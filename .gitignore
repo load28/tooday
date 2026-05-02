@@ -13,3 +13,4 @@ __unconfig*
 todos.json
 .turbo
 **/.turbo
+.idea
