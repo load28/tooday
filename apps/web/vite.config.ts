@@ -11,7 +11,7 @@ const config = defineConfig({
     devtools(),
     nitro(),
     tanstackStart({
-      tsr: {
+      router: {
         routeFileIgnorePattern: '\\.css\\.ts$',
       },
     }),
