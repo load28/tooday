@@ -7,7 +7,17 @@ import { defineConfig } from 'vite';
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [devtools(), nitro(), tanstackStart(), viteReact(), vanillaExtractPlugin()],
+  plugins: [
+    devtools(),
+    nitro(),
+    tanstackStart({
+      tsr: {
+        routeFileIgnorePattern: '\\.css\\.ts$',
+      },
+    }),
+    viteReact(),
+    vanillaExtractPlugin(),
+  ],
 });
 
 export default config;
