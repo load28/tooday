@@ -55,6 +55,8 @@ tooday/
 {
   "name": "tooday",
   "private": true,
+  "type": "module",
+  "packageManager": "bun@1.1.45",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "turbo run dev",
@@ -67,11 +69,13 @@ tooday/
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
-    "turbo": "latest",
+    "turbo": "^2.9.7",
     "typescript": "^6.0.2"
   }
 }
 ```
+
+`packageManager` 필드는 Turbo의 워크스페이스 인식에 필요. 버전은 실제 사용하는 Bun과 일치시킴.
 
 ### `apps/web/package.json`
 
@@ -205,13 +209,39 @@ TS 파일 없음 → tsconfig 없음. tRPC 셋팅 시 추가.
     "dev": { "cache": false, "persistent": true },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".output/**", ".tanstack/**", "dist/**"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "vite.config.ts",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ],
+      "outputs": [".output/**"]
     },
-    "test": { "dependsOn": ["^build"] },
-    "typecheck": { "dependsOn": ["^typecheck"] }
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ]
+    }
   }
 }
 ```
+
+`inputs`로 캐시 키를 명시 → 무관한 파일 변경에 캐시 무효화 방지. 베이스 tsconfig는 `$TURBO_ROOT$` 토큰으로 루트 참조.
 
 ### Biome는 turbo 우회
 

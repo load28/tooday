@@ -1,0 +1,39 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "public/**",
+        "vite.config.ts",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ],
+      "outputs": [".output/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "package.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ]
+    }
+  }
+}
