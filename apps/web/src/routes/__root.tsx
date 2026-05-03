@@ -1,10 +1,14 @@
 import { TanStackDevtools } from '@tanstack/react-devtools';
-import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
+import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import type { ReactNode } from 'react';
 import globalCss from '../global.css?url';
 
-export const Route = createRootRoute({
+type RouteContext = {
+  auth: { name: string; email: string; password: string };
+};
+
+export const Route = createRootRouteWithContext<RouteContext>()({
   head: () => ({
     meta: [
       {
