@@ -15,7 +15,15 @@ export const Route = createRootRoute({
       { name: 'theme-color', content: '#3182f6' },
       { title: 'TooDay · Design Guide' },
     ],
-    links: [{ rel: 'stylesheet', href: globalCss }],
+    links: [
+      { rel: 'preconnect', href: 'https://cdn.jsdelivr.net', crossOrigin: '' },
+      {
+        rel: 'stylesheet',
+        crossOrigin: '',
+        href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
+      },
+      { rel: 'stylesheet', href: globalCss },
+    ],
   }),
   shellComponent: RootDocument,
   component: () => <Outlet />,

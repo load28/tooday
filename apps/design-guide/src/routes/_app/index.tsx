@@ -1,35 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { DayList } from '@/components/day-list';
-import { MobileShell, TopBar } from '@/components/mobile-shell';
-import * as topBarStyles from '@/components/mobile-shell.css';
-import { tasks } from '@/data/mock';
-import * as styles from './index.css';
+import { IconBell, IconPlus } from '@/components/icons';
+import { MobileShell, shellStyles, type TabKey, TopBar } from '@/components/shell';
+import { DAYS, TASKS, type Task, TODAY_INDEX } from '@/lib/data';
+import { DayView } from '@/screens/day-view';
 
 export const Route = createFileRoute('/_app/')({
-  component: DayView,
+  component: TimePage,
 });
 
-const TODAY_INDEX = 2;
-
-const DAYS: { label: string; isToday: boolean }[] = [
-  { label: '5월 1일 목요일', isToday: false },
-  { label: '5월 2일 금요일', isToday: false },
-  { label: '5월 3일 토요일', isToday: true },
-  { label: '5월 4일 일요일', isToday: false },
-  { label: '5월 5일 월요일', isToday: false },
-  { label: '5월 6일 화요일', isToday: false },
-  { label: '5월 7일 수요일', isToday: false },
-];
-
-function DayView() {
+function TimePage() {
+  const navigate = useNavigate();
   const [dayIdx, setDayIdx] = useState(TODAY_INDEX);
+  const [tasks, setTasks] = useState<Task[]>(TASKS);
+
   const day = DAYS[dayIdx] ?? DAYS[TODAY_INDEX];
   if (!day) return null;
+  const visibleTasks = day.isToday ? tasks : day.hasTasks ? tasks.slice(0, 3) : [];
 
-  const goPrev = () => setDayIdx((i) => Math.max(0, i - 1));
-  const goNext = () => setDayIdx((i) => Math.min(DAYS.length - 1, i + 1));
+  const toggleTask = (id: string) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        return { ...t, status: t.status === 'done' ? 'todo' : 'done' };
+      }),
+    );
+  };
+
+  const onTabChange = (k: TabKey) => {
+    if (k === 'projects') navigate({ to: '/projects' });
+    else if (k === 'guide') navigate({ to: '/guide' });
+  };
 
   return (
     <MobileShell
@@ -37,37 +38,35 @@ function DayView() {
         <TopBar
           title="오늘"
           right={
-            <button type="button" className={topBarStyles.topBarBtn} aria-label="알림">
-              <Bell size={20} />
-            </button>
+            <>
+              <button type="button" style={shellStyles.topBarBtn} aria-label="알림">
+                <IconBell size={20} />
+              </button>
+              <button
+                type="button"
+                style={shellStyles.topBarBtn}
+                aria-label="태스크 추가"
+                onClick={() => navigate({ to: '/tasks/new' })}
+              >
+                <IconPlus size={22} strokeWidth={2.4} />
+              </button>
+            </>
           }
         />
       }
+      tab="time"
+      onTabChange={onTabChange}
+      showFab={false}
     >
-      <nav className={styles.dateNav} aria-label="날짜 이동">
-        <button type="button" className={styles.dateNavBtn} onClick={goPrev} disabled={dayIdx === 0} aria-label="이전 날">
-          <ChevronLeft size={22} />
-        </button>
-        <button
-          type="button"
-          className={styles.dateNavTitle}
-          onClick={() => setDayIdx(TODAY_INDEX)}
-          aria-label={day.isToday ? day.label : `${day.label} — 오늘로 돌아가기`}
-        >
-          {day.label}
-        </button>
-        <button
-          type="button"
-          className={styles.dateNavBtn}
-          onClick={goNext}
-          disabled={dayIdx === DAYS.length - 1}
-          aria-label="다음 날"
-        >
-          <ChevronRight size={22} />
-        </button>
-      </nav>
-
-      <DayList tasks={day.isToday ? tasks : []} />
+      <DayView
+        tasks={visibleTasks}
+        day={day}
+        days={DAYS}
+        activeDayIdx={dayIdx}
+        onSelectDay={setDayIdx}
+        onTaskClick={(id) => navigate({ to: '/tasks/$taskId', params: { taskId: id } })}
+        onToggleTask={toggleTask}
+      />
     </MobileShell>
   );
 }
