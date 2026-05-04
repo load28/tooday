@@ -1,4 +1,6 @@
 import { Link } from '@tanstack/react-router';
+import { CalendarOff } from 'lucide-react';
+import { card } from '@/components/atoms.css';
 import { getProject, PROJECT_COLOR_HEX, type Task } from '@/data/mock';
 import * as styles from './day-list.css';
 
@@ -25,7 +27,13 @@ function getSectionKey(time: string): SectionKey {
 
 export function DayList({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) {
-    return <p className={styles.empty}>이 날에는 일정이 없어요</p>;
+    return (
+      <div className={styles.empty}>
+        <CalendarOff size={40} strokeWidth={1.6} className={styles.emptyIcon} />
+        <p className={styles.emptyText}>이 날에는 일정이 없어요</p>
+        <p className={styles.emptyHint}>새 태스크를 추가해 하루를 계획해 보세요</p>
+      </div>
+    );
   }
 
   const sorted = [...tasks].sort((a, b) => timeToMin(a.startAt) - timeToMin(b.startAt));
@@ -40,33 +48,29 @@ export function DayList({ tasks }: { tasks: Task[] }) {
       {SECTION_ORDER.map((key) => {
         const items = grouped[key];
         if (items.length === 0) return null;
-        return <DaySection key={key} label={SECTION_LABEL[key]} items={items} />;
+        return (
+          <section key={key} className={styles.section}>
+            <header className={styles.sectionHeader}>{SECTION_LABEL[key]}</header>
+            <ul className={`${card} ${styles.list}`}>
+              {items.map((task) => {
+                const project = getProject(task.projectId);
+                const accent = project ? PROJECT_COLOR_HEX[project.color] : '#8b95a1';
+                const isDone = task.status === 'done';
+
+                return (
+                  <li key={task.id} className={styles.row}>
+                    <span aria-hidden="true" className={styles.accentLine} style={{ background: isDone ? '#d1d6db' : accent }} />
+                    <Link to="/tasks/$taskId" params={{ taskId: task.id }} className={styles.body}>
+                      <span className={styles.time}>{task.startAt}</span>
+                      <span className={`${styles.title} ${isDone ? styles.titleDone : ''}`}>{task.title}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
       })}
     </div>
-  );
-}
-
-function DaySection({ label, items }: { label: string; items: Task[] }) {
-  return (
-    <section className={styles.section}>
-      <header className={styles.sectionHeader}>{label}</header>
-      <ul className={styles.list}>
-        {items.map((task) => {
-          const project = getProject(task.projectId);
-          const accent = project ? PROJECT_COLOR_HEX[project.color] : '#8b95a1';
-          const isDone = task.status === 'done';
-
-          return (
-            <li key={task.id} className={styles.row}>
-              <Link to="/tasks/$taskId" params={{ taskId: task.id }} className={styles.body}>
-                <span className={styles.time}>{task.startAt}</span>
-                <span className={styles.dot} style={{ background: isDone ? '#d1d6db' : accent }} />
-                <span className={`${styles.title} ${isDone ? styles.titleDone : ''}`}>{task.title}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }

@@ -10,13 +10,12 @@ export function KanbanCard({ task }: { task: Task }) {
 
   return (
     <Link to="/tasks/$taskId" params={{ taskId: task.id }} className={styles.row}>
-      {isDone ? (
-        <Check size={16} strokeWidth={2.6} className={styles.doneIcon} />
-      ) : (
-        <span className={styles.dot} style={{ background: accent }} />
-      )}
-      <span className={`${styles.title} ${isDone ? styles.titleDone : ''}`}>{task.title}</span>
-      <span className={styles.time}>{task.startAt}</span>
+      <span aria-hidden="true" className={styles.accentLine} style={{ background: isDone ? '#d1d6db' : accent }} />
+      <div className={styles.body}>
+        {isDone ? <Check size={16} strokeWidth={2.6} className={styles.doneIcon} /> : null}
+        <span className={`${styles.title} ${isDone ? styles.titleDone : ''}`}>{task.title}</span>
+        <span className={styles.time}>{task.startAt}</span>
+      </div>
     </Link>
   );
 }

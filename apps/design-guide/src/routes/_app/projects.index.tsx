@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
+import { card } from '@/components/atoms.css';
 import { MobileShell, TopBar } from '@/components/mobile-shell';
 import { PROJECT_COLOR_HEX, projects, tasksByProject } from '@/data/mock';
 import * as styles from './projects.css';
@@ -26,10 +27,10 @@ function ProjectList() {
           const todayCount = projectTasks.length;
 
           return (
-            <li key={project.id}>
+            <li key={project.id} className={card}>
               <Link to="/projects/$projectId" params={{ projectId: project.id }} className={styles.projectRow}>
+                <span aria-hidden="true" className={styles.projectAccent} style={{ background: accent }} />
                 <div className={styles.projectHead}>
-                  <span className={styles.projectDot} style={{ background: accent }} />
                   <span className={styles.projectName}>{project.name}</span>
                   <ChevronRight size={16} className={styles.projectChev} />
                 </div>

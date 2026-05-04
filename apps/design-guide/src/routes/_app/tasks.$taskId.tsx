@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, useNavigate } from '@tanstack/react-router';
 import { Check, ChevronRight, Plus, X } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
+import { card } from '@/components/atoms.css';
 import { BottomSheet } from '@/components/bottom-sheet';
 import { MobileShell, TopBar } from '@/components/mobile-shell';
 import {
@@ -118,7 +119,7 @@ function TaskDetail() {
           </button>
         </div>
 
-        <ul className={styles.metaList}>
+        <ul className={`${card} ${styles.metaList}`}>
           <li>
             <button type="button" className={`${styles.metaRow} ${styles.metaRowBtn}`} onClick={() => setProjectSheetOpen(true)}>
               <span className={styles.metaKey}>프로젝트</span>
@@ -160,7 +161,7 @@ function TaskDetail() {
               {doneCount} / {checklist.length}
             </span>
           </header>
-          <ul className={styles.checklist}>
+          <ul className={`${card} ${styles.checklist}`}>
             {checklist.map((item) => (
               <li key={item.id} className={styles.checkItem}>
                 <button
@@ -192,16 +193,20 @@ function TaskDetail() {
         </section>
 
         <section className={styles.sectionBlock}>
-          <h2 className={styles.sectionTitle}>메모</h2>
-          <textarea
-            className={styles.memoInput}
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder="이 태스크에 대한 생각을 적어보세요"
-          />
+          <header className={styles.sectionTitleRow}>
+            <h2 className={styles.sectionTitle}>메모</h2>
+          </header>
+          <div className={`${card} ${styles.memoCard}`}>
+            <textarea
+              className={styles.memoInput}
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="이 태스크에 대한 생각을 적어보세요"
+            />
+          </div>
         </section>
 
-        <button type="button" className={styles.deleteRow} onClick={handleDelete}>
+        <button type="button" className={`${card} ${styles.deleteRow}`} onClick={handleDelete}>
           이 태스크 삭제
         </button>
       </div>

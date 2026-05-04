@@ -4,15 +4,15 @@ import { tokens } from '@/styles/theme.css';
 export const form = style({
   display: 'flex',
   flexDirection: 'column',
-  padding: `${tokens.space[4]} ${tokens.space[6]} ${tokens.space[7]}`,
-  gap: tokens.space[6],
+  padding: `${tokens.space[4]} ${tokens.space[4]} ${tokens.space[7]}`,
+  gap: tokens.space[5],
 });
 
 export const titleInput = style({
   width: '100%',
   border: 'none',
   background: 'transparent',
-  padding: 0,
+  padding: `0 ${tokens.space[2]}`,
   fontSize: tokens.fontSize.display,
   fontWeight: tokens.fontWeight.bold,
   color: tokens.color.textPrimary,
@@ -31,8 +31,7 @@ export const fieldList = style({
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
-  borderTop: `1px solid ${tokens.color.divider}`,
-  borderBottom: `1px solid ${tokens.color.divider}`,
+  overflow: 'hidden',
 });
 
 export const fieldRow = style({
@@ -41,7 +40,7 @@ export const fieldRow = style({
   justifyContent: 'space-between',
   width: '100%',
   height: '56px',
-  padding: 0,
+  padding: `0 ${tokens.space[5]}`,
   border: 'none',
   background: 'transparent',
   fontFamily: 'inherit',
@@ -95,15 +94,19 @@ export const sectionLabel = style({
   fontWeight: tokens.fontWeight.semibold,
   color: tokens.color.textTertiary,
   letterSpacing: '-0.01em',
+  paddingLeft: tokens.space[2],
+});
+
+export const memoCard = style({
+  padding: tokens.space[5],
 });
 
 export const memoInput = style({
   width: '100%',
   minHeight: '120px',
   border: 'none',
-  borderBottom: `1px solid ${tokens.color.divider}`,
   background: 'transparent',
-  padding: `${tokens.space[2]} 0`,
+  padding: 0,
   fontFamily: 'inherit',
   fontSize: tokens.fontSize.md,
   fontWeight: tokens.fontWeight.regular,
@@ -113,7 +116,7 @@ export const memoInput = style({
   outline: 'none',
   selectors: {
     '&::placeholder': { color: tokens.color.textPlaceholder },
-    '&:focus': { borderBottomColor: tokens.color.primary },
+    '&:focus': { caretColor: tokens.color.primary },
   },
 });
 

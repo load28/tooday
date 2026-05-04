@@ -4,15 +4,14 @@ import { tokens } from '@/styles/theme.css';
 export const dayList = style({
   display: 'flex',
   flexDirection: 'column',
-  paddingBottom: tokens.space[7],
+  gap: tokens.space[5],
+  padding: `${tokens.space[2]} ${tokens.space[4]} ${tokens.space[7]}`,
 });
 
 export const section = style({
   display: 'flex',
   flexDirection: 'column',
-  selectors: {
-    '&:not(:first-of-type)': { marginTop: tokens.space[5] },
-  },
+  gap: tokens.space[2],
 });
 
 export const sectionHeader = style({
@@ -20,7 +19,7 @@ export const sectionHeader = style({
   fontWeight: tokens.fontWeight.semibold,
   color: tokens.color.textTertiary,
   letterSpacing: '-0.01em',
-  padding: `${tokens.space[2]} ${tokens.space[6]}`,
+  paddingLeft: tokens.space[2],
 });
 
 export const list = style({
@@ -29,18 +28,24 @@ export const list = style({
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
 });
 
 export const row = style({
   display: 'flex',
-  alignItems: 'center',
-  height: '52px',
-  padding: `0 ${tokens.space[6]}`,
-  gap: tokens.space[3],
+  alignItems: 'stretch',
+  height: '56px',
   borderTop: `1px solid ${tokens.color.divider}`,
   selectors: {
     '&:first-of-type': { borderTop: 'none' },
   },
+});
+
+export const accentLine = style({
+  width: '3px',
+  margin: `${tokens.space[3]} ${tokens.space[4]} ${tokens.space[3]} 0`,
+  borderRadius: tokens.radius.pill,
+  flex: '0 0 auto',
 });
 
 export const body = style({
@@ -48,9 +53,9 @@ export const body = style({
   display: 'flex',
   alignItems: 'center',
   gap: tokens.space[3],
+  paddingRight: tokens.space[5],
   textDecoration: 'none',
   color: 'inherit',
-  height: '100%',
   minWidth: 0,
 });
 
@@ -60,13 +65,6 @@ export const time = style({
   fontWeight: tokens.fontWeight.semibold,
   color: tokens.color.textTertiary,
   fontFeatureSettings: '"tnum" 1',
-  flex: '0 0 auto',
-});
-
-export const dot = style({
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
   flex: '0 0 auto',
 });
 
@@ -88,8 +86,29 @@ export const titleDone = style({
 });
 
 export const empty = style({
-  padding: `${tokens.space[8]} ${tokens.space[6]}`,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: tokens.space[2],
+  padding: `${tokens.space[10]} ${tokens.space[6]}`,
   textAlign: 'center',
-  fontSize: tokens.fontSize.md,
-  color: tokens.color.textPlaceholder,
+});
+
+export const emptyIcon = style({
+  color: tokens.color.borderStrong,
+  marginBottom: tokens.space[2],
+});
+
+export const emptyText = style({
+  margin: 0,
+  fontSize: tokens.fontSize.lg,
+  fontWeight: tokens.fontWeight.semibold,
+  color: tokens.color.textSecondary,
+});
+
+export const emptyHint = style({
+  margin: 0,
+  fontSize: tokens.fontSize.sm,
+  color: tokens.color.textTertiary,
 });

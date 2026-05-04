@@ -67,9 +67,7 @@ function DayView() {
         </button>
       </nav>
 
-      <div className={styles.listWrap}>
-        <DayList tasks={day.isToday ? tasks : []} />
-      </div>
+      <DayList tasks={day.isToday ? tasks : []} />
     </MobileShell>
   );
 }

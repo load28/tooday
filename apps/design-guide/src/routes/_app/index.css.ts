@@ -5,7 +5,7 @@ export const dateNav = style({
   display: 'grid',
   gridTemplateColumns: '40px 1fr 40px',
   alignItems: 'center',
-  padding: `${tokens.space[3]} ${tokens.space[6]} ${tokens.space[4]}`,
+  padding: `${tokens.space[3]} ${tokens.space[4]} ${tokens.space[4]}`,
   gap: tokens.space[2],
 });
 
@@ -42,5 +42,3 @@ export const dateNavTitle = style({
     '&:active': { color: tokens.color.textSecondary },
   },
 });
-
-export const listWrap = style({});

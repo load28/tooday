@@ -4,7 +4,7 @@ import { tokens } from '@/styles/theme.css';
 /* === Projects index === */
 
 export const intro = style({
-  padding: `${tokens.space[3]} ${tokens.space[6]} ${tokens.space[6]}`,
+  padding: `${tokens.space[3]} ${tokens.space[4]} ${tokens.space[5]}`,
 });
 
 export const introTitle = style({
@@ -26,36 +26,37 @@ export const introCaption = style({
 
 export const projectList = style({
   listStyle: 'none',
-  padding: 0,
+  padding: `0 ${tokens.space[4]} ${tokens.space[7]}`,
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
-  paddingBottom: tokens.space[7],
+  gap: tokens.space[3],
 });
 
 export const projectRow = style({
   display: 'block',
-  padding: `${tokens.space[4]} ${tokens.space[6]}`,
-  borderTop: `1px solid ${tokens.color.divider}`,
+  position: 'relative',
+  padding: `${tokens.space[4]} ${tokens.space[5]} ${tokens.space[4]} ${tokens.space[6]}`,
   textDecoration: 'none',
   color: 'inherit',
   selectors: {
-    'li:first-of-type > &': { borderTop: 'none' },
     '&:active': { background: tokens.color.surfaceMuted },
   },
+});
+
+export const projectAccent = style({
+  position: 'absolute',
+  left: tokens.space[3],
+  top: tokens.space[4],
+  bottom: tokens.space[4],
+  width: '3px',
+  borderRadius: tokens.radius.pill,
 });
 
 export const projectHead = style({
   display: 'flex',
   alignItems: 'center',
   gap: tokens.space[2],
-});
-
-export const projectDot = style({
-  width: '12px',
-  height: '12px',
-  borderRadius: '50%',
-  flex: '0 0 auto',
 });
 
 export const projectName = style({
@@ -108,7 +109,7 @@ export const progressLabel = style({
 /* === Project detail === */
 
 export const detailHero = style({
-  padding: `${tokens.space[3]} ${tokens.space[6]} ${tokens.space[6]}`,
+  padding: `${tokens.space[3]} ${tokens.space[4]} ${tokens.space[5]}`,
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.space[2],
@@ -168,22 +169,22 @@ export const detailProgressFill = style({
 export const kanbanStack = style({
   display: 'flex',
   flexDirection: 'column',
-  paddingBottom: tokens.space[7],
+  gap: tokens.space[5],
+  padding: `0 ${tokens.space[4]} ${tokens.space[7]}`,
 });
 
 export const kanbanSection = style({
   display: 'flex',
   flexDirection: 'column',
-  selectors: {
-    '&:not(:first-of-type)': { marginTop: tokens.space[5] },
-  },
+  gap: tokens.space[2],
 });
 
 export const sectionHeader = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${tokens.space[2]} ${tokens.space[6]}`,
+  paddingLeft: tokens.space[2],
+  paddingRight: tokens.space[2],
 });
 
 export const sectionLabel = style({
@@ -206,10 +207,12 @@ export const taskList = style({
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
 });
 
 export const sectionEmpty = style({
   padding: `${tokens.space[5]} ${tokens.space[6]}`,
   fontSize: tokens.fontSize.sm,
   color: tokens.color.textPlaceholder,
+  textAlign: 'center',
 });

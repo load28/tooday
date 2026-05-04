@@ -2,14 +2,14 @@ import { style, styleVariants } from '@vanilla-extract/css';
 import { tokens } from '@/styles/theme.css';
 
 export const root = style({
-  padding: `${tokens.space[4]} 0 ${tokens.space[7]}`,
+  padding: `${tokens.space[4]} ${tokens.space[4]} ${tokens.space[7]}`,
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.space[5],
 });
 
 export const titleBlock = style({
-  padding: `0 ${tokens.space[6]}`,
+  padding: `0 ${tokens.space[2]}`,
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.space[3],
@@ -90,7 +90,7 @@ export const statusDotVariants = styleVariants({
   done: { background: tokens.color.success },
 });
 
-/* === Meta list (hairlines, no card) === */
+/* === Meta list (card) === */
 
 export const metaList = style({
   listStyle: 'none',
@@ -98,8 +98,7 @@ export const metaList = style({
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
-  borderTop: `1px solid ${tokens.color.divider}`,
-  borderBottom: `1px solid ${tokens.color.divider}`,
+  overflow: 'hidden',
 });
 
 export const metaRow = style({
@@ -108,7 +107,7 @@ export const metaRow = style({
   justifyContent: 'space-between',
   width: '100%',
   height: '56px',
-  padding: `0 ${tokens.space[6]}`,
+  padding: `0 ${tokens.space[5]}`,
   border: 'none',
   background: 'transparent',
   fontFamily: 'inherit',
@@ -161,20 +160,21 @@ export const metaChev = style({
 export const sectionBlock = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: tokens.space[3],
-  padding: `0 ${tokens.space[6]}`,
+  gap: tokens.space[2],
 });
 
 export const sectionTitleRow = style({
   display: 'flex',
   alignItems: 'baseline',
   justifyContent: 'space-between',
+  paddingLeft: tokens.space[2],
+  paddingRight: tokens.space[2],
 });
 
 export const sectionTitle = style({
-  fontSize: tokens.fontSize.lg,
-  fontWeight: tokens.fontWeight.bold,
-  color: tokens.color.textPrimary,
+  fontSize: tokens.fontSize.sm,
+  fontWeight: tokens.fontWeight.semibold,
+  color: tokens.color.textTertiary,
   margin: 0,
   letterSpacing: '-0.01em',
 });
@@ -186,15 +186,18 @@ export const sectionMeta = style({
   fontFeatureSettings: '"tnum" 1',
 });
 
-/* === Memo (notebook style) === */
+/* === Memo (card body) === */
+
+export const memoCard = style({
+  padding: tokens.space[5],
+});
 
 export const memoInput = style({
   width: '100%',
   minHeight: '120px',
   border: 'none',
-  borderBottom: `1px solid ${tokens.color.divider}`,
   background: 'transparent',
-  padding: `${tokens.space[2]} 0`,
+  padding: 0,
   fontFamily: 'inherit',
   fontSize: tokens.fontSize.md,
   fontWeight: tokens.fontWeight.regular,
@@ -204,11 +207,10 @@ export const memoInput = style({
   outline: 'none',
   selectors: {
     '&::placeholder': { color: tokens.color.textPlaceholder },
-    '&:focus': { borderBottomColor: tokens.color.primary },
   },
 });
 
-/* === Checklist === */
+/* === Checklist (card body) === */
 
 export const checklist = style({
   listStyle: 'none',
@@ -216,14 +218,15 @@ export const checklist = style({
   margin: 0,
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
 });
 
 export const checkItem = style({
   display: 'flex',
   alignItems: 'center',
   gap: tokens.space[3],
-  height: '44px',
-  padding: 0,
+  height: '48px',
+  padding: `0 ${tokens.space[5]}`,
   borderTop: `1px solid ${tokens.color.divider}`,
   selectors: {
     '&:first-of-type': { borderTop: 'none' },
@@ -292,11 +295,12 @@ export const checkRemove = style({
 });
 
 export const addRow = style({
+  width: '100%',
   display: 'flex',
   alignItems: 'center',
   gap: '6px',
-  height: '44px',
-  padding: 0,
+  height: '48px',
+  padding: `0 ${tokens.space[5]}`,
   border: 'none',
   borderTop: `1px solid ${tokens.color.divider}`,
   background: 'transparent',
@@ -316,11 +320,9 @@ export const deleteRow = style({
   justifyContent: 'center',
   width: '100%',
   height: '56px',
-  padding: `0 ${tokens.space[6]}`,
+  padding: `0 ${tokens.space[5]}`,
   border: 'none',
-  borderTop: `1px solid ${tokens.color.divider}`,
-  borderBottom: `1px solid ${tokens.color.divider}`,
-  background: 'transparent',
+  background: tokens.color.surface,
   fontFamily: 'inherit',
   fontSize: tokens.fontSize.md,
   fontWeight: tokens.fontWeight.semibold,

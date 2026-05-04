@@ -63,49 +63,53 @@ function GuidePage() {
   return (
     <MobileShell topBar={<TopBar title="디자인 가이드" />} showFab={false}>
       <div className={styles.root}>
-        <header>
+        <header className={styles.hero}>
           <h1 className={styles.heroTitle}>TooDay Design Guide</h1>
-          <p className={styles.heroDesc}>Toss 스타일 미니멀 — 가벼운 컬러, 넉넉한 여백, 또렷한 타이포. 모바일 웹뷰 기준 375px.</p>
+          <p className={styles.heroDesc}>회색 배경 + 흰 카드 레이어. 액센트는 절제, 위계는 카드와 타이포로.</p>
         </header>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Color · Surface</h2>
-            <p className={styles.blockCaption}>회색 배경 위에 흰 카드, 톤 차이는 명도로만. 브랜드 액센트는 Toss Blue.</p>
+            <h2 className={styles.blockTitle}>COLOR · SURFACE</h2>
+            <p className={styles.blockCaption}>회색 배경 위에 흰 카드, 톤 차이는 명도로만.</p>
           </header>
-          <div className={styles.swatchGrid}>
-            {COLORS.map((c) => (
-              <div key={c.label} className={styles.swatch}>
-                <div className={styles.swatchChip} style={{ background: c.value }} />
-                <span className={styles.swatchLabel}>{c.label}</span>
-                <span className={styles.swatchValue}>{c.value}</span>
-              </div>
-            ))}
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.swatchGrid}>
+              {COLORS.map((c) => (
+                <div key={c.label} className={styles.swatch}>
+                  <div className={styles.swatchChip} style={{ background: c.value }} />
+                  <span className={styles.swatchLabel}>{c.label}</span>
+                  <span className={styles.swatchValue}>{c.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Color · Project</h2>
+            <h2 className={styles.blockTitle}>COLOR · PROJECT</h2>
             <p className={styles.blockCaption}>각 프로젝트 보드를 식별하는 6색.</p>
           </header>
-          <div className={styles.swatchGrid}>
-            {PROJECT_COLORS.map((c) => (
-              <div key={c.label} className={styles.swatch}>
-                <div className={styles.swatchChip} style={{ background: c.value }} />
-                <span className={styles.swatchLabel}>{c.label}</span>
-                <span className={styles.swatchValue}>{c.value}</span>
-              </div>
-            ))}
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.swatchGrid}>
+              {PROJECT_COLORS.map((c) => (
+                <div key={c.label} className={styles.swatch}>
+                  <div className={styles.swatchChip} style={{ background: c.value }} />
+                  <span className={styles.swatchLabel}>{c.label}</span>
+                  <span className={styles.swatchValue}>{c.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Typography</h2>
+            <h2 className={styles.blockTitle}>TYPOGRAPHY</h2>
             <p className={styles.blockCaption}>Pretendard, 자간 -0.02em ~ -0.025em.</p>
           </header>
-          <div>
+          <div className={`${atoms.card} ${styles.blockBody}`}>
             {TYPES.map((t) => (
               <div key={t.label} className={styles.typeRow}>
                 <span style={{ fontSize: t.size, fontWeight: t.weight, letterSpacing: '-0.02em' }}>{t.sample}</span>
@@ -117,69 +121,79 @@ function GuidePage() {
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Spacing</h2>
+            <h2 className={styles.blockTitle}>SPACING</h2>
             <p className={styles.blockCaption}>4px 베이스. 여백을 충분히 둬서 정보 위계를 만든다.</p>
           </header>
-          {SPACES.map(([name, px]) => (
-            <div key={name} className={styles.spaceRow}>
-              <span style={{ width: 28, fontSize: 13, color: '#8b95a1', fontWeight: 600 }}>{name}</span>
-              <div className={styles.spaceBar} style={{ width: `${px}px` }} />
-              <span style={{ fontSize: 13, color: '#8b95a1' }}>{px}px</span>
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.spaceList}>
+              {SPACES.map(([name, px]) => (
+                <div key={name} className={styles.spaceRow}>
+                  <span style={{ width: 28, fontSize: 13, color: '#8b95a1', fontWeight: 600 }}>{name}</span>
+                  <div className={styles.spaceBar} style={{ width: `${px}px` }} />
+                  <span style={{ fontSize: 13, color: '#8b95a1' }}>{px}px</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Radius</h2>
+            <h2 className={styles.blockTitle}>RADIUS</h2>
             <p className={styles.blockCaption}>카드는 lg(14), 칩/뱃지는 pill, 버튼은 lg.</p>
           </header>
-          <div className={styles.radiusRow}>
-            {RADII.map(([name, px]) => (
-              <div key={name} className={styles.radiusChip} style={{ borderRadius: px }}>
-                <span style={{ fontWeight: 700, fontSize: 13, color: '#191f28' }}>{name}</span>
-                <span>{px}</span>
-              </div>
-            ))}
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.radiusRow}>
+              {RADII.map(([name, px]) => (
+                <div key={name} className={styles.radiusChip} style={{ borderRadius: px }}>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: '#191f28' }}>{name}</span>
+                  <span>{px}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Buttons</h2>
+            <h2 className={styles.blockTitle}>BUTTONS</h2>
             <p className={styles.blockCaption}>높이 52px, 굵은 라벨, 액센트는 단 하나.</p>
           </header>
-          <div className={styles.buttonRow}>
-            <button type="button" className={`${atoms.button} ${atoms.buttonVariants.primary}`}>
-              시작하기
-            </button>
-            <button type="button" className={`${atoms.button} ${atoms.buttonVariants.secondary}`}>
-              나중에 하기
-            </button>
-            <button type="button" className={`${atoms.button} ${atoms.buttonVariants.ghost}`}>
-              취소
-            </button>
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.buttonRow}>
+              <button type="button" className={`${atoms.button} ${atoms.buttonVariants.primary}`}>
+                시작하기
+              </button>
+              <button type="button" className={`${atoms.button} ${atoms.buttonVariants.secondary}`}>
+                나중에 하기
+              </button>
+              <button type="button" className={`${atoms.button} ${atoms.buttonVariants.ghost}`}>
+                취소
+              </button>
+            </div>
           </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Status Badge</h2>
+            <h2 className={styles.blockTitle}>STATUS BADGE</h2>
             <p className={styles.blockCaption}>3가지 상태 — 시작 전 / 진행 중 / 완료.</p>
           </header>
-          <div className={styles.inlineRow}>
-            <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.todo}`}>시작 전</span>
-            <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.doing}`}>진행 중</span>
-            <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.done}`}>완료</span>
+          <div className={`${atoms.card} ${styles.blockBody}`}>
+            <div className={styles.inlineRow}>
+              <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.todo}`}>시작 전</span>
+              <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.doing}`}>진행 중</span>
+              <span className={`${atoms.statusBadge} ${atoms.statusBadgeVariants.done}`}>완료</span>
+            </div>
           </div>
         </section>
 
         <section className={styles.block}>
           <header className={styles.blockHeader}>
-            <h2 className={styles.blockTitle}>Task Card</h2>
+            <h2 className={styles.blockTitle}>TASK CARD</h2>
             <p className={styles.blockCaption}>공통 카드 — 시간 뷰 / 프로젝트 보드 모두 사용.</p>
           </header>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className={styles.cardStack}>
             {tasks.slice(2, 5).map((t) => (
               <TaskCard key={t.id} task={t} />
             ))}

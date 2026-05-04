@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Check, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { card } from '@/components/atoms.css';
 import { BottomSheet } from '@/components/bottom-sheet';
 import { MobileShell, TopBar } from '@/components/mobile-shell';
 import { endTime, formatDuration, getProject, PROJECT_COLOR_HEX, projects } from '@/data/mock';
@@ -45,7 +46,7 @@ function NewTask() {
           aria-label="태스크 제목"
         />
 
-        <ul className={styles.fieldList}>
+        <ul className={`${card} ${styles.fieldList}`}>
           <li>
             <button type="button" className={styles.fieldRow} onClick={() => setProjectSheetOpen(true)}>
               <span className={styles.fieldLabel}>프로젝트</span>
@@ -70,12 +71,14 @@ function NewTask() {
 
         <div className={styles.memoBlock}>
           <span className={styles.sectionLabel}>메모</span>
-          <textarea
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder="필요하면 적어보세요"
-            className={styles.memoInput}
-          />
+          <div className={`${card} ${styles.memoCard}`}>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="필요하면 적어보세요"
+              className={styles.memoInput}
+            />
+          </div>
         </div>
 
         <button type="button" className={styles.primaryBtn} disabled={!canCreate} onClick={create}>

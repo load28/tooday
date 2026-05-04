@@ -3,11 +3,8 @@ import { tokens } from '@/styles/theme.css';
 
 export const row = style({
   display: 'flex',
-  alignItems: 'center',
-  gap: tokens.space[3],
-  height: '52px',
-  padding: `0 ${tokens.space[6]}`,
-  background: 'transparent',
+  alignItems: 'stretch',
+  height: '56px',
   textDecoration: 'none',
   color: 'inherit',
   borderTop: `1px solid ${tokens.color.divider}`,
@@ -17,11 +14,20 @@ export const row = style({
   },
 });
 
-export const dot = style({
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
+export const accentLine = style({
+  width: '3px',
+  margin: `${tokens.space[3]} ${tokens.space[4]} ${tokens.space[3]} 0`,
+  borderRadius: tokens.radius.pill,
   flex: '0 0 auto',
+});
+
+export const body = style({
+  flex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  gap: tokens.space[3],
+  paddingRight: tokens.space[5],
+  minWidth: 0,
 });
 
 export const doneIcon = style({

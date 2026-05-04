@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
+import { card } from '@/components/atoms.css';
 import { KanbanCard } from '@/components/kanban-card';
 import { MobileShell, TopBar } from '@/components/mobile-shell';
 import { getProject, PROJECT_COLOR_HEX, type TaskStatus, tasksByProject } from '@/data/mock';
@@ -49,9 +50,9 @@ function ProjectDetail() {
                 <span className={styles.sectionCount}>{items.length}</span>
               </header>
               {items.length === 0 ? (
-                <div className={styles.sectionEmpty}>비어 있음</div>
+                <div className={`${card} ${styles.sectionEmpty}`}>비어 있음</div>
               ) : (
-                <ul className={styles.taskList}>
+                <ul className={`${card} ${styles.taskList}`}>
                   {items.map((task) => (
                     <li key={task.id}>
                       <KanbanCard task={task} />
