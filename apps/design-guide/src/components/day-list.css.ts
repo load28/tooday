@@ -35,22 +35,12 @@ export const row = style({
   display: 'flex',
   alignItems: 'center',
   height: '52px',
-  padding: `0 ${tokens.space[3]} 0 ${tokens.space[6]}`,
+  padding: `0 ${tokens.space[6]}`,
   gap: tokens.space[3],
-  background: 'transparent',
-  position: 'relative',
-  willChange: 'transform',
   borderTop: `1px solid ${tokens.color.divider}`,
   selectors: {
     '&:first-of-type': { borderTop: 'none' },
   },
-});
-
-export const rowDragging = style({
-  background: tokens.color.surface,
-  borderRadius: tokens.radius.md,
-  borderTop: 'none !important',
-  boxShadow: tokens.shadow.lg,
 });
 
 export const body = style({
@@ -95,24 +85,6 @@ export const titleDone = style({
   color: tokens.color.textTertiary,
   textDecoration: 'line-through',
   textDecorationColor: tokens.color.borderStrong,
-});
-
-export const handle = style({
-  width: '28px',
-  height: '28px',
-  border: 'none',
-  background: 'transparent',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: tokens.color.borderStrong,
-  borderRadius: tokens.radius.sm,
-  flex: '0 0 auto',
-  cursor: 'grab',
-  touchAction: 'none',
-  selectors: {
-    '&:active': { cursor: 'grabbing', color: tokens.color.textTertiary },
-  },
 });
 
 export const empty = style({
