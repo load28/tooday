@@ -8,6 +8,7 @@
 **/.tanstack
 **/.wrangler
 **/.output
+**/styled-system
 .vinxi
 __unconfig*
 todos.json

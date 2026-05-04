@@ -18,6 +18,7 @@
       "!**/.turbo",
       "!**/.tanstack",
       "!**/.output",
+      "!**/styled-system",
       "!**/dist"
     ]
   },
