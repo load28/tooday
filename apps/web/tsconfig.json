@@ -3,8 +3,9 @@
   "compilerOptions": {
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "styled-system/*": ["./styled-system/*"]
     }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "panda.config.ts", "styled-system"]
 }
