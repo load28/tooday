@@ -10,9 +10,12 @@ function NotFound() {
   );
 }
 
+const basepath = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
 export function getRouter() {
   return createTanStackRouter({
     routeTree,
+    basepath,
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
