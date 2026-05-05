@@ -18,7 +18,8 @@ const rowRecipe = cva({
     width: '100%',
     color: 'text',
     textAlign: 'left',
-    transition: 'background-color {durations.fast} {easings.standard}',
+    transition: 'background-color {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
   },
   variants: {
     density: {
@@ -33,8 +34,11 @@ const rowRecipe = cva({
     interactive: {
       true: {
         cursor: 'pointer',
-        _hover: { bg: 'pressed' },
-        _active: { bg: 'pressedStrong' },
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        _hoverable: { _hover: { bg: 'hoverOverlay' } },
+        _press: { bg: 'pressedStrong' },
       },
     },
     inset: {

@@ -7,6 +7,16 @@ export default defineConfig({
   outdir: 'styled-system',
   jsxFramework: 'react',
 
+  conditions: {
+    extend: {
+      // 마우스가 실제 있는 기기에서만 hover 스타일을 적용한다.
+      // 모바일 웹뷰에서는 자동으로 무시되어 "탭 후 색이 박히는" 현상이 사라진다.
+      hoverable: '@media (hover: hover) and (pointer: fine)',
+      // 누르는 순간만 적용. data-pressed 속성으로 프로그래매틱 트리거도 가능.
+      press: '&:active, &[data-pressed="true"]',
+    },
+  },
+
   globalCss: {
     'html, body, #app': {
       minHeight: '100%',
@@ -21,6 +31,9 @@ export default defineConfig({
       WebkitFontSmoothing: 'antialiased',
       MozOsxFontSmoothing: 'grayscale',
       textRendering: 'optimizeLegibility',
+      // 끝까지 스크롤했을 때 고무줄 바운스/풀투리프레시 차단 (네이티브 앱 느낌)
+      overscrollBehaviorY: 'none',
+      WebkitTextSizeAdjust: '100%',
     },
     '*, *::before, *::after': {
       boxSizing: 'border-box',
@@ -28,6 +41,21 @@ export default defineConfig({
     'button, input, textarea, select': {
       fontFamily: 'inherit',
       letterSpacing: 'inherit',
+    },
+    // 모바일 탭 최적화: 회색 하이라이트 제거 + 더블탭 줌 지연 제거 + 길게 눌러도 선택 안 됨
+    'button, a, [role="button"], [data-pressable]': {
+      WebkitTapHighlightColor: 'transparent',
+      touchAction: 'manipulation',
+      userSelect: 'none',
+      WebkitTouchCallout: 'none',
+    },
+    'input, textarea, [contenteditable="true"]': {
+      userSelect: 'text',
+      WebkitUserSelect: 'text',
+    },
+    img: {
+      WebkitUserDrag: 'none',
+      userSelect: 'none',
     },
   },
 
@@ -181,8 +209,21 @@ export default defineConfig({
 
           // overlay & states
           overlay: { value: 'rgba(15, 19, 36, 0.45)' },
-          pressed: { value: 'rgba(15, 19, 36, 0.04)' },
-          pressedStrong: { value: 'rgba(15, 19, 36, 0.08)' },
+          // hover (PC 전용, 옅게)
+          hoverOverlay: { value: 'rgba(15, 19, 36, 0.04)' },
+          // press (모바일/PC 공통, 명확하게)
+          pressed: { value: 'rgba(15, 19, 36, 0.06)' },
+          pressedStrong: { value: 'rgba(15, 19, 36, 0.10)' },
+          // 브랜드 인터랙션
+          primaryPressed: { value: '{colors.brand.700}' },
+          dangerPressed: { value: '#d63845' },
+        },
+        spacing: {
+          safeTop: { value: 'env(safe-area-inset-top, 0px)' },
+          safeBottom: { value: 'env(safe-area-inset-bottom, 0px)' },
+          safeLeft: { value: 'env(safe-area-inset-left, 0px)' },
+          safeRight: { value: 'env(safe-area-inset-right, 0px)' },
+          keyboard: { value: 'env(keyboard-inset-height, 0px)' },
         },
       },
 

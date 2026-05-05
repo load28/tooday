@@ -20,8 +20,10 @@ const pressableRecipe = cva({
     letterSpacing: 'inherit',
     textAlign: 'left',
     minWidth: 0,
+    // 빠질 때만 부드럽게(120ms), 들어갈 때(_press)는 즉시(0ms)
     transition:
-      'background-color {durations.fast} {easings.standard}, transform {durations.fast} {easings.standard}, color {durations.fast} {easings.standard}',
+      'background-color {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
     _disabled: {
       cursor: 'not-allowed',
       opacity: 0.5,
@@ -35,31 +37,36 @@ const pressableRecipe = cva({
     tone: {
       ghost: {
         color: 'text',
-        _hover: { bg: 'pressed' },
-        _active: { bg: 'pressedStrong' },
+        _hoverable: { _hover: { bg: 'hoverOverlay' } },
+        _press: { bg: 'pressedStrong' },
       },
       subtle: {
         bg: 'surfaceMuted',
         color: 'textSecondary',
-        _hover: { bg: 'surfaceSoft' },
+        _hoverable: { _hover: { bg: 'surfaceSoft' } },
+        _press: { bg: 'surfaceSoft' },
       },
       brand: {
         bg: 'primary',
         color: 'onPrimary',
-        _hover: { bg: 'primaryHover' },
+        _hoverable: { _hover: { bg: 'primaryHover' } },
+        _press: { bg: 'primaryPressed' },
       },
       brandSoft: {
         bg: 'primarySoft',
         color: 'primary',
-        _hover: { bg: 'primarySofter' },
+        _hoverable: { _hover: { bg: 'primarySofter' } },
+        _press: { bg: 'primarySofter' },
       },
       danger: {
         bg: 'danger',
         color: 'textInverse',
+        _press: { bg: 'dangerPressed' },
       },
       dangerSoft: {
         bg: 'dangerSoft',
         color: 'danger',
+        _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
       },
     },
     shape: {
@@ -95,7 +102,12 @@ type PressableProps = PressableVariants &
 
 export function Pressable({ tone, shape, size, pressed, className, children, type, ...rest }: PressableProps) {
   return (
-    <button type={type ?? 'button'} {...rest} className={cx(pressableRecipe({ tone, shape, size, pressed }), className)}>
+    <button
+      type={type ?? 'button'}
+      data-pressable=""
+      {...rest}
+      className={cx(pressableRecipe({ tone, shape, size, pressed }), className)}
+    >
       {children}
     </button>
   );

@@ -7,7 +7,8 @@ import { css, cx } from 'styled-system/css';
  */
 const viewportCls = css({
   width: '100%',
-  height: '100vh',
+  // URL바가 표시/숨김될 때 점프하지 않도록 dvh 사용 (iOS 16+/Android 모두 지원)
+  height: ['100vh', '100dvh'],
   bg: 'bg',
   display: 'flex',
   flexDirection: 'column',
@@ -16,12 +17,17 @@ const viewportCls = css({
   color: 'text',
   fontFamily: 'sans',
   letterSpacing: 'tight',
+  // 안전 영역(노치/홈바) 좌우 패딩
+  paddingLeft: 'safeLeft',
+  paddingRight: 'safeRight',
 });
 
 const headerCls = css({
   flex: '0 0 auto',
   bg: 'bg',
   minHeight: 'appBar',
+  // 노치 영역만큼 위로 밀어내기
+  paddingTop: 'safeTop',
 });
 
 const contentCls = css({
@@ -29,12 +35,16 @@ const contentCls = css({
   overflowY: 'auto',
   overflowX: 'hidden',
   WebkitOverflowScrolling: 'touch',
+  // 스크롤 컨테이너는 고무줄 차단
+  overscrollBehavior: 'contain',
 });
 
 const footerCls = css({
   flex: '0 0 auto',
   bg: 'surface',
   borderTop: '1px solid {colors.divider}',
+  // 홈바 영역만큼 아래로 밀어내기
+  paddingBottom: 'safeBottom',
 });
 
 const overlayCls = css({

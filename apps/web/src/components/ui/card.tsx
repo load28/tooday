@@ -12,7 +12,8 @@ const cardRecipe = cva({
     overflow: 'hidden',
     minWidth: 0,
     color: 'text',
-    transition: 'box-shadow {durations.fast} {easings.standard}, transform {durations.fast} {easings.standard}',
+    transition: 'box-shadow {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
   },
   variants: {
     elevation: {
@@ -35,8 +36,13 @@ const cardRecipe = cva({
     interactive: {
       true: {
         cursor: 'pointer',
-        _hover: { transform: 'translateY(-1px)' },
-        _active: { transform: 'translateY(0)' },
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        // PC(마우스 기기)에서만 살짝 떠오르기
+        _hoverable: { _hover: { transform: 'translateY(-1px)' } },
+        // 모든 기기: 누르는 순간 살짝 쪼그라들어 "물리적으로 눌림" 피드백
+        _press: { transform: 'scale(0.99)' },
       },
     },
     selected: {
