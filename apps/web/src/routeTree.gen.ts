@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -16,6 +17,11 @@ import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as AuthenticatedBoardsIndexRouteImport } from './routes/_authenticated/boards/index'
 import { Route as AuthenticatedBoardsCardsCardRouteImport } from './routes/_authenticated/boards/cards/$card'
 
+const DesignSystemRoute = DesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
@@ -49,12 +55,14 @@ const AuthenticatedBoardsCardsCardRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/design-system': typeof DesignSystemRoute
   '/login': typeof PublicLoginRoute
   '/boards/': typeof AuthenticatedBoardsIndexRoute
   '/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/design-system': typeof DesignSystemRoute
   '/login': typeof PublicLoginRoute
   '/boards': typeof AuthenticatedBoardsIndexRoute
   '/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
@@ -64,20 +72,27 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/design-system': typeof DesignSystemRoute
   '/_public/login': typeof PublicLoginRoute
   '/_authenticated/boards/': typeof AuthenticatedBoardsIndexRoute
   '/_authenticated/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/boards/' | '/boards/cards/$card'
+  fullPaths:
+    | '/'
+    | '/design-system'
+    | '/login'
+    | '/boards/'
+    | '/boards/cards/$card'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/boards' | '/boards/cards/$card'
+  to: '/' | '/design-system' | '/login' | '/boards' | '/boards/cards/$card'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_public'
+    | '/design-system'
     | '/_public/login'
     | '/_authenticated/boards/'
     | '/_authenticated/boards/cards/$card'
@@ -87,10 +102,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
+  DesignSystemRoute: typeof DesignSystemRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/design-system': {
+      id: '/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof DesignSystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -165,6 +188,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
+  DesignSystemRoute: DesignSystemRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,15 +1,16 @@
-name: Deploy design-guide to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - 'apps/design-guide/**'
+      - 'apps/web/**'
       - 'packages/**'
       - 'bun.lock'
       - 'package.json'
       - 'turbo.json'
-      - '.github/workflows/deploy-design-guide.yml'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +39,21 @@ jobs:
         env:
           DEPLOY_TARGET: github-pages
         run: bun run --filter @tooday/design-guide build
+
+      - name: Build web design-system showcase
+        env:
+          DEPLOY_TARGET: github-pages
+        run: bun run --filter @tooday/web build
+
+      - name: Stage web showcase under design-guide output
+        run: |
+          # web 앱은 /tooday/web 베이스로 빌드되며 /design-system 만 정적 페이지가 필요하다.
+          # prerender 단계에서 따라 들어간 인증/리다이렉트 페이지는 배포 대상이 아니므로 정리한다.
+          web_pub="apps/web/.output/public"
+          rm -rf "$web_pub/index.html" "$web_pub/login" "$web_pub/boards"
+          dest="apps/design-guide/.output/public/web"
+          mkdir -p "$dest"
+          cp -R "$web_pub"/. "$dest"/
 
       - name: Disable Jekyll processing
         run: touch apps/design-guide/.output/public/.nojekyll
