@@ -17,7 +17,7 @@
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
-    "@tanstack/router-plugin": "^1.132.0",
+    "@tanstack/router-plugin": "latest",
     "@tooday/shared": "workspace:*",
     "@tooday/bff": "workspace:*",
     "lucide-react": "^0.545.0",

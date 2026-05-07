@@ -8,3 +8,33 @@ pre-commit:
     - name: deps
       glob: "*.{ts,tsx}"
       run: bun run lint:deps
+
+pre-push:
+  jobs:
+    - name: lockfile-sync
+      run: |
+        find . -name "package.json" \
+          -not -path "*/node_modules/*" \
+          -not -path "*/.reference/*" \
+          | while read pkg_file; do
+            dir=$(dirname "$pkg_file")
+            latest_pkgs=$(cat "$pkg_file" \
+              | grep -o '"@[^"]*": "latest"' \
+              | grep -o '"@[^"]*"' \
+              | tr -d '"' \
+              | tr '\n' ' ')
+
+            if [ -n "$latest_pkgs" ]; then
+              bun update $latest_pkgs --cwd "$dir" --silent 2>/dev/null
+            fi
+          done
+
+        if ! git diff --quiet bun.lock; then
+          echo ""
+          echo "❌ Lockfile drift detected — dependencies have new versions published."
+          echo ""
+          echo "Run the following and push again:"
+          echo "   git add bun.lock && git commit -m 'chore: bump lockfile' && git push"
+          echo ""
+          exit 1
+        fi
