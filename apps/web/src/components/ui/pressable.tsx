@@ -1,11 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { cva, cx } from 'styled-system/css';
 
-/**
- * Pressable — 탭 가능한 베이스 버튼 프리미티브.
- * 시각적인 톤(없음/소프트/프라이머리/위험)과 셰이프(원형/필/사각)만 정의한다.
- * 패딩, 텍스트는 자식이 결정.
- */
 const pressableRecipe = cva({
   base: {
     display: 'inline-flex',
@@ -21,7 +16,8 @@ const pressableRecipe = cva({
     textAlign: 'left',
     minWidth: 0,
     transition:
-      'background-color {durations.fast} {easings.standard}, transform {durations.fast} {easings.standard}, color {durations.fast} {easings.standard}',
+      'background-color {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
     _disabled: {
       cursor: 'not-allowed',
       opacity: 0.5,
@@ -35,31 +31,32 @@ const pressableRecipe = cva({
     tone: {
       ghost: {
         color: 'text',
-        _hover: { bg: 'pressed' },
-        _active: { bg: 'pressedStrong' },
+        _press: { bg: 'pressedStrong' },
       },
       subtle: {
         bg: 'surfaceMuted',
         color: 'textSecondary',
-        _hover: { bg: 'surfaceSoft' },
+        _press: { bg: 'surfaceSoft' },
       },
       brand: {
         bg: 'primary',
         color: 'onPrimary',
-        _hover: { bg: 'primaryHover' },
+        _press: { bg: 'primaryPressed' },
       },
       brandSoft: {
         bg: 'primarySoft',
         color: 'primary',
-        _hover: { bg: 'primarySofter' },
+        _press: { bg: 'primarySofter' },
       },
       danger: {
         bg: 'danger',
         color: 'textInverse',
+        _press: { bg: 'dangerPressed' },
       },
       dangerSoft: {
         bg: 'dangerSoft',
         color: 'danger',
+        _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
       },
     },
     shape: {
@@ -95,7 +92,12 @@ type PressableProps = PressableVariants &
 
 export function Pressable({ tone, shape, size, pressed, className, children, type, ...rest }: PressableProps) {
   return (
-    <button type={type ?? 'button'} {...rest} className={cx(pressableRecipe({ tone, shape, size, pressed }), className)}>
+    <button
+      type={type ?? 'button'}
+      data-pressable=""
+      {...rest}
+      className={cx(pressableRecipe({ tone, shape, size, pressed }), className)}
+    >
       {children}
     </button>
   );

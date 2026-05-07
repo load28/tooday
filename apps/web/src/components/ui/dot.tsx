@@ -1,8 +1,5 @@
 import { cva, cx } from 'styled-system/css';
 
-/**
- * Dot — 작은 색상 인디케이터. 프로젝트 컬러, 상태 점, 라벨 앞 색칩 등에 사용.
- */
 const dotRecipe = cva({
   base: {
     display: 'inline-block',
@@ -34,7 +31,6 @@ const dotRecipe = cva({
 type DotVariants = NonNullable<Parameters<typeof dotRecipe>[0]>;
 
 type DotProps = DotVariants & {
-  /** 토큰 외 임의 색을 점에 쓰고 싶을 때만 사용. 비워두면 tone 토큰을 따른다. */
   color?: string;
   className?: string;
   'aria-label'?: string;

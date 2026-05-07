@@ -1,14 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { css, cva, cx } from 'styled-system/css';
 
-/**
- * Row — 가로형 리스트 항목 프리미티브.
- * leading(좌측 영역) / content(중앙 텍스트 영역) / trailing(우측 영역) 슬롯 구조.
- *
- * 사용 예:
- *  - Surface나 Card 안에 여러 Row + Divider를 쌓아 리스트를 구성.
- *  - 단독 Row를 캔버스에 두면 "탭 가능한 항목" 형태가 된다.
- */
 const rowRecipe = cva({
   base: {
     display: 'flex',
@@ -18,7 +10,8 @@ const rowRecipe = cva({
     width: '100%',
     color: 'text',
     textAlign: 'left',
-    transition: 'background-color {durations.fast} {easings.standard}',
+    transition: 'background-color {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
   },
   variants: {
     density: {
@@ -33,8 +26,10 @@ const rowRecipe = cva({
     interactive: {
       true: {
         cursor: 'pointer',
-        _hover: { bg: 'pressed' },
-        _active: { bg: 'pressedStrong' },
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        _press: { bg: 'pressedStrong' },
       },
     },
     inset: {

@@ -1,13 +1,9 @@
 import type { ReactNode } from 'react';
 import { css, cx } from 'styled-system/css';
 
-/**
- * Screen — 모바일 뷰포트 셸. 상단/하단 바가 고정되고 가운데가 스크롤되는 표준 모바일 레이아웃.
- * 이 안에서 화면 콘텐츠는 항상 스크롤 영역에 위치한다.
- */
 const viewportCls = css({
   width: '100%',
-  height: '100vh',
+  height: ['100vh', '100dvh'],
   bg: 'bg',
   display: 'flex',
   flexDirection: 'column',
@@ -16,12 +12,15 @@ const viewportCls = css({
   color: 'text',
   fontFamily: 'sans',
   letterSpacing: 'tight',
+  paddingLeft: 'safeLeft',
+  paddingRight: 'safeRight',
 });
 
 const headerCls = css({
   flex: '0 0 auto',
   bg: 'bg',
   minHeight: 'appBar',
+  paddingTop: 'safeTop',
 });
 
 const contentCls = css({
@@ -29,12 +28,14 @@ const contentCls = css({
   overflowY: 'auto',
   overflowX: 'hidden',
   WebkitOverflowScrolling: 'touch',
+  overscrollBehavior: 'contain',
 });
 
 const footerCls = css({
   flex: '0 0 auto',
   bg: 'surface',
   borderTop: '1px solid {colors.divider}',
+  paddingBottom: 'safeBottom',
 });
 
 const overlayCls = css({
@@ -47,7 +48,6 @@ const overlayCls = css({
 type ScreenProps = {
   topBar?: ReactNode;
   bottomBar?: ReactNode;
-  /** 떠있는 액션 (FAB, 토스트 등) — 스크롤과 별개로 고정 */
   overlay?: ReactNode;
   children?: ReactNode;
   className?: string;

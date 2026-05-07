@@ -1,11 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { cva, cx } from 'styled-system/css';
 
-/**
- * Surface — 배경/테두리/그림자/라운드를 가진 일반 컨테이너 프리미티브.
- * 카드(`tone="surface" elevation="card"`), 머티드 그룹(`tone="muted"`),
- * 인버스 영역(`tone="inverse"`) 등 화면 어디든 배경 영역으로 쓰기 위한 베이스.
- */
 const surfaceRecipe = cva({
   base: {
     minWidth: 0,

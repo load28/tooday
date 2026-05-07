@@ -1,10 +1,6 @@
 import type { ReactNode } from 'react';
 import { cva, cx } from 'styled-system/css';
 
-/**
- * Chip — 작은 라벨/태그 프리미티브.
- * 프로젝트 라벨, 상태 배지, 메타데이터 라벨 등에 쓴다.
- */
 const chipRecipe = cva({
   base: {
     display: 'inline-flex',

@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react';
 import { css, cx } from 'styled-system/css';
 
-/**
- * AppBar — 상단 네비게이션 바 프리미티브. leading / title / trailing 슬롯.
- */
 const barCls = css({
   display: 'flex',
   alignItems: 'center',

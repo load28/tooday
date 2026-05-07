@@ -1,10 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { cva, cx } from 'styled-system/css';
 
-/**
- * Card — Surface의 시멘틱 프리셋. "콘텐츠 묶음" 단위로 쓰는 카드.
- * 카드 내부에는 보통 Row, Stack, Divider가 들어간다.
- */
 const cardRecipe = cva({
   base: {
     bg: 'surface',
@@ -12,7 +8,8 @@ const cardRecipe = cva({
     overflow: 'hidden',
     minWidth: 0,
     color: 'text',
-    transition: 'box-shadow {durations.fast} {easings.standard}, transform {durations.fast} {easings.standard}',
+    transition: 'box-shadow {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
   },
   variants: {
     elevation: {
@@ -35,8 +32,10 @@ const cardRecipe = cva({
     interactive: {
       true: {
         cursor: 'pointer',
-        _hover: { transform: 'translateY(-1px)' },
-        _active: { transform: 'translateY(0)' },
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        _press: { transform: 'scale(0.99)' },
       },
     },
     selected: {

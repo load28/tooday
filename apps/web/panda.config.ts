@@ -7,6 +7,12 @@ export default defineConfig({
   outdir: 'styled-system',
   jsxFramework: 'react',
 
+  conditions: {
+    extend: {
+      press: '&:active, &[data-pressed="true"]',
+    },
+  },
+
   globalCss: {
     'html, body, #app': {
       minHeight: '100%',
@@ -21,6 +27,8 @@ export default defineConfig({
       WebkitFontSmoothing: 'antialiased',
       MozOsxFontSmoothing: 'grayscale',
       textRendering: 'optimizeLegibility',
+      overscrollBehaviorY: 'none',
+      WebkitTextSizeAdjust: '100%',
     },
     '*, *::before, *::after': {
       boxSizing: 'border-box',
@@ -28,6 +36,20 @@ export default defineConfig({
     'button, input, textarea, select': {
       fontFamily: 'inherit',
       letterSpacing: 'inherit',
+    },
+    'button, a, [role="button"], [data-pressable]': {
+      WebkitTapHighlightColor: 'transparent',
+      touchAction: 'manipulation',
+      userSelect: 'none',
+      WebkitTouchCallout: 'none',
+    },
+    'input, textarea, [contenteditable="true"]': {
+      userSelect: 'text',
+      WebkitUserSelect: 'text',
+    },
+    img: {
+      WebkitUserDrag: 'none',
+      userSelect: 'none',
     },
   },
 
@@ -141,22 +163,18 @@ export default defineConfig({
 
       semanticTokens: {
         colors: {
-          // canvas
           bg: { value: '#f5f6f8' },
           bgWarm: { value: '#f7f8fa' },
 
-          // surfaces
           surface: { value: '{colors.white}' },
           surfaceMuted: { value: '{colors.cool.50}' },
           surfaceSoft: { value: '{colors.cool.100}' },
           surfaceInverse: { value: '{colors.cool.900}' },
 
-          // borders
           border: { value: '{colors.cool.200}' },
           borderStrong: { value: '{colors.cool.300}' },
           divider: { value: '{colors.cool.100}' },
 
-          // text
           text: { value: '{colors.cool.900}' },
           textSecondary: { value: '{colors.cool.700}' },
           textTertiary: { value: '{colors.cool.500}' },
@@ -164,14 +182,11 @@ export default defineConfig({
           textInverse: { value: '{colors.white}' },
           textBrand: { value: '{colors.brand.500}' },
 
-          // brand
           primary: { value: '{colors.brand.500}' },
-          primaryHover: { value: '{colors.brand.600}' },
           primarySoft: { value: '{colors.brand.100}' },
           primarySofter: { value: '{colors.brand.50}' },
           onPrimary: { value: '{colors.white}' },
 
-          // status
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },
           warning: { value: '{colors.sun.500}' },
@@ -179,10 +194,18 @@ export default defineConfig({
           danger: { value: '{colors.ruby.500}' },
           dangerSoft: { value: '{colors.ruby.100}' },
 
-          // overlay & states
           overlay: { value: 'rgba(15, 19, 36, 0.45)' },
-          pressed: { value: 'rgba(15, 19, 36, 0.04)' },
-          pressedStrong: { value: 'rgba(15, 19, 36, 0.08)' },
+          pressed: { value: 'rgba(15, 19, 36, 0.06)' },
+          pressedStrong: { value: 'rgba(15, 19, 36, 0.10)' },
+          primaryPressed: { value: '{colors.brand.700}' },
+          dangerPressed: { value: '#d63845' },
+        },
+        spacing: {
+          safeTop: { value: 'env(safe-area-inset-top, 0px)' },
+          safeBottom: { value: 'env(safe-area-inset-bottom, 0px)' },
+          safeLeft: { value: 'env(safe-area-inset-left, 0px)' },
+          safeRight: { value: 'env(safe-area-inset-right, 0px)' },
+          keyboard: { value: 'env(keyboard-inset-height, 0px)' },
         },
       },
 
@@ -192,7 +215,7 @@ export default defineConfig({
             fontSize: '24px',
             fontWeight: '700',
             letterSpacing: '-0.03em',
-            lineHeight: '1.2',
+            lineHeight: '30px',
           },
         },
         title: {
@@ -200,7 +223,7 @@ export default defineConfig({
             fontSize: '18px',
             fontWeight: '700',
             letterSpacing: '-0.02em',
-            lineHeight: '1.3',
+            lineHeight: '24px',
           },
         },
         subtitle: {
@@ -208,7 +231,7 @@ export default defineConfig({
             fontSize: '17px',
             fontWeight: '700',
             letterSpacing: '-0.02em',
-            lineHeight: '1.3',
+            lineHeight: '22px',
           },
         },
         bodyLg: {
@@ -216,7 +239,7 @@ export default defineConfig({
             fontSize: '16px',
             fontWeight: '500',
             letterSpacing: '-0.01em',
-            lineHeight: '1.45',
+            lineHeight: '24px',
           },
         },
         bodyLgStrong: {
@@ -224,7 +247,7 @@ export default defineConfig({
             fontSize: '16px',
             fontWeight: '700',
             letterSpacing: '-0.01em',
-            lineHeight: '1.45',
+            lineHeight: '24px',
           },
         },
         body: {
@@ -232,7 +255,7 @@ export default defineConfig({
             fontSize: '14px',
             fontWeight: '500',
             letterSpacing: '-0.01em',
-            lineHeight: '1.5',
+            lineHeight: '22px',
           },
         },
         bodyStrong: {
@@ -240,7 +263,7 @@ export default defineConfig({
             fontSize: '14px',
             fontWeight: '700',
             letterSpacing: '-0.01em',
-            lineHeight: '1.5',
+            lineHeight: '22px',
           },
         },
         bodySm: {
@@ -248,7 +271,7 @@ export default defineConfig({
             fontSize: '13px',
             fontWeight: '500',
             letterSpacing: '-0.01em',
-            lineHeight: '1.5',
+            lineHeight: '20px',
           },
         },
         label: {
@@ -256,7 +279,7 @@ export default defineConfig({
             fontSize: '13px',
             fontWeight: '700',
             letterSpacing: '-0.01em',
-            lineHeight: '1.4',
+            lineHeight: '18px',
           },
         },
         caption: {
@@ -264,7 +287,7 @@ export default defineConfig({
             fontSize: '12px',
             fontWeight: '500',
             letterSpacing: '-0.01em',
-            lineHeight: '1.4',
+            lineHeight: '16px',
           },
         },
         captionStrong: {
@@ -272,7 +295,7 @@ export default defineConfig({
             fontSize: '12px',
             fontWeight: '700',
             letterSpacing: '-0.01em',
-            lineHeight: '1.4',
+            lineHeight: '16px',
           },
         },
         micro: {
@@ -280,7 +303,7 @@ export default defineConfig({
             fontSize: '11px',
             fontWeight: '600',
             letterSpacing: '0',
-            lineHeight: '1.3',
+            lineHeight: '14px',
           },
         },
         overline: {
@@ -288,7 +311,7 @@ export default defineConfig({
             fontSize: '13px',
             fontWeight: '700',
             letterSpacing: '0.02em',
-            lineHeight: '1.3',
+            lineHeight: '18px',
             textTransform: 'uppercase',
           },
         },
@@ -297,6 +320,7 @@ export default defineConfig({
             fontSize: '13px',
             fontWeight: '700',
             letterSpacing: '-0.01em',
+            lineHeight: '18px',
             fontFeatureSettings: '"tnum" 1',
           },
         },

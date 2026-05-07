@@ -3,10 +3,6 @@ import { css, cx } from 'styled-system/css';
 import { Stack } from './stack';
 import { Text } from './text';
 
-/**
- * Section — "섹션 타이틀 + 본문" 묶음 프리미티브.
- * 화면 안에서 그룹을 시각적으로 구분할 때 가장 빈번하게 쓰는 패턴.
- */
 type SectionProps = {
   title?: ReactNode;
   trailing?: ReactNode;

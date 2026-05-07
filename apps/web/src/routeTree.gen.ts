@@ -9,25 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PublicLoginRouteImport } from './routes/_public/login'
-import { Route as AuthenticatedBoardsIndexRouteImport } from './routes/_authenticated/boards/index'
-import { Route as AuthenticatedBoardsCardsCardRouteImport } from './routes/_authenticated/boards/cards/$card'
+import { Route as PublicSignupRouteRouteImport } from './routes/_public/signup/route'
+import { Route as PublicLoginRouteRouteImport } from './routes/_public/login/route'
+import { Route as AppTodayRouteRouteImport } from './routes/_app/today/route'
+import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects/index'
+import { Route as AppTasksNewRouteRouteImport } from './routes/_app/tasks/new/route'
+import { Route as AppTasksTaskIdRouteRouteImport } from './routes/_app/tasks/$taskId/route'
+import { Route as AppProjectsProjectIdRouteRouteImport } from './routes/_app/projects/$projectId/route'
 
-const DesignSystemRoute = DesignSystemRouteImport.update({
-  id: '/design-system',
-  path: '/design-system',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,85 +33,119 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicLoginRoute = PublicLoginRouteImport.update({
+const PublicSignupRouteRoute = PublicSignupRouteRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const PublicLoginRouteRoute = PublicLoginRouteRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const AuthenticatedBoardsIndexRoute =
-  AuthenticatedBoardsIndexRouteImport.update({
-    id: '/boards/',
-    path: '/boards/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedBoardsCardsCardRoute =
-  AuthenticatedBoardsCardsCardRouteImport.update({
-    id: '/boards/cards/$card',
-    path: '/boards/cards/$card',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AppTodayRouteRoute = AppTodayRouteRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppTasksNewRouteRoute = AppTasksNewRouteRouteImport.update({
+  id: '/tasks/new',
+  path: '/tasks/new',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppTasksTaskIdRouteRoute = AppTasksTaskIdRouteRouteImport.update({
+  id: '/tasks/$taskId',
+  path: '/tasks/$taskId',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppProjectsProjectIdRouteRoute =
+  AppProjectsProjectIdRouteRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
+    getParentRoute: () => AppRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/design-system': typeof DesignSystemRoute
-  '/login': typeof PublicLoginRoute
-  '/boards/': typeof AuthenticatedBoardsIndexRoute
-  '/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
+  '/today': typeof AppTodayRouteRoute
+  '/login': typeof PublicLoginRouteRoute
+  '/signup': typeof PublicSignupRouteRoute
+  '/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
+  '/tasks/new': typeof AppTasksNewRouteRoute
+  '/projects/': typeof AppProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/design-system': typeof DesignSystemRoute
-  '/login': typeof PublicLoginRoute
-  '/boards': typeof AuthenticatedBoardsIndexRoute
-  '/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
+  '/today': typeof AppTodayRouteRoute
+  '/login': typeof PublicLoginRouteRoute
+  '/signup': typeof PublicSignupRouteRoute
+  '/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
+  '/tasks/new': typeof AppTasksNewRouteRoute
+  '/projects': typeof AppProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_app': typeof AppRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
-  '/design-system': typeof DesignSystemRoute
-  '/_public/login': typeof PublicLoginRoute
-  '/_authenticated/boards/': typeof AuthenticatedBoardsIndexRoute
-  '/_authenticated/boards/cards/$card': typeof AuthenticatedBoardsCardsCardRoute
+  '/_app/today': typeof AppTodayRouteRoute
+  '/_public/login': typeof PublicLoginRouteRoute
+  '/_public/signup': typeof PublicSignupRouteRoute
+  '/_app/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/_app/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
+  '/_app/tasks/new': typeof AppTasksNewRouteRoute
+  '/_app/projects/': typeof AppProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/design-system'
+    | '/today'
     | '/login'
-    | '/boards/'
-    | '/boards/cards/$card'
+    | '/signup'
+    | '/projects/$projectId'
+    | '/tasks/$taskId'
+    | '/tasks/new'
+    | '/projects/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/design-system' | '/login' | '/boards' | '/boards/cards/$card'
+  to:
+    | '/'
+    | '/today'
+    | '/login'
+    | '/signup'
+    | '/projects/$projectId'
+    | '/tasks/$taskId'
+    | '/tasks/new'
+    | '/projects'
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
+    | '/_app'
     | '/_public'
-    | '/design-system'
+    | '/_app/today'
     | '/_public/login'
-    | '/_authenticated/boards/'
-    | '/_authenticated/boards/cards/$card'
+    | '/_public/signup'
+    | '/_app/projects/$projectId'
+    | '/_app/tasks/$taskId'
+    | '/_app/tasks/new'
+    | '/_app/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AppRouteRoute: typeof AppRouteRouteWithChildren
   PublicRouteRoute: typeof PublicRouteRouteWithChildren
-  DesignSystemRoute: typeof DesignSystemRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/design-system': {
-      id: '/design-system'
-      path: '/design-system'
-      fullPath: '/design-system'
-      preLoaderRoute: typeof DesignSystemRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_public': {
       id: '/_public'
       path: ''
@@ -121,11 +153,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
+    '/_app': {
+      id: '/_app'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -135,49 +167,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_public/signup': {
+      id: '/_public/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof PublicSignupRouteRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
     '/_public/login': {
       id: '/_public/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof PublicLoginRouteImport
+      preLoaderRoute: typeof PublicLoginRouteRouteImport
       parentRoute: typeof PublicRouteRoute
     }
-    '/_authenticated/boards/': {
-      id: '/_authenticated/boards/'
-      path: '/boards'
-      fullPath: '/boards/'
-      preLoaderRoute: typeof AuthenticatedBoardsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_app/today': {
+      id: '/_app/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AppTodayRouteRouteImport
+      parentRoute: typeof AppRouteRoute
     }
-    '/_authenticated/boards/cards/$card': {
-      id: '/_authenticated/boards/cards/$card'
-      path: '/boards/cards/$card'
-      fullPath: '/boards/cards/$card'
-      preLoaderRoute: typeof AuthenticatedBoardsCardsCardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_app/projects/': {
+      id: '/_app/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AppProjectsIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/tasks/new': {
+      id: '/_app/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof AppTasksNewRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/tasks/$taskId': {
+      id: '/_app/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof AppTasksTaskIdRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/projects/$projectId': {
+      id: '/_app/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AppProjectsProjectIdRouteRouteImport
+      parentRoute: typeof AppRouteRoute
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedBoardsIndexRoute: typeof AuthenticatedBoardsIndexRoute
-  AuthenticatedBoardsCardsCardRoute: typeof AuthenticatedBoardsCardsCardRoute
+interface AppRouteRouteChildren {
+  AppTodayRouteRoute: typeof AppTodayRouteRoute
+  AppProjectsProjectIdRouteRoute: typeof AppProjectsProjectIdRouteRoute
+  AppTasksTaskIdRouteRoute: typeof AppTasksTaskIdRouteRoute
+  AppTasksNewRouteRoute: typeof AppTasksNewRouteRoute
+  AppProjectsIndexRoute: typeof AppProjectsIndexRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedBoardsIndexRoute: AuthenticatedBoardsIndexRoute,
-  AuthenticatedBoardsCardsCardRoute: AuthenticatedBoardsCardsCardRoute,
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppTodayRouteRoute: AppTodayRouteRoute,
+  AppProjectsProjectIdRouteRoute: AppProjectsProjectIdRouteRoute,
+  AppTasksTaskIdRouteRoute: AppTasksTaskIdRouteRoute,
+  AppTasksNewRouteRoute: AppTasksNewRouteRoute,
+  AppProjectsIndexRoute: AppProjectsIndexRoute,
 }
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
 
 interface PublicRouteRouteChildren {
-  PublicLoginRoute: typeof PublicLoginRoute
+  PublicLoginRouteRoute: typeof PublicLoginRouteRoute
+  PublicSignupRouteRoute: typeof PublicSignupRouteRoute
 }
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
-  PublicLoginRoute: PublicLoginRoute,
+  PublicLoginRouteRoute: PublicLoginRouteRoute,
+  PublicSignupRouteRoute: PublicSignupRouteRoute,
 }
 
 const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
@@ -186,9 +255,8 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AppRouteRoute: AppRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
-  DesignSystemRoute: DesignSystemRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
