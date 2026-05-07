@@ -7,10 +7,15 @@
 ```
 React Native (WebView) ── apps/web (TanStack Start) ── apps/bff (tRPC)
                                        └─────── packages/shared ──────┘
+
+apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 3001)
 ```
 
 - **apps/web** — TanStack Start (Vite + Nitro). RN WebView가 띄우는 웹 화면.
 - **apps/bff** — tRPC 서버 (예정).
+- **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
+  시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
+  (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).
 - **packages/shared** — web ↔ bff 간 타입 공유 (TS 소스 직접 익스포트).
 
 ## Stack
