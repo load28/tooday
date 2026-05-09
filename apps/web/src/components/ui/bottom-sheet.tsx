@@ -53,15 +53,16 @@ const handleCls = css({
 type BottomSheetProps = {
   open: boolean;
   onClose: () => void;
-  title?: ReactNode;
-  description?: ReactNode;
-  children?: ReactNode;
   ariaLabel?: string;
+  children?: ReactNode;
 };
 
-export function BottomSheet({ open, onClose, title, description, children, ariaLabel }: BottomSheetProps) {
-  const contentAriaLabel = typeof title === 'string' ? undefined : ariaLabel;
+type BottomSheetSlotProps = {
+  children?: ReactNode;
+  className?: string;
+};
 
+function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProps) {
   return (
     <Dialog.Root
       open={open}
@@ -74,30 +75,8 @@ export function BottomSheet({ open, onClose, title, description, children, ariaL
       <Portal>
         <Dialog.Backdrop className={backdropCls} />
         <Dialog.Positioner className={positionerCls}>
-          <Dialog.Content className={sheetCls} aria-label={contentAriaLabel}>
+          <Dialog.Content className={sheetCls} aria-label={ariaLabel}>
             <div className={handleCls} aria-hidden="true" />
-            {title != null || description != null ? (
-              <Stack gap="1">
-                {typeof title === 'string' ? (
-                  <Dialog.Title asChild>
-                    <Text as="h2" variant="title">
-                      {title}
-                    </Text>
-                  </Dialog.Title>
-                ) : (
-                  title
-                )}
-                {typeof description === 'string' ? (
-                  <Dialog.Description asChild>
-                    <Text as="p" variant="bodySm" tone="tertiary">
-                      {description}
-                    </Text>
-                  </Dialog.Description>
-                ) : (
-                  description
-                )}
-              </Stack>
-            ) : null}
             {children}
           </Dialog.Content>
         </Dialog.Positioner>
@@ -105,3 +84,37 @@ export function BottomSheet({ open, onClose, title, description, children, ariaL
     </Dialog.Root>
   );
 }
+
+function BottomSheetHeader({ children, className }: BottomSheetSlotProps) {
+  return (
+    <Stack gap="1" className={className}>
+      {children}
+    </Stack>
+  );
+}
+
+function BottomSheetTitle({ children, className }: BottomSheetSlotProps) {
+  return (
+    <Dialog.Title asChild>
+      <Text as="h2" variant="title" className={className}>
+        {children}
+      </Text>
+    </Dialog.Title>
+  );
+}
+
+function BottomSheetDescription({ children, className }: BottomSheetSlotProps) {
+  return (
+    <Dialog.Description asChild>
+      <Text as="p" variant="bodySm" tone="tertiary" className={className}>
+        {children}
+      </Text>
+    </Dialog.Description>
+  );
+}
+
+export const BottomSheet = Object.assign(BottomSheetRoot, {
+  Header: BottomSheetHeader,
+  Title: BottomSheetTitle,
+  Description: BottomSheetDescription,
+});
