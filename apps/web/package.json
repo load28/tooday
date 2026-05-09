@@ -12,14 +12,15 @@
     "prepare": "panda codegen"
   },
   "dependencies": {
+    "@ark-ui/react": "^5.36.2",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "latest",
-    "@tooday/shared": "workspace:*",
     "@tooday/bff": "workspace:*",
+    "@tooday/shared": "workspace:*",
     "lucide-react": "^0.545.0",
     "nitro": "^3.0.260311-beta",
     "react": "^19.2.0",

@@ -1,10 +1,12 @@
-import { type ReactNode, useEffect } from 'react';
-import { css, cx } from 'styled-system/css';
+import { Dialog } from '@ark-ui/react/dialog';
+import { Portal } from '@ark-ui/react/portal';
+import type { ReactNode } from 'react';
+import { css } from 'styled-system/css';
 import { Stack } from './stack';
 import { Text } from './text';
 
-const wrapCls = css({
-  position: 'absolute',
+const positionerCls = css({
+  position: 'fixed',
   inset: 0,
   zIndex: 60,
   display: 'flex',
@@ -13,12 +15,10 @@ const wrapCls = css({
 });
 
 const backdropCls = css({
-  position: 'absolute',
+  position: 'fixed',
   inset: 0,
+  zIndex: 60,
   background: 'overlay',
-  border: 'none',
-  padding: 0,
-  cursor: 'pointer',
   animation: 'toodayFadeIn {durations.base} {easings.standard}',
 });
 
@@ -50,6 +50,12 @@ const handleCls = css({
   flex: '0 0 auto',
 });
 
+const contentBodyCls = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '3',
+});
+
 type BottomSheetProps = {
   open: boolean;
   onClose: () => void;
@@ -60,39 +66,48 @@ type BottomSheetProps = {
 };
 
 export function BottomSheet({ open, onClose, title, description, children, ariaLabel }: BottomSheetProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-  const labelText = ariaLabel ?? (typeof title === 'string' ? title : undefined);
+  const contentAriaLabel = typeof title === 'string' ? undefined : ariaLabel;
 
   return (
-    <div className={wrapCls}>
-      <button type="button" className={backdropCls} aria-label="닫기" onClick={onClose} />
-      <div className={sheetCls} role="dialog" aria-modal="true" aria-label={labelText}>
-        <div className={handleCls} aria-hidden="true" />
-        {title != null || description != null ? (
-          <Stack gap="1">
-            {typeof title === 'string' ? <Text variant="title">{title}</Text> : title}
-            {typeof description === 'string' ? (
-              <Text variant="bodySm" tone="tertiary">
-                {description}
-              </Text>
-            ) : (
-              description
-            )}
-          </Stack>
-        ) : null}
-        <div className={cx(css({ display: 'flex', flexDirection: 'column', gap: '3' }))}>{children}</div>
-      </div>
-    </div>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(details) => {
+        if (!details.open) onClose();
+      }}
+      lazyMount
+      unmountOnExit
+    >
+      <Portal>
+        <Dialog.Backdrop className={backdropCls} />
+        <Dialog.Positioner className={positionerCls}>
+          <Dialog.Content className={sheetCls} aria-label={contentAriaLabel}>
+            <div className={handleCls} aria-hidden="true" />
+            {title != null || description != null ? (
+              <Stack gap="1">
+                {typeof title === 'string' ? (
+                  <Dialog.Title asChild>
+                    <Text as="h2" variant="title">
+                      {title}
+                    </Text>
+                  </Dialog.Title>
+                ) : (
+                  title
+                )}
+                {typeof description === 'string' ? (
+                  <Dialog.Description asChild>
+                    <Text as="p" variant="bodySm" tone="tertiary">
+                      {description}
+                    </Text>
+                  </Dialog.Description>
+                ) : (
+                  description
+                )}
+              </Stack>
+            ) : null}
+            <div className={contentBodyCls}>{children}</div>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   );
 }
