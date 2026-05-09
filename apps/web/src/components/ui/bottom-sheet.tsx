@@ -50,12 +50,6 @@ const handleCls = css({
   flex: '0 0 auto',
 });
 
-const contentBodyCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '3',
-});
-
 type BottomSheetProps = {
   open: boolean;
   onClose: () => void;
@@ -104,7 +98,7 @@ export function BottomSheet({ open, onClose, title, description, children, ariaL
                 )}
               </Stack>
             ) : null}
-            <div className={contentBodyCls}>{children}</div>
+            {children}
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
