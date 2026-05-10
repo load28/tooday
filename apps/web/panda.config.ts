@@ -1,5 +1,18 @@
 import { defineConfig } from '@pandacss/dev';
 
+const spacingScale = {
+  '0': { value: '0' },
+  '2xs': { value: '0.125rem' },
+  xs: { value: '0.25rem' },
+  sm: { value: '0.375rem' },
+  md: { value: '0.5rem' },
+  lg: { value: '0.625rem' },
+  xl: { value: '0.75rem' },
+  '2xl': { value: '1rem' },
+  '3xl': { value: '1.25rem' },
+  '4xl': { value: '1.5rem' },
+};
+
 export default defineConfig({
   preflight: true,
   include: ['./src/**/*.{js,jsx,ts,tsx}'],
@@ -139,9 +152,13 @@ export default defineConfig({
           fab: { value: '0 8px 20px rgba(49, 130, 246, 0.35), 0 2px 6px rgba(49, 130, 246, 0.25)' },
           focus: { value: '0 0 0 3px rgba(49, 130, 246, 0.30)' },
         },
+        spacing: spacingScale,
         sizes: {
+          ...spacingScale,
+          controlSm: { value: '32px' },
           tap: { value: '40px' },
           tapLg: { value: '48px' },
+          tapXl: { value: '56px' },
           fab: { value: '56px' },
           handle: { value: '36px' },
           appBar: { value: '52px' },
@@ -206,6 +223,23 @@ export default defineConfig({
           safeLeft: { value: 'env(safe-area-inset-left, 0px)' },
           safeRight: { value: 'env(safe-area-inset-right, 0px)' },
           keyboard: { value: 'env(keyboard-inset-height, 0px)' },
+
+          pageX: { value: '{spacing.2xl}' },
+
+          appBarPadX: { value: '{spacing.xl}' },
+          appBarPadY: { value: '{spacing.sm}' },
+          appBarGap: { value: '{spacing.md}' },
+
+          cardPadSm: { value: '{spacing.xl}' },
+          cardPadMd: { value: '{spacing.2xl}' },
+          cardPadLg: { value: '{spacing.3xl}' },
+
+          sheetPadX: { value: '{spacing.3xl}' },
+          sheetPadBottom: { value: '{spacing.4xl}' },
+          sheetGap: { value: '{spacing.2xl}' },
+          sheetHandleTop: { value: '{spacing.lg}' },
+
+          dividerLeadingInset: { value: '3rem' },
         },
       },
 
