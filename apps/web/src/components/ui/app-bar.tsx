@@ -5,15 +5,22 @@ const barCls = css({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  paddingY: 'appBarPadY',
-  paddingX: 'appBarPadX',
+  paddingBlock: 'appBarPadY',
+  paddingInline: 'appBarPadX',
   gap: 'appBarGap',
   minHeight: 'appBar',
 });
 
-const leadingCls = css({ display: 'flex', alignItems: 'center', gap: 'xs', minWidth: 0, flex: 1 });
-const trailingCls = css({ display: 'flex', alignItems: 'center', gap: 'xs', flex: '0 0 auto' });
+const leadingCls = css({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'xs',
+  flex: '0 0 auto',
+});
+
 const titleCls = css({
+  flex: 1,
+  minWidth: 0,
   textStyle: 'subtitle',
   color: 'text',
   whiteSpace: 'nowrap',
@@ -21,21 +28,41 @@ const titleCls = css({
   textOverflow: 'ellipsis',
 });
 
-type AppBarProps = {
-  title?: ReactNode;
-  leading?: ReactNode;
-  trailing?: ReactNode;
+const trailingCls = css({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'xs',
+  flex: '0 0 auto',
+});
+
+type AppBarRootProps = {
+  children?: ReactNode;
   className?: string;
 };
 
-export function AppBar({ title, leading, trailing, className }: AppBarProps) {
-  return (
-    <div className={cx(barCls, className)}>
-      <div className={leadingCls}>
-        {leading}
-        {title != null ? typeof title === 'string' ? <span className={titleCls}>{title}</span> : title : null}
-      </div>
-      {trailing != null ? <div className={trailingCls}>{trailing}</div> : null}
-    </div>
-  );
+type AppBarSlotProps = {
+  children?: ReactNode;
+  className?: string;
+};
+
+function AppBarRoot({ children, className }: AppBarRootProps) {
+  return <header className={cx(barCls, className)}>{children}</header>;
 }
+
+function AppBarLeading({ children, className }: AppBarSlotProps) {
+  return <div className={cx(leadingCls, className)}>{children}</div>;
+}
+
+function AppBarTitle({ children, className }: AppBarSlotProps) {
+  return <span className={cx(titleCls, className)}>{children}</span>;
+}
+
+function AppBarTrailing({ children, className }: AppBarSlotProps) {
+  return <div className={cx(trailingCls, className)}>{children}</div>;
+}
+
+export const AppBar = Object.assign(AppBarRoot, {
+  Leading: AppBarLeading,
+  Title: AppBarTitle,
+  Trailing: AppBarTrailing,
+});
