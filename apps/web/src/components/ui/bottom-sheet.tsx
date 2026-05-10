@@ -28,12 +28,12 @@ const sheetCls = css({
   bg: 'surface',
   borderTopLeftRadius: '3xl',
   borderTopRightRadius: '3xl',
-  paddingTop: '2.5',
-  paddingX: '5',
-  paddingBottom: '6',
+  paddingTop: 'sheetHandleTop',
+  paddingX: 'sheetPadX',
+  paddingBottom: 'sheetPadBottom',
   display: 'flex',
   flexDirection: 'column',
-  gap: '4',
+  gap: 'sheetGap',
   boxShadow: 'sheet',
   animation: 'toodaySlideUp {durations.slow} {easings.standard}',
   maxHeight: '85%',
@@ -42,11 +42,11 @@ const sheetCls = css({
 
 const handleCls = css({
   width: 'handle',
-  height: '1',
+  height: 'xs',
   borderRadius: 'pill',
   bg: 'borderStrong',
   alignSelf: 'center',
-  marginBottom: '1',
+  marginBottom: 'xs',
   flex: '0 0 auto',
 });
 
@@ -87,7 +87,7 @@ function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProp
 
 function BottomSheetHeader({ children, className }: BottomSheetSlotProps) {
   return (
-    <Stack gap="1" className={className}>
+    <Stack gap="xs" className={className}>
       {children}
     </Stack>
   );

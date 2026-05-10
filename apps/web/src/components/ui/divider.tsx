@@ -17,8 +17,8 @@ const dividerRecipe = cva({
     },
     inset: {
       none: { marginX: '0' },
-      content: { marginX: '4' },
-      leading: { marginLeft: '12' },
+      content: { marginX: 'pageX' },
+      leading: { marginLeft: 'dividerLeadingInset' },
     },
   },
   defaultVariants: {

@@ -25,9 +25,9 @@ const cardRecipe = cva({
     },
     padding: {
       none: { padding: '0' },
-      sm: { padding: '3' },
-      md: { padding: '4' },
-      lg: { padding: '5' },
+      sm: { padding: 'cardPadSm' },
+      md: { padding: 'cardPadMd' },
+      lg: { padding: 'cardPadLg' },
     },
     interactive: {
       true: {

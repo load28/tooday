@@ -5,14 +5,14 @@ const barCls = css({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  paddingY: '1.5',
-  paddingX: '3',
-  gap: '2',
+  paddingY: 'appBarPadY',
+  paddingX: 'appBarPadX',
+  gap: 'appBarGap',
   minHeight: 'appBar',
 });
 
-const leadingCls = css({ display: 'flex', alignItems: 'center', gap: '1', minWidth: 0, flex: 1 });
-const trailingCls = css({ display: 'flex', alignItems: 'center', gap: '1', flex: '0 0 auto' });
+const leadingCls = css({ display: 'flex', alignItems: 'center', gap: 'xs', minWidth: 0, flex: 1 });
+const trailingCls = css({ display: 'flex', alignItems: 'center', gap: 'xs', flex: '0 0 auto' });
 const titleCls = css({
   textStyle: 'subtitle',
   color: 'text',

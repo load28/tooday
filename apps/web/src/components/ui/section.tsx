@@ -15,18 +15,18 @@ const headerCls = css({
   display: 'flex',
   alignItems: 'baseline',
   justifyContent: 'space-between',
-  gap: '3',
-  paddingX: '5',
-  paddingY: '2',
+  gap: 'xl',
+  paddingX: '3xl',
+  paddingY: 'md',
 });
 
 export function Section({ title, trailing, description, children, className }: SectionProps) {
   const showHeader = title != null || trailing != null || description != null;
   return (
-    <Stack as="section" gap="2" className={className}>
+    <Stack as="section" gap="md" className={className}>
       {showHeader ? (
         <header className={headerCls}>
-          <Stack gap="0.5">
+          <Stack gap="2xs">
             {title != null ? (
               typeof title === 'string' ? (
                 <Text variant="overline" tone="tertiary">
@@ -47,7 +47,7 @@ export function Section({ title, trailing, description, children, className }: S
             ) : null}
           </Stack>
           {trailing != null ? (
-            <div className={cx(css({ display: 'flex', alignItems: 'center', gap: '2' }))}>{trailing}</div>
+            <div className={cx(css({ display: 'flex', alignItems: 'center', gap: 'md' }))}>{trailing}</div>
           ) : null}
         </header>
       ) : null}

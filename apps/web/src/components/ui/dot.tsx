@@ -8,10 +8,10 @@ const dotRecipe = cva({
   },
   variants: {
     size: {
-      xs: { width: '1', height: '1' },
-      sm: { width: '1.5', height: '1.5' },
-      md: { width: '2', height: '2' },
-      lg: { width: '2.5', height: '2.5' },
+      xs: { width: 'xs', height: 'xs' },
+      sm: { width: 'sm', height: 'sm' },
+      md: { width: 'md', height: 'md' },
+      lg: { width: 'lg', height: 'lg' },
     },
     tone: {
       primary: { bg: 'primary' },

@@ -47,7 +47,7 @@ function buildStackClass(direction: 'row' | 'column', { gap, align, justify, wra
 }
 
 export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
-  const { as, gap = '3', align, justify, wrap, inline, className, children, ...rest } = props;
+  const { as, gap = 'xl', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
   const stackClass = buildStackClass('column', { gap, align, justify, wrap, inline });
   return (
@@ -58,7 +58,7 @@ export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
 }
 
 export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
-  const { as, gap = '2', align, justify, wrap, inline, className, children, ...rest } = props;
+  const { as, gap = 'md', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
   const stackClass = buildStackClass('row', { gap, align, justify, wrap, inline });
   return (

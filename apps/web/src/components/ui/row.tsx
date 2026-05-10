@@ -5,7 +5,7 @@ const rowRecipe = cva({
   base: {
     display: 'flex',
     alignItems: 'center',
-    gap: '3',
+    gap: 'xl',
     minWidth: 0,
     width: '100%',
     color: 'text',
@@ -15,9 +15,9 @@ const rowRecipe = cva({
   },
   variants: {
     density: {
-      compact: { paddingX: '3', paddingY: '2', minHeight: 'tap' },
-      comfortable: { paddingX: '4', paddingY: '3', minHeight: 'tapLg' },
-      spacious: { paddingX: '4', paddingY: '4', minHeight: '14' },
+      compact: { paddingX: 'xl', paddingY: 'md', minHeight: 'tap' },
+      comfortable: { paddingX: '2xl', paddingY: 'xl', minHeight: 'tapLg' },
+      spacious: { paddingX: '2xl', paddingY: '2xl', minHeight: 'tapXl' },
     },
     align: {
       center: { alignItems: 'center' },
@@ -56,8 +56,8 @@ type RowBase = RowVariants & {
 type RowProps<T extends ElementType> = RowBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof RowBase | 'as'>;
 
 const slotLeading = css({ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' });
-const slotContent = css({ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.5', justifyContent: 'center' });
-const slotTrailing = css({ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '2', color: 'textTertiary' });
+const slotContent = css({ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2xs', justifyContent: 'center' });
+const slotTrailing = css({ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 'md', color: 'textTertiary' });
 
 export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
   const { as, density, align, interactive, inset, leading, trailing, className, children, ...rest } = props;

@@ -5,9 +5,9 @@ const chipRecipe = cva({
   base: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '1.5',
-    paddingX: '2',
-    paddingY: '0.5',
+    gap: 'sm',
+    paddingX: 'md',
+    paddingY: '2xs',
     borderRadius: 'pill',
     textStyle: 'caption',
     whiteSpace: 'nowrap',
@@ -25,7 +25,7 @@ const chipRecipe = cva({
     size: {
       sm: { textStyle: 'micro', paddingY: '0' },
       md: { textStyle: 'caption' },
-      lg: { textStyle: 'bodySm', paddingY: '1', paddingX: '3' },
+      lg: { textStyle: 'bodySm', paddingY: 'xs', paddingX: 'xl' },
     },
   },
   defaultVariants: {
