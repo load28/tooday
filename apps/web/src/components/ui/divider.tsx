@@ -16,9 +16,9 @@ const dividerRecipe = cva({
       strong: { background: 'border' },
     },
     inset: {
-      none: { marginX: '0' },
-      content: { marginX: 'pageX' },
-      leading: { marginLeft: 'dividerLeadingInset' },
+      none: { marginInline: '0' },
+      content: { marginInline: 'pageX' },
+      leading: { marginInlineStart: 'dividerLeadingInset' },
     },
   },
   defaultVariants: {
