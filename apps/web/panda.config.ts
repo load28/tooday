@@ -218,12 +218,6 @@ export default defineConfig({
           dangerPressed: { value: '#d63845' },
         },
         spacing: {
-          safeTop: { value: 'env(safe-area-inset-top, 0px)' },
-          safeBottom: { value: 'env(safe-area-inset-bottom, 0px)' },
-          safeLeft: { value: 'env(safe-area-inset-left, 0px)' },
-          safeRight: { value: 'env(safe-area-inset-right, 0px)' },
-          keyboard: { value: 'env(keyboard-inset-height, 0px)' },
-
           pageX: { value: '{spacing.2xl}' },
 
           appBarPadX: { value: '{spacing.xl}' },

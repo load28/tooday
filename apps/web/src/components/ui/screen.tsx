@@ -12,15 +12,12 @@ const viewportCls = css({
   color: 'text',
   fontFamily: 'sans',
   letterSpacing: 'tight',
-  paddingLeft: 'safeLeft',
-  paddingRight: 'safeRight',
 });
 
 const headerCls = css({
   flex: '0 0 auto',
   bg: 'bg',
   minHeight: 'appBar',
-  paddingTop: 'safeTop',
 });
 
 const contentCls = css({
@@ -35,7 +32,6 @@ const footerCls = css({
   flex: '0 0 auto',
   bg: 'surface',
   borderTop: '1px solid {colors.divider}',
-  paddingBottom: 'safeBottom',
 });
 
 const overlayCls = css({
