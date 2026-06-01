@@ -13,6 +13,7 @@ function NotFound() {
 export function getRouter() {
   return createTanStackRouter({
     routeTree,
+    context: {},
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,

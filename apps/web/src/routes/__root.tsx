@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import globalCss from '../global.css?url';
 
 type RouteContext = {
-  auth: { name: string; email: string; password: string };
+  auth?: { name: string; email: string; password: string };
 };
 
 export const Route = createRootRouteWithContext<RouteContext>()({
