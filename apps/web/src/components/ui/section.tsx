@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { css, cx } from 'styled-system/css';
+import { css } from 'styled-system/css';
 import { Stack } from './stack';
 import { Text } from './text';
 
@@ -46,9 +46,7 @@ export function Section({ title, trailing, description, children, className }: S
               )
             ) : null}
           </Stack>
-          {trailing != null ? (
-            <div className={cx(css({ display: 'flex', alignItems: 'center', gap: 'md' }))}>{trailing}</div>
-          ) : null}
+          {trailing != null ? <div className={css({ display: 'flex', alignItems: 'center', gap: 'md' })}>{trailing}</div> : null}
         </header>
       ) : null}
       <div>{children}</div>
