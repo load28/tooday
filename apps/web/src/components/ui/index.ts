@@ -4,6 +4,7 @@ export { Card } from './card';
 export { Chip } from './chip';
 export { Divider } from './divider';
 export { Dot } from './dot';
+export { NumberInput } from './number-input';
 export { Pressable } from './pressable';
 export { Row } from './row';
 export { Screen } from './screen';
