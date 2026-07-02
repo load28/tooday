@@ -1,5 +1,7 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import { routeTree } from './routeTree.gen';
+import { createTrpc } from './trpc';
 
 function NotFound() {
   return (
@@ -11,14 +13,20 @@ function NotFound() {
 }
 
 export function getRouter() {
-  return createTanStackRouter({
+  const { queryClient, trpc } = createTrpc();
+
+  const router = createTanStackRouter({
     routeTree,
-    context: {},
+    context: { queryClient, trpc },
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
     defaultNotFoundComponent: NotFound,
   });
+
+  setupRouterSsrQueryIntegration({ router, queryClient });
+
+  return router;
 }
 
 declare module '@tanstack/react-router' {

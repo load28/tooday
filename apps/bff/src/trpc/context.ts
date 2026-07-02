@@ -8,14 +8,9 @@ import type { UserStore } from '../auth/user-store';
 import type { BffConfig } from '../config';
 
 export type TrpcContext = {
-  /**
-   * 쿠키 또는 Bearer 헤더로 식별된 유저 (없으면 null).
-   * 주의: pub.* 프로시저는 절대 user를 참조하면 안 된다.
-   * pub.* 응답은 공유 캐시(CDN)에 저장되므로 유저별로 달라지면 캐시 오염이 발생한다.
-   */
+  /** pub.* 프로시저는 user를 참조하면 안 된다 — 응답이 공유 캐시에 저장된다 */
   user: User | null;
   sessionToken: string | null;
-  /** 세션 토큰을 httpOnly 쿠키로 응답에 심는다 (웹 클라이언트용) */
   setSessionCookie: (token: string) => void;
   clearSessionCookie: () => void;
 };

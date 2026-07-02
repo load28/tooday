@@ -15,11 +15,7 @@ export interface LoginRequest {
   password: string;
 }
 
-/**
- * 로그인/회원가입 성공 응답.
- * 세션 토큰은 httpOnly 쿠키(Set-Cookie)로도 내려가고,
- * 헤더 방식 클라이언트(네이티브 등)를 위해 body의 token으로도 내려간다.
- */
+/** token은 Set-Cookie(웹)와 body(헤더 방식 클라이언트) 양쪽으로 전달된다 */
 export interface AuthResponse {
   user: User;
   token: string;

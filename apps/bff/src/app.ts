@@ -23,7 +23,7 @@ export function createApp(deps: AppDeps) {
     app.use('*', logger());
   }
 
-  // 쿠키 방식은 브라우저 credentials CORS가 필수. 헤더 방식(네이티브)은 CORS 영향 없음.
+  // 쿠키 인증에는 credentials CORS가 필수
   app.use(
     '*',
     cors({
@@ -39,8 +39,6 @@ export function createApp(deps: AppDeps) {
     return errorResponse(c, 500, 'INTERNAL_ERROR', '서버 오류가 발생했습니다.');
   });
 
-  // 모든 데이터 API는 tRPC. 클라이언트는 노배치(httpLink)가 기본이라 쿼리가 GET 단일 경로로 나간다.
-  // pub.*만 trpcResponseMeta가 public Cache-Control을 부여하고, auth.*/user.* 등 프라이빗은 private, no-store.
   app.use(
     '/trpc/*',
     trpcServer({
