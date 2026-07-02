@@ -12,6 +12,7 @@ const app = createApp({
 });
 
 export type { AppType } from './app';
+export type { AppRouter } from './trpc/router';
 
 export default {
   port: config.port,

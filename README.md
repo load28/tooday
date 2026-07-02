@@ -12,9 +12,11 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
 ```
 
 - **apps/web** — TanStack Start (Vite + Nitro). RN WebView가 띄우는 웹 화면.
-- **apps/bff** — Hono BFF (port 3002). 인증 관문: httpOnly 쿠키(웹)와
-  `Authorization: Bearer` 헤더(네이티브/웹뷰 브릿지)를 모두 지원.
-  `/auth/signup`, `/auth/login`, `/auth/logout`, `/auth/me`, `/health`.
+- **apps/bff** — Hono + tRPC BFF (port 3002). httpOnly 쿠키(웹)와
+  `Authorization: Bearer` 헤더(네이티브/웹뷰 브릿지) 이중 인증 지원.
+  모든 데이터 API는 `/trpc` — 프라이빗(`auth.*`, `user.*`)은 `private, no-store`,
+  공개(`pub.*`) 쿼리만 public Cache-Control로 HTTP 캐시를 탄다.
+  클라이언트는 노배치(`httpLink`)가 기본.
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
   (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).
