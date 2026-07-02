@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'bun:test';
 import { createApp } from './app';
+import { DEFAULT_SESSION_COOKIE_NAME, serializeSessionCookie, serializeSessionCookieRemoval } from './auth/session-cookie';
 import { InMemorySessionStore } from './auth/session-store';
 import { InMemoryUserStore } from './auth/user-store';
 import type { BffConfig } from './config';
+import { CACHE_CONTROL, CACHE_CONTROL_BY_PATH } from './trpc/cache';
 
-function createTestApp(configOverrides: Partial<BffConfig> = {}) {
-  const config: BffConfig = {
+function createTestConfig(overrides: Partial<BffConfig> = {}): BffConfig {
+  return {
     port: 0,
     allowedOrigins: ['http://localhost:3000'],
-    cookieName: 'tooday_session',
+    cookieName: DEFAULT_SESSION_COOKIE_NAME,
     cookieSecure: false,
     sessionTtlMs: 60_000,
-    ...configOverrides,
+    ...overrides,
   };
+}
+
+function createTestApp(config: BffConfig = createTestConfig()) {
   return createApp({
     config,
     users: new InMemoryUserStore(),
@@ -28,6 +33,10 @@ function mutation(input: unknown): RequestInit {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   };
+}
+
+function sessionCookieHeader(token: string): string {
+  return `${DEFAULT_SESSION_COOKIE_NAME}=${token}`;
 }
 
 interface TrpcResult<T> {
@@ -51,16 +60,15 @@ describe('health', () => {
 
 describe('auth.signup', () => {
   it('유저를 생성하고 세션 쿠키와 토큰을 함께 내려준다', async () => {
-    const app = createTestApp();
+    const config = createTestConfig();
+    const app = createTestApp(config);
     const { res, data, cookie } = await signup(app);
 
     expect(res.status).toBe(200);
     expect(data.user).toMatchObject({ email: 'test@tooday.app', name: '테스터' });
     expect(data.token).toHaveLength(64);
-    expect(cookie).toContain(`tooday_session=${data.token}`);
-    expect(cookie).toContain('HttpOnly');
-    expect(cookie).toContain('SameSite=Lax');
-    expect(res.headers.get('cache-control')).toBe('private, no-store');
+    expect(cookie).toBe(serializeSessionCookie(config, data.token));
+    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL.private);
   });
 
   it('중복 이메일이면 409를 반환한다', async () => {
@@ -79,13 +87,14 @@ describe('auth.signup', () => {
 
 describe('auth.login', () => {
   it('올바른 자격증명이면 쿠키와 토큰을 내려준다', async () => {
-    const app = createTestApp();
+    const config = createTestConfig();
+    const app = createTestApp(config);
     await signup(app);
 
     const res = await app.request('/trpc/auth.login', mutation({ email: SIGNUP_BODY.email, password: SIGNUP_BODY.password }));
     expect(res.status).toBe(200);
     const body = (await res.json()) as TrpcResult<{ token: string }>;
-    expect(res.headers.get('set-cookie')).toContain(`tooday_session=${body.result.data.token}`);
+    expect(res.headers.get('set-cookie')).toBe(serializeSessionCookie(config, body.result.data.token));
   });
 
   it('비밀번호가 틀리면 401을 반환한다', async () => {
@@ -103,7 +112,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { data } = await signup(app);
 
     const res = await app.request('/trpc/user.me', {
-      headers: { Cookie: `tooday_session=${data.token}` },
+      headers: { Cookie: sessionCookieHeader(data.token) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as TrpcResult<{ user: { email: string } }>;
@@ -129,7 +138,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const res = await app.request('/trpc/user.me', {
       headers: {
         Authorization: 'Bearer invalid-token',
-        Cookie: `tooday_session=${data.token}`,
+        Cookie: sessionCookieHeader(data.token),
       },
     });
     expect(res.status).toBe(401);
@@ -142,7 +151,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
   });
 
   it('만료된 세션은 401을 반환한다', async () => {
-    const app = createTestApp({ sessionTtlMs: -1 });
+    const app = createTestApp(createTestConfig({ sessionTtlMs: -1 }));
     const { data } = await signup(app);
 
     const res = await app.request('/trpc/user.me', {
@@ -158,16 +167,16 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const res = await app.request('/trpc/user.me', {
       headers: { Authorization: `Bearer ${data.token}` },
     });
-    expect(res.headers.get('cache-control')).toBe('private, no-store');
+    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL.private);
   });
 });
 
 describe('HTTP 캐시 정책', () => {
-  it('pub.* 쿼리는 public Cache-Control을 받는다', async () => {
+  it('pub.* 쿼리는 경로별 public Cache-Control을 받는다', async () => {
     const app = createTestApp();
     const res = await app.request('/trpc/pub.appConfig');
     expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control')).toBe('public, max-age=300, s-maxage=600, stale-while-revalidate=3600');
+    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL_BY_PATH['pub.appConfig'] as string);
     const body = (await res.json()) as TrpcResult<{ version: string }>;
     expect(body.result.data.version).toBeDefined();
   });
@@ -180,31 +189,32 @@ describe('HTTP 캐시 정책', () => {
       headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control')).toBe('private, no-store');
+    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL.private);
   });
 
   it('존재하지 않는 프로시저 에러 응답은 캐시되지 않는다', async () => {
     const app = createTestApp();
     const res = await app.request('/trpc/pub.doesNotExist');
     expect(res.status).toBe(404);
-    expect(res.headers.get('cache-control')).toBe('private, no-store');
+    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL.private);
   });
 });
 
 describe('auth.logout', () => {
   it('세션을 무효화하고 쿠키를 삭제한다 (쿠키/헤더 어느 쪽으로도 재사용 불가)', async () => {
-    const app = createTestApp();
+    const config = createTestConfig();
+    const app = createTestApp(config);
     const { data } = await signup(app);
 
     const logoutRes = await app.request('/trpc/auth.logout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: `tooday_session=${data.token}` },
+      headers: { 'Content-Type': 'application/json', Cookie: sessionCookieHeader(data.token) },
     });
     expect(logoutRes.status).toBe(200);
-    expect(logoutRes.headers.get('set-cookie')).toContain('Max-Age=0');
+    expect(logoutRes.headers.get('set-cookie')).toBe(serializeSessionCookieRemoval(config));
 
     const viaCookie = await app.request('/trpc/user.me', {
-      headers: { Cookie: `tooday_session=${data.token}` },
+      headers: { Cookie: sessionCookieHeader(data.token) },
     });
     expect(viaCookie.status).toBe(401);
 

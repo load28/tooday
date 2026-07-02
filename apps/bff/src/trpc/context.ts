@@ -1,7 +1,7 @@
 import type { User } from '@tooday/shared';
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import type { Context as HonoContext } from 'hono';
-import { serialize } from 'hono/utils/cookie';
+import { serializeSessionCookie, serializeSessionCookieRemoval } from '../auth/session-cookie';
 import type { SessionStore } from '../auth/session-store';
 import { extractSessionToken } from '../auth/token';
 import type { UserStore } from '../auth/user-store';
@@ -31,19 +31,10 @@ export function createContextFactory({ config, sessions, users }: TrpcContextDep
       user,
       sessionToken,
       setSessionCookie: (token) => {
-        opts.resHeaders.append(
-          'set-cookie',
-          serialize(config.cookieName, token, {
-            httpOnly: true,
-            secure: config.cookieSecure,
-            sameSite: 'Lax',
-            path: '/',
-            maxAge: Math.floor(config.sessionTtlMs / 1000),
-          }),
-        );
+        opts.resHeaders.append('set-cookie', serializeSessionCookie(config, token));
       },
       clearSessionCookie: () => {
-        opts.resHeaders.append('set-cookie', serialize(config.cookieName, '', { path: '/', maxAge: 0 }));
+        opts.resHeaders.append('set-cookie', serializeSessionCookieRemoval(config));
       },
     };
   };

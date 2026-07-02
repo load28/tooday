@@ -1,3 +1,5 @@
+import { DEFAULT_SESSION_COOKIE_NAME } from './auth/session-cookie';
+
 export interface BffConfig {
   port: number;
   allowedOrigins: string[];
@@ -15,7 +17,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       .split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),
-    cookieName: env.BFF_SESSION_COOKIE ?? 'tooday_session',
+    cookieName: env.BFF_SESSION_COOKIE ?? DEFAULT_SESSION_COOKIE_NAME,
     cookieSecure: env.NODE_ENV === 'production',
     sessionTtlMs: Number(env.BFF_SESSION_TTL_MS ?? WEEK_MS),
   };
