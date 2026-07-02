@@ -1,4 +1,5 @@
 import type { AuthResponse, LoginRequest, SignupRequest } from '@tooday/shared';
+import { isNonEmptyString, isRecord } from '@tooday/shared';
 import { TRPCError } from '@trpc/server';
 import type { SessionStore } from '../../auth/session-store';
 import type { UserStore } from '../../auth/user-store';
@@ -7,20 +8,18 @@ import { protectedProcedure, publicProcedure, router } from '../init';
 
 const MIN_PASSWORD_LENGTH = 8;
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
 function loginInput(value: unknown): LoginRequest {
-  const { email, password } = (value ?? {}) as Record<string, unknown>;
-  if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
+  if (!isRecord(value) || !isNonEmptyString(value.email) || !isNonEmptyString(value.password)) {
     throw new Error('email과 password가 필요합니다.');
   }
-  return { email, password };
+  return { email: value.email, password: value.password };
 }
 
 function signupInput(value: unknown): SignupRequest {
-  const { email, password, name } = (value ?? {}) as Record<string, unknown>;
+  if (!isRecord(value)) {
+    throw new Error('올바른 요청 본문이 아닙니다.');
+  }
+  const { email, password, name } = value;
   if (!isNonEmptyString(email) || !email.includes('@') || !isNonEmptyString(name)) {
     throw new Error('올바른 email과 name이 필요합니다.');
   }

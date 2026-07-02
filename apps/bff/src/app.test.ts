@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test';
+import type { AuthResponse, MeResponse } from '@tooday/shared';
+import { isRecord } from '@tooday/shared';
 import { createApp } from './app';
 import { DEFAULT_SESSION_COOKIE_NAME, serializeSessionCookie, serializeSessionCookieRemoval } from './auth/session-cookie';
 import { InMemorySessionStore } from './auth/session-store';
@@ -39,14 +41,18 @@ function sessionCookieHeader(token: string): string {
   return `${DEFAULT_SESSION_COOKIE_NAME}=${token}`;
 }
 
-interface TrpcResult<T> {
-  result: { data: T };
+/** tRPC 응답 봉투를 런타임 가드로 검증하고 data만 꺼낸다. 유일한 타입 단언 경계. */
+async function trpcData<T>(res: Response): Promise<T> {
+  const body: unknown = await res.json();
+  if (!isRecord(body) || !isRecord(body.result) || !('data' in body.result)) {
+    throw new Error(`tRPC 응답 형식이 아닙니다: ${JSON.stringify(body)}`);
+  }
+  return body.result.data as T;
 }
 
 async function signup(app: ReturnType<typeof createTestApp>) {
   const res = await app.request('/trpc/auth.signup', mutation(SIGNUP_BODY));
-  const body = (await res.json()) as TrpcResult<{ user: { id: string; email: string; name: string }; token: string }>;
-  return { res, data: body.result.data, cookie: res.headers.get('set-cookie') };
+  return { res, data: await trpcData<AuthResponse>(res), cookie: res.headers.get('set-cookie') };
 }
 
 describe('health', () => {
@@ -93,8 +99,8 @@ describe('auth.login', () => {
 
     const res = await app.request('/trpc/auth.login', mutation({ email: SIGNUP_BODY.email, password: SIGNUP_BODY.password }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as TrpcResult<{ token: string }>;
-    expect(res.headers.get('set-cookie')).toBe(serializeSessionCookie(config, body.result.data.token));
+    const { token } = await trpcData<AuthResponse>(res);
+    expect(res.headers.get('set-cookie')).toBe(serializeSessionCookie(config, token));
   });
 
   it('비밀번호가 틀리면 401을 반환한다', async () => {
@@ -115,8 +121,8 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
       headers: { Cookie: sessionCookieHeader(data.token) },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as TrpcResult<{ user: { email: string } }>;
-    expect(body.result.data.user.email).toBe('test@tooday.app');
+    const { user } = await trpcData<MeResponse>(res);
+    expect(user.email).toBe('test@tooday.app');
   });
 
   it('Authorization Bearer 헤더 방식으로 접근할 수 있다', async () => {
@@ -127,8 +133,8 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
       headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as TrpcResult<{ user: { email: string } }>;
-    expect(body.result.data.user.email).toBe('test@tooday.app');
+    const { user } = await trpcData<MeResponse>(res);
+    expect(user.email).toBe('test@tooday.app');
   });
 
   it('헤더가 쿠키보다 우선한다', async () => {
@@ -176,9 +182,13 @@ describe('HTTP 캐시 정책', () => {
     const app = createTestApp();
     const res = await app.request('/trpc/pub.appConfig');
     expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control')).toBe(CACHE_CONTROL_BY_PATH['pub.appConfig'] as string);
-    const body = (await res.json()) as TrpcResult<{ version: string }>;
-    expect(body.result.data.version).toBeDefined();
+    const expectedCacheControl = CACHE_CONTROL_BY_PATH['pub.appConfig'];
+    if (expectedCacheControl === undefined) {
+      throw new Error('pub.appConfig 캐시 정책이 정의되어 있지 않습니다.');
+    }
+    expect(res.headers.get('cache-control')).toBe(expectedCacheControl);
+    const { version } = await trpcData<{ version: string }>(res);
+    expect(version).toBeDefined();
   });
 
   it('pub 외 경로가 섞인 배치 요청은 캐시되지 않는다', async () => {

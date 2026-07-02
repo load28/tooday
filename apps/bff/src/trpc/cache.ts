@@ -28,7 +28,7 @@ export function trpcResponseMeta({ paths, type, errors }: ResponseMetaInput) {
     return { headers: { 'cache-control': CACHE_CONTROL.private } };
   }
 
-  const cacheControl =
-    paths.length === 1 ? (CACHE_CONTROL_BY_PATH[paths[0] as string] ?? CACHE_CONTROL.publicDefault) : CACHE_CONTROL.publicDefault;
+  const singlePath = paths.length === 1 ? paths[0] : undefined;
+  const cacheControl = (singlePath !== undefined ? CACHE_CONTROL_BY_PATH[singlePath] : undefined) ?? CACHE_CONTROL.publicDefault;
   return { headers: { 'cache-control': cacheControl } };
 }
