@@ -1,3 +1,5 @@
+export { isNonEmptyString, isRecord } from './guards';
+
 export interface User {
   id: string;
   email: string;
