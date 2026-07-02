@@ -172,6 +172,31 @@ refetchQueries → 즉시 fetch 실행
 3. 다음 beforeLoad의 ensureQueryData가 갱신된 캐시를 반환
 ```
 
+## tRPC 전송 / HTTP 캐시 정책
+
+### 이중 인증 (쿠키 + 헤더)
+
+- BFF는 세션 토큰을 두 경로로 받는다: `Authorization: Bearer <token>` 헤더(우선), httpOnly 쿠키(폴백)
+- 로그인/회원가입 응답은 Set-Cookie(웹용)와 body의 `token`(네이티브/웹뷰 브릿지용)을 함께 내려준다
+- tRPC 컨텍스트가 요청마다 토큰을 파싱해 `ctx.user`를 채운다
+
+### 노배치가 기본
+
+- tRPC의 HTTP 캐시 문제는 배칭에서 온다: 여러 쿼리가 한 URL로 합쳐져 캐시 키가 불안정해짐
+- 클라이언트는 `httpBatchLink` 대신 `httpLink`를 기본으로 사용 → 쿼리가 GET + 단일 경로 URL로 나가 URL이 그대로 캐시 키가 된다
+- 배칭이 꼭 필요한 곳이 생기면 `splitLink`로 명시적으로만 허용
+
+### 캐시 정책 (서버가 경로 기준으로 강제)
+
+| 네임스페이스 | 용도 | Cache-Control |
+|--------------|------|---------------|
+| `pub.*` | 유저와 무관한 공개 데이터 | `public, max-age, s-maxage, stale-while-revalidate` |
+| `auth.*`, `user.*` 등 나머지 | 프라이빗 (유저 데이터, 인증) | `private, no-store` |
+
+- 규칙: `pub.*` 프로시저는 `ctx.user`를 절대 참조하지 않는다 (공유 캐시 오염 방지)
+- 뮤테이션, 에러 응답, `pub.*` 외 경로가 섞인 배치 요청은 전부 `no-store`
+- 경로별 TTL 오버라이드는 `apps/bff/src/trpc/cache.ts`에서 관리
+
 ## 근거 출처
 
 - TanStack Start 공식 문서 (authentication-overview.md, authentication.md, middleware.md, server-functions.md)

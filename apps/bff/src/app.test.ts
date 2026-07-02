@@ -22,18 +22,22 @@ function createTestApp(configOverrides: Partial<BffConfig> = {}) {
 
 const SIGNUP_BODY = { email: 'test@tooday.app', password: 'password123', name: '테스터' };
 
-function jsonRequest(body: unknown): RequestInit {
+function mutation(input: unknown): RequestInit {
   return {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(input),
   };
 }
 
+interface TrpcResult<T> {
+  result: { data: T };
+}
+
 async function signup(app: ReturnType<typeof createTestApp>) {
-  const res = await app.request('/auth/signup', jsonRequest(SIGNUP_BODY));
-  const body = (await res.json()) as { user: { id: string }; token: string };
-  return { res, body, cookie: res.headers.get('set-cookie') };
+  const res = await app.request('/trpc/auth.signup', mutation(SIGNUP_BODY));
+  const body = (await res.json()) as TrpcResult<{ user: { id: string; email: string; name: string }; token: string }>;
+  return { res, data: body.result.data, cookie: res.headers.get('set-cookie') };
 }
 
 describe('health', () => {
@@ -45,84 +49,87 @@ describe('health', () => {
   });
 });
 
-describe('signup', () => {
+describe('auth.signup', () => {
   it('유저를 생성하고 세션 쿠키와 토큰을 함께 내려준다', async () => {
     const app = createTestApp();
-    const { res, body, cookie } = await signup(app);
+    const { res, data, cookie } = await signup(app);
 
-    expect(res.status).toBe(201);
-    expect(body.user).toMatchObject({ email: 'test@tooday.app', name: '테스터' });
-    expect(body.token).toHaveLength(64);
-    expect(cookie).toContain(`tooday_session=${body.token}`);
+    expect(res.status).toBe(200);
+    expect(data.user).toMatchObject({ email: 'test@tooday.app', name: '테스터' });
+    expect(data.token).toHaveLength(64);
+    expect(cookie).toContain(`tooday_session=${data.token}`);
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('SameSite=Lax');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 
   it('중복 이메일이면 409를 반환한다', async () => {
     const app = createTestApp();
     await signup(app);
-    const res = await app.request('/auth/signup', jsonRequest(SIGNUP_BODY));
+    const res = await app.request('/trpc/auth.signup', mutation(SIGNUP_BODY));
     expect(res.status).toBe(409);
   });
 
   it('짧은 비밀번호는 400을 반환한다', async () => {
     const app = createTestApp();
-    const res = await app.request('/auth/signup', jsonRequest({ ...SIGNUP_BODY, password: 'short' }));
+    const res = await app.request('/trpc/auth.signup', mutation({ ...SIGNUP_BODY, password: 'short' }));
     expect(res.status).toBe(400);
   });
 });
 
-describe('login', () => {
+describe('auth.login', () => {
   it('올바른 자격증명이면 쿠키와 토큰을 내려준다', async () => {
     const app = createTestApp();
     await signup(app);
 
-    const res = await app.request('/auth/login', jsonRequest({ email: SIGNUP_BODY.email, password: SIGNUP_BODY.password }));
+    const res = await app.request('/trpc/auth.login', mutation({ email: SIGNUP_BODY.email, password: SIGNUP_BODY.password }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { token: string };
-    expect(res.headers.get('set-cookie')).toContain(`tooday_session=${body.token}`);
+    const body = (await res.json()) as TrpcResult<{ token: string }>;
+    expect(res.headers.get('set-cookie')).toContain(`tooday_session=${body.result.data.token}`);
   });
 
   it('비밀번호가 틀리면 401을 반환한다', async () => {
     const app = createTestApp();
     await signup(app);
 
-    const res = await app.request('/auth/login', jsonRequest({ email: SIGNUP_BODY.email, password: 'wrong-password' }));
+    const res = await app.request('/trpc/auth.login', mutation({ email: SIGNUP_BODY.email, password: 'wrong-password' }));
     expect(res.status).toBe(401);
   });
 });
 
-describe('인증 (쿠키 + 헤더 이중 지원)', () => {
-  it('쿠키 방식으로 /auth/me에 접근할 수 있다', async () => {
+describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
+  it('쿠키 방식으로 접근할 수 있다', async () => {
     const app = createTestApp();
-    const { body } = await signup(app);
+    const { data } = await signup(app);
 
-    const res = await app.request('/auth/me', {
-      headers: { Cookie: `tooday_session=${body.token}` },
+    const res = await app.request('/trpc/user.me', {
+      headers: { Cookie: `tooday_session=${data.token}` },
     });
     expect(res.status).toBe(200);
-    expect(((await res.json()) as { user: { email: string } }).user.email).toBe('test@tooday.app');
+    const body = (await res.json()) as TrpcResult<{ user: { email: string } }>;
+    expect(body.result.data.user.email).toBe('test@tooday.app');
   });
 
-  it('Authorization Bearer 헤더 방식으로 /auth/me에 접근할 수 있다', async () => {
+  it('Authorization Bearer 헤더 방식으로 접근할 수 있다', async () => {
     const app = createTestApp();
-    const { body } = await signup(app);
+    const { data } = await signup(app);
 
-    const res = await app.request('/auth/me', {
-      headers: { Authorization: `Bearer ${body.token}` },
+    const res = await app.request('/trpc/user.me', {
+      headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(res.status).toBe(200);
-    expect(((await res.json()) as { user: { email: string } }).user.email).toBe('test@tooday.app');
+    const body = (await res.json()) as TrpcResult<{ user: { email: string } }>;
+    expect(body.result.data.user.email).toBe('test@tooday.app');
   });
 
   it('헤더가 쿠키보다 우선한다', async () => {
     const app = createTestApp();
-    const { body } = await signup(app);
+    const { data } = await signup(app);
 
-    const res = await app.request('/auth/me', {
+    const res = await app.request('/trpc/user.me', {
       headers: {
         Authorization: 'Bearer invalid-token',
-        Cookie: `tooday_session=${body.token}`,
+        Cookie: `tooday_session=${data.token}`,
       },
     });
     expect(res.status).toBe(401);
@@ -130,40 +137,79 @@ describe('인증 (쿠키 + 헤더 이중 지원)', () => {
 
   it('인증 정보가 없으면 401을 반환한다', async () => {
     const app = createTestApp();
-    const res = await app.request('/auth/me');
+    const res = await app.request('/trpc/user.me');
     expect(res.status).toBe(401);
   });
 
   it('만료된 세션은 401을 반환한다', async () => {
     const app = createTestApp({ sessionTtlMs: -1 });
-    const { body } = await signup(app);
+    const { data } = await signup(app);
 
-    const res = await app.request('/auth/me', {
-      headers: { Authorization: `Bearer ${body.token}` },
+    const res = await app.request('/trpc/user.me', {
+      headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(res.status).toBe(401);
   });
+
+  it('프라이빗 응답이므로 캐시되지 않는다', async () => {
+    const app = createTestApp();
+    const { data } = await signup(app);
+
+    const res = await app.request('/trpc/user.me', {
+      headers: { Authorization: `Bearer ${data.token}` },
+    });
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
 });
 
-describe('logout', () => {
+describe('HTTP 캐시 정책', () => {
+  it('pub.* 쿼리는 public Cache-Control을 받는다', async () => {
+    const app = createTestApp();
+    const res = await app.request('/trpc/pub.appConfig');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=300, s-maxage=600, stale-while-revalidate=3600');
+    const body = (await res.json()) as TrpcResult<{ version: string }>;
+    expect(body.result.data.version).toBeDefined();
+  });
+
+  it('pub 외 경로가 섞인 배치 요청은 캐시되지 않는다', async () => {
+    const app = createTestApp();
+    const { data } = await signup(app);
+
+    const res = await app.request('/trpc/pub.appConfig,user.me?batch=1', {
+      headers: { Authorization: `Bearer ${data.token}` },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
+
+  it('존재하지 않는 프로시저 에러 응답은 캐시되지 않는다', async () => {
+    const app = createTestApp();
+    const res = await app.request('/trpc/pub.doesNotExist');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
+});
+
+describe('auth.logout', () => {
   it('세션을 무효화하고 쿠키를 삭제한다 (쿠키/헤더 어느 쪽으로도 재사용 불가)', async () => {
     const app = createTestApp();
-    const { body } = await signup(app);
+    const { data } = await signup(app);
 
-    const logoutRes = await app.request('/auth/logout', {
+    const logoutRes = await app.request('/trpc/auth.logout', {
       method: 'POST',
-      headers: { Cookie: `tooday_session=${body.token}` },
+      headers: { 'Content-Type': 'application/json', Cookie: `tooday_session=${data.token}` },
     });
     expect(logoutRes.status).toBe(200);
     expect(logoutRes.headers.get('set-cookie')).toContain('Max-Age=0');
 
-    const viaCookie = await app.request('/auth/me', {
-      headers: { Cookie: `tooday_session=${body.token}` },
+    const viaCookie = await app.request('/trpc/user.me', {
+      headers: { Cookie: `tooday_session=${data.token}` },
     });
     expect(viaCookie.status).toBe(401);
 
-    const viaHeader = await app.request('/auth/me', {
-      headers: { Authorization: `Bearer ${body.token}` },
+    const viaHeader = await app.request('/trpc/user.me', {
+      headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(viaHeader.status).toBe(401);
   });
