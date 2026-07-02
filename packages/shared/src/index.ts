@@ -1,31 +1,12 @@
-export { isNonEmptyString, isRecord } from './guards';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-}
-
-export interface SignupRequest {
-  email: string;
-  password: string;
-  name: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-/** token은 Set-Cookie(웹)와 body(헤더 방식 클라이언트) 양쪽으로 전달된다 */
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
-export interface MeResponse {
-  user: User;
-}
+export type { AuthResponse, LoginRequest, MeResponse, SignupRequest, User } from './schemas';
+export {
+  authResponseSchema,
+  loginRequestSchema,
+  MIN_PASSWORD_LENGTH,
+  meResponseSchema,
+  signupRequestSchema,
+  userSchema,
+} from './schemas';
 
 export interface ApiError {
   error: {

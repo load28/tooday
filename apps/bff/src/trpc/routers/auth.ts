@@ -1,33 +1,10 @@
-import type { AuthResponse, LoginRequest, SignupRequest } from '@tooday/shared';
-import { isNonEmptyString, isRecord } from '@tooday/shared';
+import type { AuthResponse } from '@tooday/shared';
+import { loginRequestSchema, signupRequestSchema } from '@tooday/shared';
 import { TRPCError } from '@trpc/server';
 import type { SessionStore } from '../../auth/session-store';
 import type { UserStore } from '../../auth/user-store';
 import { DuplicateEmailError } from '../../auth/user-store';
 import { protectedProcedure, publicProcedure, router } from '../init';
-
-const MIN_PASSWORD_LENGTH = 8;
-
-function loginInput(value: unknown): LoginRequest {
-  if (!isRecord(value) || !isNonEmptyString(value.email) || !isNonEmptyString(value.password)) {
-    throw new Error('email과 password가 필요합니다.');
-  }
-  return { email: value.email, password: value.password };
-}
-
-function signupInput(value: unknown): SignupRequest {
-  if (!isRecord(value)) {
-    throw new Error('올바른 요청 본문이 아닙니다.');
-  }
-  const { email, password, name } = value;
-  if (!isNonEmptyString(email) || !email.includes('@') || !isNonEmptyString(name)) {
-    throw new Error('올바른 email과 name이 필요합니다.');
-  }
-  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
-    throw new Error(`password는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.`);
-  }
-  return { email, password, name };
-}
 
 export interface AuthRouterDeps {
   users: UserStore;
@@ -36,7 +13,7 @@ export interface AuthRouterDeps {
 
 export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
   return router({
-    signup: publicProcedure.input(signupInput).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
+    signup: publicProcedure.input(signupRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
       try {
         const user = await users.create(input);
         const session = sessions.create(user.id);
@@ -50,7 +27,7 @@ export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
       }
     }),
 
-    login: publicProcedure.input(loginInput).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
+    login: publicProcedure.input(loginRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
       const user = await users.verifyCredentials(input.email, input.password);
       if (!user) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
