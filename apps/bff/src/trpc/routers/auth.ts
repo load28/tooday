@@ -35,11 +35,6 @@ export interface AuthRouterDeps {
   sessions: SessionStore;
 }
 
-/**
- * 인증 라우터. 프라이빗 영역이므로 pub.* 밖 → 항상 private, no-store.
- * 세션 토큰은 httpOnly 쿠키(Set-Cookie)와 응답 body의 token 양쪽으로 내려간다.
- * 웹은 쿠키를, 네이티브/웹뷰 브릿지는 token을 Authorization: Bearer로 사용한다.
- */
 export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
   return router({
     signup: publicProcedure.input(signupInput).mutation(async ({ ctx, input }): Promise<AuthResponse> => {

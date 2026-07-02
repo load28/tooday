@@ -1,6 +1,5 @@
 export interface BffConfig {
   port: number;
-  /** CORS를 허용할 웹 오리진 목록 (쿠키 방식은 credentials CORS가 필수) */
   allowedOrigins: string[];
   cookieName: string;
   cookieSecure: boolean;

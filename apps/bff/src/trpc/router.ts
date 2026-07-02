@@ -12,11 +12,8 @@ export interface AppRouterDeps {
 
 export function createAppRouter(deps: AppRouterDeps) {
   return router({
-    /** HTTP 캐시 대상 (public Cache-Control). 유저 의존 데이터 금지 */
     pub: pubRouter,
-    /** 프라이빗: 인증 */
     auth: createAuthRouter(deps),
-    /** 프라이빗: 유저 데이터 */
     user: userRouter,
   });
 }
