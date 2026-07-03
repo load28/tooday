@@ -28,7 +28,7 @@ export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
     }),
 
     login: publicProcedure.input(loginRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
-      const user = await users.verifyCredentials(input.email, input.password);
+      const user = await users.verifyCredentials(input);
       if (!user) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
       }

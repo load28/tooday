@@ -33,10 +33,10 @@ export function createApp(deps: AppDeps) {
     }),
   );
 
-  app.notFound((c) => errorResponse(c, 404, 'NOT_FOUND', '요청한 리소스를 찾을 수 없습니다.'));
+  app.notFound((c) => errorResponse({ c, status: 404, code: 'NOT_FOUND', message: '요청한 리소스를 찾을 수 없습니다.' }));
   app.onError((error, c) => {
     console.error(error);
-    return errorResponse(c, 500, 'INTERNAL_ERROR', '서버 오류가 발생했습니다.');
+    return errorResponse({ c, status: 500, code: 'INTERNAL_ERROR', message: '서버 오류가 발생했습니다.' });
   });
 
   app.use(
