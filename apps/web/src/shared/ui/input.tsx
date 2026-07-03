@@ -7,7 +7,7 @@ import { cva, cx } from 'styled-system/css';
  * Field 안에서는 Ark가 data-invalid를 전파하고, 단독 사용 시에는
  * 컨트롤이 직접 aria-invalid를 설정한다 — 둘 다 같은 셀렉터로 스타일링된다.
  */
-export const inputRecipe = cva({
+const inputRecipe = cva({
   base: {
     display: 'block',
     width: '100%',
