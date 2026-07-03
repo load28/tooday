@@ -1,21 +1,21 @@
-import type { SqlDatabase } from './ports';
+import type { Kysely } from 'kysely';
+import type { DatabaseSchema } from './schema';
 
-const MIGRATIONS: readonly string[] = [
-  `CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    password_hash TEXT NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
-    expires_at INTEGER NOT NULL
-  )`,
-];
+export async function migrate(db: Kysely<DatabaseSchema>): Promise<void> {
+  await db.schema
+    .createTable('users')
+    .ifNotExists()
+    .addColumn('id', 'text', (col) => col.primaryKey())
+    .addColumn('email', 'text', (col) => col.notNull().unique())
+    .addColumn('name', 'text', (col) => col.notNull())
+    .addColumn('password_hash', 'text', (col) => col.notNull())
+    .execute();
 
-export async function migrate(db: SqlDatabase): Promise<void> {
-  for (const statement of MIGRATIONS) {
-    await db.run(statement);
-  }
+  await db.schema
+    .createTable('sessions')
+    .ifNotExists()
+    .addColumn('token', 'text', (col) => col.primaryKey())
+    .addColumn('user_id', 'text', (col) => col.notNull().references('users.id'))
+    .addColumn('expires_at', 'integer', (col) => col.notNull())
+    .execute();
 }

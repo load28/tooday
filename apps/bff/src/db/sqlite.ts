@@ -1,17 +1,12 @@
 import { Database } from 'bun:sqlite';
-import type { SqlDatabase, SqlValue } from './ports';
+import { Kysely } from 'kysely';
+import { BunSqliteDialect } from 'kysely-bun-sqlite';
+import type { DatabaseSchema } from './schema';
 
-export function createSqliteDatabase(path: string): SqlDatabase {
-  const db = new Database(path);
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
-
-  return {
-    async query(sql: string, params: readonly SqlValue[] = []): Promise<unknown[]> {
-      return db.query(sql).all(...params);
-    },
-    async run(sql: string, params: readonly SqlValue[] = []): Promise<void> {
-      db.query(sql).run(...params);
-    },
-  };
+/** 엔진 교체(postgres 등)는 다른 다이얼렉트로 Kysely를 만드는 팩토리를 추가하면 된다 */
+export function createSqliteDatabase(path: string): Kysely<DatabaseSchema> {
+  const database = new Database(path);
+  database.exec('PRAGMA journal_mode = WAL;');
+  database.exec('PRAGMA foreign_keys = ON;');
+  return new Kysely<DatabaseSchema>({ dialect: new BunSqliteDialect({ database }) });
 }
