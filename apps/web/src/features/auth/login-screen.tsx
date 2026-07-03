@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { type FormEvent, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { css } from 'styled-system/css';
 import { HStack, Pressable, Screen, Stack, Text, TextField } from '@/shared/ui';
 
@@ -50,9 +50,15 @@ export function LoginScreen() {
     login.mutate({ email: email.trim(), password });
   };
 
-  const handleChange = (setter: (value: string) => void) => (event: FormEvent<HTMLInputElement>) => {
+  // 입력을 다시 시작하면 이전 로그인 실패 에러를 지운다
+  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (login.isError) login.reset();
-    setter(event.currentTarget.value);
+    setEmail(event.currentTarget.value);
+  };
+
+  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (login.isError) login.reset();
+    setPassword(event.currentTarget.value);
   };
 
   return (
@@ -63,10 +69,10 @@ export function LoginScreen() {
             TooDay
           </Text>
           <Text as="h1" variant="display">
-            다시 만나서 반가워요
+            로그인
           </Text>
           <Text variant="body" tone="tertiary">
-            이메일로 로그인해 주세요.
+            이메일과 비밀번호를 입력해 주세요.
           </Text>
         </Stack>
 
@@ -81,7 +87,7 @@ export function LoginScreen() {
             spellCheck={false}
             placeholder="you@example.com"
             value={email}
-            onChange={handleChange(setEmail)}
+            onChange={handleEmailChange}
           />
           <TextField
             label="비밀번호"
@@ -90,7 +96,7 @@ export function LoginScreen() {
             autoComplete="current-password"
             placeholder="비밀번호"
             value={password}
-            onChange={handleChange(setPassword)}
+            onChange={handlePasswordChange}
             error={login.isError ? login.error.message : undefined}
           />
         </Stack>

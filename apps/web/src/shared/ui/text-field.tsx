@@ -52,19 +52,19 @@ export function TextField({ label, error, className, id, ...rest }: TextFieldPro
   const errorId = `${inputId}-error`;
   return (
     <div className={cx(fieldCls, className)}>
-      {label != null ? (
+      {label !== undefined ? (
         <Text as="label" htmlFor={inputId} variant="label" tone="secondary">
           {label}
         </Text>
       ) : null}
       <input
         id={inputId}
-        aria-invalid={error != null || undefined}
-        aria-describedby={error != null ? errorId : undefined}
+        aria-invalid={error !== undefined ? true : undefined}
+        aria-describedby={error !== undefined ? errorId : undefined}
         {...rest}
-        className={inputRecipe({ invalid: error != null })}
+        className={inputRecipe({ invalid: error !== undefined })}
       />
-      {error != null ? (
+      {error !== undefined ? (
         <Text id={errorId} variant="caption" tone="danger" role="alert">
           {error}
         </Text>
