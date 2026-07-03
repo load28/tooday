@@ -79,6 +79,7 @@ export function LoginScreen() {
         <Stack gap="2xl">
           <TextField
             label="이메일"
+            size="xl"
             type="email"
             name="email"
             inputMode="email"
@@ -88,9 +89,11 @@ export function LoginScreen() {
             placeholder="you@example.com"
             value={email}
             onChange={handleEmailChange}
+            invalid={login.isError}
           />
           <TextField
             label="비밀번호"
+            size="xl"
             type="password"
             name="password"
             autoComplete="current-password"
