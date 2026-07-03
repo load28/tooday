@@ -1,7 +1,5 @@
-import { Field as ArkField } from '@ark-ui/react/field';
 import { type ComponentPropsWithRef, useCallback, useState } from 'react';
-import { cx } from 'styled-system/css';
-import { type InputSize, inputRecipe } from '@/shared/ui/input';
+import { Input, type InputSize } from '@/shared/ui/input';
 
 type NumberInputOwnProps = {
   value?: number;
@@ -31,7 +29,7 @@ function isOutOfRange(value: number, min?: number, max?: number): boolean {
   return false;
 }
 
-/** Input과 recipe를 공유하는 숫자 컨트롤. Field 안에서는 id·aria 배선을 물려받는다. */
+/** Input에 숫자 파싱·클램프를 얹은 컨트롤. Field 안에서는 id·aria 배선을 물려받는다. */
 export function NumberInput({
   value,
   defaultValue,
@@ -90,7 +88,7 @@ export function NumberInput({
   );
 
   return (
-    <ArkField.Input
+    <Input
       {...rest}
       {...(showInvalid ? { 'aria-invalid': true } : {})}
       type="number"
@@ -102,7 +100,8 @@ export function NumberInput({
       value={displayValue}
       onChange={handleChange}
       onBlur={handleBlur}
-      className={cx(inputRecipe({ size }), className)}
+      size={size}
+      className={className}
     />
   );
 }
