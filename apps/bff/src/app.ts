@@ -1,27 +1,29 @@
 import { trpcServer } from '@hono/trpc-server';
+import { TRPC_ENDPOINT } from '@tooday/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 import type { SessionStore, UserStore } from './auth/ports';
 import type { BffConfig } from './config';
 import { errorResponse } from './http';
+import type { Logger } from './logging';
+import { createLogger, createRequestLogger } from './logging';
 import { trpcResponseMeta } from './trpc/cache';
 import { createContextFactory } from './trpc/context';
 import { createAppRouter } from './trpc/router';
-
-export const TRPC_ENDPOINT = '/trpc';
 
 export interface AppDeps {
   config: BffConfig;
   users: UserStore;
   sessions: SessionStore;
+  logger?: Logger;
 }
 
 export function createApp(deps: AppDeps) {
+  const log = deps.logger ?? createLogger(deps.config.logFormat);
   const app = new Hono();
 
   if (process.env.NODE_ENV !== 'test') {
-    app.use('*', logger());
+    app.use('*', createRequestLogger(log));
   }
 
   // 쿠키 인증에는 credentials CORS가 필수
@@ -36,7 +38,11 @@ export function createApp(deps: AppDeps) {
 
   app.notFound((c) => errorResponse({ c, status: 404, code: 'NOT_FOUND', message: '요청한 리소스를 찾을 수 없습니다.' }));
   app.onError((error, c) => {
-    console.error(error);
+    log.error('unhandled_error', {
+      path: c.req.path,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return errorResponse({ c, status: 500, code: 'INTERNAL_ERROR', message: '서버 오류가 발생했습니다.' });
   });
 

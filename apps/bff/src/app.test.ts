@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import { authResponseSchema, meResponseSchema } from '@tooday/shared';
+import { authResponseSchema, meResponseSchema, TRPC_ENDPOINT } from '@tooday/shared';
 import { z } from 'zod';
-import { createApp, TRPC_ENDPOINT } from './app';
+import { createApp } from './app';
 import { InMemorySessionStore, InMemoryUserStore } from './auth/adapters/memory';
 import { serializeSessionCookie, serializeSessionCookieRemoval } from './auth/session-cookie';
 import type { BffConfig } from './config';
@@ -14,6 +14,8 @@ function setup(overrides: Partial<BffConfig> = {}) {
     cookieName: 'tooday_session',
     cookieSecure: false,
     sessionTtlMs: 60_000,
+    databasePath: ':memory:',
+    logFormat: 'pretty',
     ...overrides,
   };
   const app = createApp({

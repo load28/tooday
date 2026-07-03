@@ -17,3 +17,7 @@ todos.json
 .idea
 .vscode
 .serena
+
+# sqlite
+*.sqlite
+*.sqlite-*

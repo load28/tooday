@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { AppRouter } from '@tooday/bff';
 import type { User } from '@tooday/shared';
+import { TRPC_ENDPOINT } from '@tooday/shared';
 import { createTRPCClient, httpLink } from '@trpc/client';
 import { createTRPCOptionsProxy, type TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 
@@ -25,7 +26,7 @@ export function createTrpc(): RouterAppContext {
     links: [
       // 노배치(httpLink): 쿼리가 GET 단일 경로 URL로 나가야 BFF의 HTTP 캐시 정책이 동작한다
       httpLink({
-        url: `${BFF_URL}/trpc`,
+        url: `${BFF_URL}${TRPC_ENDPOINT}`,
         fetch: (input, init) => fetch(input, { ...init, credentials: 'include' }),
         headers: async () => {
           if (typeof document !== 'undefined') return {};

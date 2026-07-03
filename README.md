@@ -17,6 +17,8 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   모든 데이터 API는 `/trpc` — 프라이빗(`auth.*`, `user.*`)은 `private, no-store`,
   공개(`pub.*`) 쿼리만 public Cache-Control로 HTTP 캐시를 탄다.
   클라이언트는 노배치(`httpLink`)가 기본.
+  저장소는 SQLite(`bun:sqlite`)가 기본이며, 스토어(포트) ↔ SQL ↔ DB 드라이버가
+  계층 분리되어 있어 엔진 교체 시 코어 무변경 (`src/db/ports.ts`).
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
   (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).
