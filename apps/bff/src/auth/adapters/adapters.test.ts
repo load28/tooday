@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { migrate } from '../../db/migrate';
-import { createSqliteDatabase } from '../../db/sqlite';
-import { DomainError } from '../../errors';
-import type { SessionStore, UserStore } from '../ports';
-import { InMemorySessionStore, InMemoryUserStore } from './memory';
-import { SqlSessionStore, SqlUserStore } from './sql';
+import { InMemorySessionStore, InMemoryUserStore } from '@bff/auth/adapters/memory';
+import { SqlSessionStore, SqlUserStore } from '@bff/auth/adapters/sql';
+import type { SessionStore, UserStore } from '@bff/auth/ports';
+import { migrate } from '@bff/db/migrate';
+import { createSqliteDatabase } from '@bff/db/sqlite';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
 
 interface Stores {
   users: UserStore;
@@ -51,7 +51,7 @@ for (const { name, make } of IMPLEMENTATIONS) {
     it('중복 이메일이면 DomainError(EMAIL_TAKEN)를 던진다', async () => {
       const { users } = await make({ ttlMs: 60_000 });
       await users.create(INPUT);
-      expect(users.create(INPUT)).rejects.toMatchObject(new DomainError('EMAIL_TAKEN'));
+      expect(users.create(INPUT)).rejects.toMatchObject(new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN));
     });
 
     it('자격 증명을 검증한다', async () => {

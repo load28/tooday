@@ -1,14 +1,14 @@
+import type { DomainErrorCode } from '@bff/errors';
+import { DOMAIN_ERROR_CODES, DomainError, findDomainError } from '@bff/errors';
+import type { TrpcContext } from '@bff/trpc/context';
 import { initTRPC, TRPCError } from '@trpc/server';
-import type { DomainErrorCode } from '../errors';
-import { DomainError, findDomainError } from '../errors';
-import type { TrpcContext } from './context';
 
 const t = initTRPC.context<TrpcContext>().create();
 
 const TRPC_CODE_BY_DOMAIN_CODE = {
-  EMAIL_TAKEN: 'CONFLICT',
-  INVALID_CREDENTIALS: 'UNAUTHORIZED',
-  UNAUTHENTICATED: 'UNAUTHORIZED',
+  [DOMAIN_ERROR_CODES.EMAIL_TAKEN]: 'CONFLICT',
+  [DOMAIN_ERROR_CODES.INVALID_CREDENTIALS]: 'UNAUTHORIZED',
+  [DOMAIN_ERROR_CODES.UNAUTHENTICATED]: 'UNAUTHORIZED',
 } as const satisfies Record<DomainErrorCode, TRPCError['code']>;
 
 /** DomainError를 tRPC 에러(HTTP 상태)로 변환하는 유일한 지점 */
@@ -32,7 +32,7 @@ export const publicProcedure = t.procedure.use(domainErrorMapper);
 
 export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.user || !ctx.sessionToken) {
-    throw new DomainError('UNAUTHENTICATED');
+    throw new DomainError(DOMAIN_ERROR_CODES.UNAUTHENTICATED);
   }
   return next({ ctx: { user: ctx.user, sessionToken: ctx.sessionToken } });
 });

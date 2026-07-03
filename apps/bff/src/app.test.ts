@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test';
+import { createApp } from '@bff/app';
+import { InMemorySessionStore, InMemoryUserStore } from '@bff/auth/adapters/memory';
+import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/auth/session-cookie';
+import type { BffConfig } from '@bff/config';
+import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import { authResponseSchema, meResponseSchema, TRPC_ENDPOINT } from '@tooday/shared';
 import { z } from 'zod';
-import { createApp } from './app';
-import { InMemorySessionStore, InMemoryUserStore } from './auth/adapters/memory';
-import { serializeSessionCookie, serializeSessionCookieRemoval } from './auth/session-cookie';
-import type { BffConfig } from './config';
-import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from './trpc/cache';
 
 function setup(overrides: Partial<BffConfig> = {}) {
   const config: BffConfig = {

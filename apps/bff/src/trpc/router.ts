@@ -1,8 +1,8 @@
-import type { SessionStore, UserStore } from '../auth/ports';
-import { router } from './init';
-import { createAuthRouter } from './routers/auth';
-import { pubRouter } from './routers/pub';
-import { userRouter } from './routers/user';
+import type { SessionStore, UserStore } from '@bff/auth/ports';
+import { router } from '@bff/trpc/init';
+import { createAuthRouter } from '@bff/trpc/routers/auth';
+import { pubRouter } from '@bff/trpc/routers/pub';
+import { userRouter } from '@bff/trpc/routers/user';
 
 export interface AppRouterDeps {
   users: UserStore;

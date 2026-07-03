@@ -1,10 +1,10 @@
+import type { SessionStore, UserStore } from '@bff/auth/ports';
+import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/auth/session-cookie';
+import { extractSessionToken } from '@bff/auth/token';
+import type { BffConfig } from '@bff/config';
 import type { User } from '@tooday/shared';
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import type { Context as HonoContext } from 'hono';
-import type { SessionStore, UserStore } from '../auth/ports';
-import { serializeSessionCookie, serializeSessionCookieRemoval } from '../auth/session-cookie';
-import { extractSessionToken } from '../auth/token';
-import type { BffConfig } from '../config';
 
 export type TrpcContext = {
   /** pub.* 프로시저는 user를 참조하면 안 된다 — 응답이 공유 캐시에 저장된다 */
