@@ -41,16 +41,16 @@ function sessionCookieHeader(token: string): string {
   return `${DEFAULT_SESSION_COOKIE_NAME}=${token}`;
 }
 
-const trpcEnvelopeSchema = z.object({ result: z.object({ data: z.unknown() }) });
+const trpcSuccessEnvelopeSchema = z.object({ result: z.object({ data: z.unknown() }) });
 
-async function trpcData<T>(res: Response, schema: z.ZodType<T>): Promise<T> {
-  const body = trpcEnvelopeSchema.parse(await res.json());
-  return schema.parse(body.result.data);
+async function unwrapTrpcData<T>(res: Response, schema: z.ZodType<T>): Promise<T> {
+  const envelope = trpcSuccessEnvelopeSchema.parse(await res.json());
+  return schema.parse(envelope.result.data);
 }
 
 async function signup(app: ReturnType<typeof createTestApp>) {
   const res = await app.request('/trpc/auth.signup', mutation(SIGNUP_BODY));
-  return { res, data: await trpcData(res, authResponseSchema), cookie: res.headers.get('set-cookie') };
+  return { res, data: await unwrapTrpcData(res, authResponseSchema), cookie: res.headers.get('set-cookie') };
 }
 
 describe('health', () => {
@@ -97,7 +97,7 @@ describe('auth.login', () => {
 
     const res = await app.request('/trpc/auth.login', mutation({ email: SIGNUP_BODY.email, password: SIGNUP_BODY.password }));
     expect(res.status).toBe(200);
-    const { token } = await trpcData(res, authResponseSchema);
+    const { token } = await unwrapTrpcData(res, authResponseSchema);
     expect(res.headers.get('set-cookie')).toBe(serializeSessionCookie(config, token));
   });
 
@@ -119,7 +119,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
       headers: { Cookie: sessionCookieHeader(data.token) },
     });
     expect(res.status).toBe(200);
-    const { user } = await trpcData(res, meResponseSchema);
+    const { user } = await unwrapTrpcData(res, meResponseSchema);
     expect(user.email).toBe('test@tooday.app');
   });
 
@@ -131,7 +131,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
       headers: { Authorization: `Bearer ${data.token}` },
     });
     expect(res.status).toBe(200);
-    const { user } = await trpcData(res, meResponseSchema);
+    const { user } = await unwrapTrpcData(res, meResponseSchema);
     expect(user.email).toBe('test@tooday.app');
   });
 
@@ -185,7 +185,7 @@ describe('HTTP 캐시 정책', () => {
       throw new Error('pub.appConfig 캐시 정책이 정의되어 있지 않습니다.');
     }
     expect(res.headers.get('cache-control')).toBe(expectedCacheControl);
-    const { version } = await trpcData(res, z.object({ version: z.string() }));
+    const { version } = await unwrapTrpcData(res, z.object({ version: z.string() }));
     expect(version).toBeDefined();
   });
 
