@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
+import { fetchSessionUser } from '@/app/trpc.ts';
 import type { FileRouteTypes } from '@/routeTree.gen.ts';
-import { fetchSessionUser } from '@/trpc.ts';
 
 export const Route = createFileRoute('/')({
   beforeLoad: async ({ context }) => {

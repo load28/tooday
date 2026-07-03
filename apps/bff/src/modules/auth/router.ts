@@ -1,5 +1,5 @@
-import type { SessionStore, UserStore } from '@bff/auth/ports';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
+import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { protectedProcedure, publicProcedure, router } from '@bff/trpc/init';
 import type { AuthResponse } from '@tooday/shared';
 import { loginRequestSchema, signupRequestSchema } from '@tooday/shared';

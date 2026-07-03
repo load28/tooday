@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { InMemorySessionStore, InMemoryUserStore } from '@bff/auth/adapters/memory';
-import { SqlSessionStore, SqlUserStore } from '@bff/auth/adapters/sql';
-import type { SessionStore, UserStore } from '@bff/auth/ports';
-import { migrate } from '@bff/db/migrate';
-import { createSqliteDatabase } from '@bff/db/sqlite';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
+import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
+import { SqlSessionStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
+import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { migrate } from '@bff/platform/db/migrate';
+import { createSqliteDatabase } from '@bff/platform/db/sqlite';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 
 interface Stores {
   users: UserStore;

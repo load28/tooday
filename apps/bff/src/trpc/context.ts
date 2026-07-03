@@ -1,7 +1,7 @@
-import type { SessionStore, UserStore } from '@bff/auth/ports';
-import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/auth/session-cookie';
-import { extractSessionToken } from '@bff/auth/token';
-import type { BffConfig } from '@bff/config';
+import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
+import { extractSessionToken } from '@bff/modules/auth/token';
+import type { BffConfig } from '@bff/platform/config';
 import type { User } from '@tooday/shared';
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import type { Context as HonoContext } from 'hono';

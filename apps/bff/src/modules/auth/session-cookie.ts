@@ -1,4 +1,4 @@
-import type { BffConfig } from '@bff/config';
+import type { BffConfig } from '@bff/platform/config';
 import { serialize } from 'hono/utils/cookie';
 
 const WEEK_SECONDS = 7 * 24 * 60 * 60;

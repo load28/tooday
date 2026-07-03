@@ -1,4 +1,4 @@
-import type { DatabaseSchema } from '@bff/db/schema';
+import type { DatabaseSchema } from '@bff/platform/db/schema';
 import type { Kysely } from 'kysely';
 
 export async function migrate(db: Kysely<DatabaseSchema>): Promise<void> {

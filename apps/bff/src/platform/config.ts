@@ -1,4 +1,4 @@
-import type { LogFormat } from '@bff/logging';
+import type { LogFormat } from '@bff/platform/logging';
 
 export interface BffConfig {
   port: number;

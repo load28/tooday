@@ -13,7 +13,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "biome lint",
-    "lint:deps": "depcruise --config .dependency-cruiser.cjs apps packages",
+    "lint:deps": "depcruise --config apps/bff/.dependency-cruiser.cjs apps/bff && depcruise --config apps/web/.dependency-cruiser.cjs apps/web && depcruise --config apps/design-guide/.dependency-cruiser.cjs apps/design-guide && depcruise --config .dependency-cruiser.cjs packages",
     "check": "biome check",
     "format": "biome format",
     "prepare": "lefthook install"

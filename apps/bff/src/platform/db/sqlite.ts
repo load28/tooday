@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import type { DatabaseSchema } from '@bff/db/schema';
+import type { DatabaseSchema } from '@bff/platform/db/schema';
 import { Kysely } from 'kysely';
 import { BunSqliteDialect } from 'kysely-bun-sqlite';
 

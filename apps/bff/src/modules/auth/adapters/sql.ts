@@ -1,7 +1,7 @@
-import type { CreateUserInput, Session, SessionStore, UserStore } from '@bff/auth/ports';
-import { generateSessionToken } from '@bff/auth/session-token';
-import type { DatabaseSchema } from '@bff/db/schema';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
+import type { CreateUserInput, Session, SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { generateSessionToken } from '@bff/modules/auth/session-token';
+import type { DatabaseSchema } from '@bff/platform/db/schema';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import type { User } from '@tooday/shared';
 import type { Kysely } from 'kysely';
 

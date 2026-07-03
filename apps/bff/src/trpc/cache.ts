@@ -1,4 +1,4 @@
-import type { pubRouter } from '@bff/trpc/routers/pub';
+import type { pubRouter } from '@bff/modules/pub/router';
 
 const CACHEABLE_PATH_PREFIX = 'pub.';
 

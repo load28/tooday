@@ -1,9 +1,9 @@
 import { createApp } from '@bff/app';
-import { SqlSessionStore, SqlUserStore } from '@bff/auth/adapters/sql';
-import { loadConfig } from '@bff/config';
-import { migrate } from '@bff/db/migrate';
-import { createSqliteDatabase } from '@bff/db/sqlite';
-import { createLogger } from '@bff/logging';
+import { SqlSessionStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
+import { loadConfig } from '@bff/platform/config';
+import { migrate } from '@bff/platform/db/migrate';
+import { createSqliteDatabase } from '@bff/platform/db/sqlite';
+import { createLogger } from '@bff/platform/logging';
 
 const config = loadConfig();
 const logger = createLogger(config.logFormat);

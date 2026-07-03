@@ -1,8 +1,8 @@
-import type { SessionStore, UserStore } from '@bff/auth/ports';
-import type { BffConfig } from '@bff/config';
-import { errorResponse } from '@bff/http';
-import type { Logger } from '@bff/logging';
-import { createLogger, createRequestLogger } from '@bff/logging';
+import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { BffConfig } from '@bff/platform/config';
+import { errorResponse } from '@bff/platform/http';
+import type { Logger } from '@bff/platform/logging';
+import { createLogger, createRequestLogger } from '@bff/platform/logging';
 import { trpcResponseMeta } from '@bff/trpc/cache';
 import { createContextFactory } from '@bff/trpc/context';
 import { createAppRouter } from '@bff/trpc/router';

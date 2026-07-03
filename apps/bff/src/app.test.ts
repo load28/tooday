@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '@bff/app';
-import { InMemorySessionStore, InMemoryUserStore } from '@bff/auth/adapters/memory';
-import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/auth/session-cookie';
-import type { BffConfig } from '@bff/config';
+import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
+import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
+import type { BffConfig } from '@bff/platform/config';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import { authResponseSchema, meResponseSchema, TRPC_ENDPOINT } from '@tooday/shared';
 import { z } from 'zod';
