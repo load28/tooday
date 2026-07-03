@@ -12,3 +12,4 @@ export { Section } from '@/shared/ui/section';
 export { HStack, Spacer, Stack } from '@/shared/ui/stack';
 export { Surface } from '@/shared/ui/surface';
 export { Text } from '@/shared/ui/text';
+export { TextField } from '@/shared/ui/text-field';
