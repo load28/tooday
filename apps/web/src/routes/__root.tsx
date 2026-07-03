@@ -24,6 +24,14 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       },
     ],
     links: [
+      // Pretendard는 CSS @import 대신 link로 로드한다 — panda가 생성 규칙을
+      // global.css에 주입하면 @import가 선두 규칙이 아니게 되어 무시된다.
+      { rel: 'preconnect', href: 'https://cdn.jsdelivr.net', crossOrigin: '' },
+      {
+        rel: 'stylesheet',
+        crossOrigin: '',
+        href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
+      },
       {
         rel: 'stylesheet',
         href: globalCss,
