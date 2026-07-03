@@ -1,6 +1,7 @@
 import type { User } from '@tooday/shared';
 import { DomainError } from '../../errors';
 import type { CreateUserInput, Session, SessionStore, UserStore } from '../ports';
+import { generateSessionToken } from '../session-token';
 
 interface UserRecord extends User {
   passwordHash: string;
@@ -44,11 +45,6 @@ export class InMemoryUserStore implements UserStore {
   }
 }
 
-function generateToken(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
 export class InMemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, Session>();
 
@@ -56,7 +52,7 @@ export class InMemorySessionStore implements SessionStore {
 
   async create(userId: string): Promise<Session> {
     const session: Session = {
-      token: generateToken(),
+      token: generateSessionToken(),
       userId,
       expiresAt: Date.now() + this.ttlMs,
     };
