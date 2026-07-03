@@ -49,6 +49,24 @@ export const guideStyles: Record<string, CSSProperties> = {
     gap: 12,
   },
   typeLabel: { fontSize: 12, color: TOKENS.color.textTertiary, fontWeight: 600 },
+
+  field: { display: 'flex', flexDirection: 'column', gap: 8 },
+  fieldLabel: { fontSize: 13, fontWeight: 700, color: TOKENS.color.textSecondary },
+  fieldCaption: { fontSize: 12, fontWeight: 500, color: TOKENS.color.textTertiary },
+  input: {
+    width: '100%',
+    height: 56,
+    padding: '0 16px',
+    border: '1.5px solid transparent',
+    borderRadius: 14,
+    background: TOKENS.color.surfaceSoft,
+    fontFamily: 'inherit',
+    fontSize: 16,
+    fontWeight: 500,
+    letterSpacing: '-0.01em',
+    color: TOKENS.color.textPrimary,
+    outline: 'none',
+  },
 };
 
 const COLORS: { label: string; val: string }[] = [
@@ -168,6 +186,49 @@ export function GuidePage() {
           >
             취소
           </button>
+        </div>
+      </section>
+
+      <section style={guideStyles.block}>
+        <header style={guideStyles.blockHead}>
+          <h2 style={guideStyles.blockTitle}>Input · Field</h2>
+          <p style={guideStyles.blockCaption}>소프트 필 배경 · 포커스 시 흰 배경 + 프라이머리 보더 · 높이 56(폼) / 40(기본).</p>
+        </header>
+        <div style={{ ...guideStyles.card, display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={guideStyles.field}>
+            <span style={guideStyles.fieldLabel}>기본</span>
+            <input style={guideStyles.input} placeholder="you@example.com" readOnly />
+          </div>
+          <div style={guideStyles.field}>
+            <span style={guideStyles.fieldLabel}>포커스</span>
+            <input
+              style={{ ...guideStyles.input, background: TOKENS.color.surface, borderColor: TOKENS.color.primary }}
+              defaultValue="demo@tooday.app"
+              readOnly
+            />
+          </div>
+          <div style={guideStyles.field}>
+            <span style={guideStyles.fieldLabel}>에러</span>
+            <input
+              style={{ ...guideStyles.input, borderColor: TOKENS.color.danger }}
+              type="password"
+              defaultValue="password"
+              readOnly
+            />
+            <span style={{ ...guideStyles.fieldCaption, color: TOKENS.color.danger }}>
+              이메일 또는 비밀번호가 올바르지 않습니다.
+            </span>
+          </div>
+          <div style={guideStyles.field}>
+            <span style={guideStyles.fieldLabel}>헬퍼 · 넘버 (높이 40)</span>
+            <input
+              style={{ ...guideStyles.input, height: 40, fontFeatureSettings: '"tnum" 1' }}
+              type="number"
+              defaultValue={30}
+              readOnly
+            />
+            <span style={guideStyles.fieldCaption}>10분 단위로 입력해 주세요.</span>
+          </div>
         </div>
       </section>
 
