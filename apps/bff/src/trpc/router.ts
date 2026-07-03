@@ -1,5 +1,4 @@
-import type { SessionStore } from '../auth/session-store';
-import type { UserStore } from '../auth/user-store';
+import type { SessionStore, UserStore } from '../auth/ports';
 import { router } from './init';
 import { createAuthRouter } from './routers/auth';
 import { pubRouter } from './routers/pub';

@@ -1,34 +1,61 @@
-// 성공한 pub.* 쿼리만 public 캐시. 뮤테이션, 에러, pub 외 경로가 섞인 배치는 전부 no-store.
-const CACHEABLE_PREFIX = 'pub.';
+const CACHEABLE_PATH_PREFIX = 'pub.';
 
-export const CACHE_CONTROL = {
-  private: 'private, no-store',
-  publicDefault: 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
-} as const;
+export const PRIVATE_CACHE_CONTROL = 'private, no-store';
 
-export const CACHE_CONTROL_BY_PATH: Record<string, string> = {
-  'pub.appConfig': 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600',
+export interface PublicCacheDirectives {
+  maxAge: number;
+  sMaxAge: number;
+  staleWhileRevalidate: number;
+}
+
+export const DEFAULT_PUBLIC_CACHE_DIRECTIVES: PublicCacheDirectives = {
+  maxAge: 60,
+  sMaxAge: 300,
+  staleWhileRevalidate: 600,
 };
 
-interface ResponseMetaInput {
+export const CACHE_DIRECTIVES_BY_PATH = {
+  'pub.appConfig': { maxAge: 300, sMaxAge: 600, staleWhileRevalidate: 3600 },
+} as const satisfies Record<string, PublicCacheDirectives>;
+
+type CacheablePath = keyof typeof CACHE_DIRECTIVES_BY_PATH;
+
+export function serializePublicCacheControl({ maxAge, sMaxAge, staleWhileRevalidate }: PublicCacheDirectives): string {
+  return `public, max-age=${maxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`;
+}
+
+function isCacheablePath(path: string): path is CacheablePath {
+  return path in CACHE_DIRECTIVES_BY_PATH;
+}
+
+export interface ResponseMetaInput {
   paths?: readonly string[];
   type: string;
   errors: readonly unknown[];
 }
 
-export function trpcResponseMeta({ paths, type, errors }: ResponseMetaInput) {
+/**
+ * 캐시 정책: 성공한 pub.* 쿼리만 public 캐시.
+ * 뮤테이션, 에러, 경로 없음, pub 외 경로가 섞인 배치는 전부 private, no-store.
+ */
+export function resolveCacheControl({ paths, type, errors }: ResponseMetaInput): string {
   const cacheable =
     type === 'query' &&
     errors.length === 0 &&
     !!paths &&
     paths.length > 0 &&
-    paths.every((path) => path.startsWith(CACHEABLE_PREFIX));
+    paths.every((path) => path.startsWith(CACHEABLE_PATH_PREFIX));
 
-  if (!cacheable) {
-    return { headers: { 'cache-control': CACHE_CONTROL.private } };
-  }
+  if (!cacheable) return PRIVATE_CACHE_CONTROL;
 
   const singlePath = paths.length === 1 ? paths[0] : undefined;
-  const cacheControl = (singlePath !== undefined ? CACHE_CONTROL_BY_PATH[singlePath] : undefined) ?? CACHE_CONTROL.publicDefault;
-  return { headers: { 'cache-control': cacheControl } };
+  const directives =
+    singlePath !== undefined && isCacheablePath(singlePath)
+      ? CACHE_DIRECTIVES_BY_PATH[singlePath]
+      : DEFAULT_PUBLIC_CACHE_DIRECTIVES;
+  return serializePublicCacheControl(directives);
+}
+
+export function trpcResponseMeta(input: ResponseMetaInput) {
+  return { headers: { 'cache-control': resolveCacheControl(input) } };
 }

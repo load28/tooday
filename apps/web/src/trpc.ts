@@ -16,7 +16,8 @@ export interface RouterAppContext {
 export function createTrpc(): RouterAppContext {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false, staleTime: 30_000 },
+      // stale 관리 안 함: 항상 서버에서 최신을 가져오고(staleTime 0), 사용이 끝나면 즉시 버린다(gcTime 0)
+      queries: { retry: false, staleTime: 0, gcTime: 0 },
     },
   });
 

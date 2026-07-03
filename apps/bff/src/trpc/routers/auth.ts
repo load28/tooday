@@ -1,9 +1,7 @@
 import type { AuthResponse } from '@tooday/shared';
 import { loginRequestSchema, signupRequestSchema } from '@tooday/shared';
-import { TRPCError } from '@trpc/server';
-import type { SessionStore } from '../../auth/session-store';
-import type { UserStore } from '../../auth/user-store';
-import { DuplicateEmailError } from '../../auth/user-store';
+import type { SessionStore, UserStore } from '../../auth/ports';
+import { DomainError } from '../../errors';
 import { protectedProcedure, publicProcedure, router } from '../init';
 
 export interface AuthRouterDeps {
@@ -14,31 +12,24 @@ export interface AuthRouterDeps {
 export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
   return router({
     signup: publicProcedure.input(signupRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
-      try {
-        const user = await users.create(input);
-        const session = sessions.create(user.id);
-        ctx.setSessionCookie(session.token);
-        return { user, token: session.token };
-      } catch (error) {
-        if (error instanceof DuplicateEmailError) {
-          throw new TRPCError({ code: 'CONFLICT', message: '이미 가입된 이메일입니다.' });
-        }
-        throw error;
-      }
+      const user = await users.create(input);
+      const session = await sessions.create(user.id);
+      ctx.setSessionCookie(session.token);
+      return { user, token: session.token };
     }),
 
     login: publicProcedure.input(loginRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
       const user = await users.verifyCredentials(input);
       if (!user) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+        throw new DomainError('INVALID_CREDENTIALS');
       }
-      const session = sessions.create(user.id);
+      const session = await sessions.create(user.id);
       ctx.setSessionCookie(session.token);
       return { user, token: session.token };
     }),
 
-    logout: protectedProcedure.mutation(({ ctx }) => {
-      sessions.revoke(ctx.sessionToken);
+    logout: protectedProcedure.mutation(async ({ ctx }) => {
+      await sessions.revoke(ctx.sessionToken);
       ctx.clearSessionCookie();
       return { ok: true };
     }),

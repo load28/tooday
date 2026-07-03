@@ -1,6 +1,5 @@
 import { createApp } from './app';
-import { InMemorySessionStore } from './auth/session-store';
-import { InMemoryUserStore } from './auth/user-store';
+import { InMemorySessionStore, InMemoryUserStore } from './auth/adapters/memory';
 import { loadConfig } from './config';
 
 const config = loadConfig();

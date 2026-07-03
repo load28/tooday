@@ -2,8 +2,8 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import type { ReactNode } from 'react';
-import globalCss from '../global.css?url';
-import type { RouterAppContext } from '../trpc';
+import globalCss from '@/global.css?url';
+import type { RouterAppContext } from '@/trpc.ts';
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
