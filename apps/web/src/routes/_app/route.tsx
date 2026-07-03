@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { fetchSessionUser } from '@/trpc.ts';
+import { fetchSessionUser } from '@/app/trpc.ts';
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context }) => {

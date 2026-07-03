@@ -1,5 +1,5 @@
-import type { DomainErrorCode } from '@bff/errors';
-import { DOMAIN_ERROR_CODES, DomainError, findDomainError } from '@bff/errors';
+import type { DomainErrorCode } from '@bff/platform/errors';
+import { DOMAIN_ERROR_CODES, DomainError, findDomainError } from '@bff/platform/errors';
 import type { TrpcContext } from '@bff/trpc/context';
 import { initTRPC, TRPCError } from '@trpc/server';
 

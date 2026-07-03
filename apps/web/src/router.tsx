@@ -1,7 +1,7 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
+import { createTrpc } from '@/app/trpc.ts';
 import { routeTree } from '@/routeTree.gen.ts';
-import { createTrpc } from '@/trpc.ts';
 
 function NotFound() {
   return (

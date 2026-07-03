@@ -2,8 +2,8 @@ import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import type { ReactNode } from 'react';
 import { css } from 'styled-system/css';
-import { Stack } from '@/components/ui/stack';
-import { Text } from '@/components/ui/text';
+import { Stack } from '@/shared/ui/stack';
+import { Text } from '@/shared/ui/text';
 
 const positionerCls = css({
   position: 'fixed',
