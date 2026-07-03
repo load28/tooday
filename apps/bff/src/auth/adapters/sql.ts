@@ -1,9 +1,9 @@
+import type { CreateUserInput, Session, SessionStore, UserStore } from '@bff/auth/ports';
+import { generateSessionToken } from '@bff/auth/session-token';
+import type { DatabaseSchema } from '@bff/db/schema';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
 import type { User } from '@tooday/shared';
 import type { Kysely } from 'kysely';
-import type { DatabaseSchema } from '../../db/schema';
-import { DomainError } from '../../errors';
-import type { CreateUserInput, Session, SessionStore, UserStore } from '../ports';
-import { generateSessionToken } from '../session-token';
 
 export class SqlUserStore implements UserStore {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
@@ -12,7 +12,7 @@ export class SqlUserStore implements UserStore {
     const normalizedEmail = email.trim().toLowerCase();
     const existing = await this.db.selectFrom('users').select('id').where('email', '=', normalizedEmail).executeTakeFirst();
     if (existing) {
-      throw new DomainError('EMAIL_TAKEN');
+      throw new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN);
     }
     const user: User = { id: crypto.randomUUID(), email: normalizedEmail, name };
     await this.db

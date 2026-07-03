@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'bun:test';
+import type { CacheablePath } from '@bff/trpc/cache';
 import {
   CACHE_DIRECTIVES_BY_PATH,
   DEFAULT_PUBLIC_CACHE_DIRECTIVES,
+  isPubliclyCacheable,
   PRIVATE_CACHE_CONTROL,
   resolveCacheControl,
   serializePublicCacheControl,
-} from './cache';
+} from '@bff/trpc/cache';
+
+const APP_CONFIG_PATH = 'pub.appConfig' satisfies CacheablePath;
+const PRIVATE_PATH = 'user.me';
+const UNLISTED_PUB_PATH = 'pub.unlisted';
 
 describe('serializePublicCacheControl', () => {
   it('디렉티브를 표준 Cache-Control 문자열로 직렬화한다', () => {
@@ -14,40 +20,39 @@ describe('serializePublicCacheControl', () => {
   });
 });
 
-describe('resolveCacheControl', () => {
-  it('뮤테이션은 캐시하지 않는다', () => {
-    expect(resolveCacheControl({ paths: ['pub.appConfig'], type: 'mutation', errors: [] })).toBe(PRIVATE_CACHE_CONTROL);
+describe('isPubliclyCacheable', () => {
+  it('성공한 pub.* 쿼리만 캐시 대상이다', () => {
+    expect(isPubliclyCacheable({ paths: [APP_CONFIG_PATH], type: 'query', errors: [] })).toBe(true);
+    expect(isPubliclyCacheable({ paths: [APP_CONFIG_PATH], type: 'mutation', errors: [] })).toBe(false);
+    expect(isPubliclyCacheable({ paths: [APP_CONFIG_PATH], type: 'query', errors: [new Error('boom')] })).toBe(false);
+    expect(isPubliclyCacheable({ paths: undefined, type: 'query', errors: [] })).toBe(false);
+    expect(isPubliclyCacheable({ paths: [], type: 'query', errors: [] })).toBe(false);
+    expect(isPubliclyCacheable({ paths: [APP_CONFIG_PATH, PRIVATE_PATH], type: 'query', errors: [] })).toBe(false);
   });
+});
 
-  it('에러가 있으면 캐시하지 않는다', () => {
-    expect(resolveCacheControl({ paths: ['pub.appConfig'], type: 'query', errors: [new Error('boom')] })).toBe(
+describe('resolveCacheControl', () => {
+  it('캐시 대상이 아니면 private, no-store를 반환한다', () => {
+    expect(resolveCacheControl({ paths: [APP_CONFIG_PATH], type: 'mutation', errors: [] })).toBe(PRIVATE_CACHE_CONTROL);
+    expect(resolveCacheControl({ paths: [APP_CONFIG_PATH, PRIVATE_PATH], type: 'query', errors: [] })).toBe(
       PRIVATE_CACHE_CONTROL,
     );
   });
 
-  it('경로가 없으면 캐시하지 않는다', () => {
-    expect(resolveCacheControl({ paths: undefined, type: 'query', errors: [] })).toBe(PRIVATE_CACHE_CONTROL);
-    expect(resolveCacheControl({ paths: [], type: 'query', errors: [] })).toBe(PRIVATE_CACHE_CONTROL);
-  });
-
-  it('pub 외 경로가 섞인 배치는 캐시하지 않는다', () => {
-    expect(resolveCacheControl({ paths: ['pub.appConfig', 'user.me'], type: 'query', errors: [] })).toBe(PRIVATE_CACHE_CONTROL);
-  });
-
   it('단일 pub 경로는 경로별 디렉티브를 사용한다', () => {
-    expect(resolveCacheControl({ paths: ['pub.appConfig'], type: 'query', errors: [] })).toBe(
-      serializePublicCacheControl(CACHE_DIRECTIVES_BY_PATH['pub.appConfig']),
+    expect(resolveCacheControl({ paths: [APP_CONFIG_PATH], type: 'query', errors: [] })).toBe(
+      serializePublicCacheControl(CACHE_DIRECTIVES_BY_PATH[APP_CONFIG_PATH]),
     );
   });
 
   it('디렉티브가 정의되지 않은 pub 경로는 기본 디렉티브를 사용한다', () => {
-    expect(resolveCacheControl({ paths: ['pub.unknown'], type: 'query', errors: [] })).toBe(
+    expect(resolveCacheControl({ paths: [UNLISTED_PUB_PATH], type: 'query', errors: [] })).toBe(
       serializePublicCacheControl(DEFAULT_PUBLIC_CACHE_DIRECTIVES),
     );
   });
 
   it('pub 경로만으로 구성된 배치는 기본 디렉티브를 사용한다', () => {
-    expect(resolveCacheControl({ paths: ['pub.appConfig', 'pub.unknown'], type: 'query', errors: [] })).toBe(
+    expect(resolveCacheControl({ paths: [APP_CONFIG_PATH, UNLISTED_PUB_PATH], type: 'query', errors: [] })).toBe(
       serializePublicCacheControl(DEFAULT_PUBLIC_CACHE_DIRECTIVES),
     );
   });

@@ -1,9 +1,9 @@
-import { createApp } from './app';
-import { SqlSessionStore, SqlUserStore } from './auth/adapters/sql';
-import { loadConfig } from './config';
-import { migrate } from './db/migrate';
-import { createSqliteDatabase } from './db/sqlite';
-import { createLogger } from './logging';
+import { createApp } from '@bff/app';
+import { SqlSessionStore, SqlUserStore } from '@bff/auth/adapters/sql';
+import { loadConfig } from '@bff/config';
+import { migrate } from '@bff/db/migrate';
+import { createSqliteDatabase } from '@bff/db/sqlite';
+import { createLogger } from '@bff/logging';
 
 const config = loadConfig();
 const logger = createLogger(config.logFormat);
@@ -19,8 +19,8 @@ const app = createApp({
   logger,
 });
 
-export type { AppType } from './app';
-export type { AppRouter } from './trpc/router';
+export type { AppType } from '@bff/app';
+export type { AppRouter } from '@bff/trpc/router';
 
 export default {
   port: config.port,

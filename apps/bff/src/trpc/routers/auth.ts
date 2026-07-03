@@ -1,8 +1,8 @@
+import type { SessionStore, UserStore } from '@bff/auth/ports';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
+import { protectedProcedure, publicProcedure, router } from '@bff/trpc/init';
 import type { AuthResponse } from '@tooday/shared';
 import { loginRequestSchema, signupRequestSchema } from '@tooday/shared';
-import type { SessionStore, UserStore } from '../../auth/ports';
-import { DomainError } from '../../errors';
-import { protectedProcedure, publicProcedure, router } from '../init';
 
 export interface AuthRouterDeps {
   users: UserStore;
@@ -21,7 +21,7 @@ export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
     login: publicProcedure.input(loginRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
       const user = await users.verifyCredentials(input);
       if (!user) {
-        throw new DomainError('INVALID_CREDENTIALS');
+        throw new DomainError(DOMAIN_ERROR_CODES.INVALID_CREDENTIALS);
       }
       const session = await sessions.create(user.id);
       ctx.setSessionCookie(session.token);

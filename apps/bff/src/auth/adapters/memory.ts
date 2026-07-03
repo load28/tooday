@@ -1,7 +1,7 @@
+import type { CreateUserInput, Session, SessionStore, UserStore } from '@bff/auth/ports';
+import { generateSessionToken } from '@bff/auth/session-token';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/errors';
 import type { User } from '@tooday/shared';
-import { DomainError } from '../../errors';
-import type { CreateUserInput, Session, SessionStore, UserStore } from '../ports';
-import { generateSessionToken } from '../session-token';
 
 interface UserRecord extends User {
   passwordHash: string;
@@ -18,7 +18,7 @@ export class InMemoryUserStore implements UserStore {
   async create({ email, password, name }: CreateUserInput): Promise<User> {
     const normalizedEmail = email.trim().toLowerCase();
     if (this.idByEmail.has(normalizedEmail)) {
-      throw new DomainError('EMAIL_TAKEN');
+      throw new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN);
     }
     const record: UserRecord = {
       id: crypto.randomUUID(),
