@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { css } from 'styled-system/css';
-import { Stack } from './stack';
-import { Text } from './text';
+import { Stack } from '@/components/ui/stack';
+import { Text } from '@/components/ui/text';
 
 type SectionProps = {
   title?: ReactNode;

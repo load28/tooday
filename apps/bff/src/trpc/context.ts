@@ -1,10 +1,9 @@
 import type { User } from '@tooday/shared';
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import type { Context as HonoContext } from 'hono';
+import type { SessionStore, UserStore } from '../auth/ports';
 import { serializeSessionCookie, serializeSessionCookieRemoval } from '../auth/session-cookie';
-import type { SessionStore } from '../auth/session-store';
 import { extractSessionToken } from '../auth/token';
-import type { UserStore } from '../auth/user-store';
 import type { BffConfig } from '../config';
 
 export type TrpcContext = {
@@ -22,10 +21,10 @@ export interface TrpcContextDeps {
 }
 
 export function createContextFactory({ config, sessions, users }: TrpcContextDeps) {
-  return (opts: FetchCreateContextFnOptions, c: HonoContext): TrpcContext => {
+  return async (opts: FetchCreateContextFnOptions, c: HonoContext): Promise<TrpcContext> => {
     const sessionToken = extractSessionToken({ c, cookieName: config.cookieName });
-    const session = sessionToken ? sessions.get(sessionToken) : null;
-    const user = session ? users.findById(session.userId) : null;
+    const session = sessionToken ? await sessions.get(sessionToken) : null;
+    const user = session ? await users.findById(session.userId) : null;
 
     return {
       user,

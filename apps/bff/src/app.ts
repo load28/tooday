@@ -2,13 +2,14 @@ import { trpcServer } from '@hono/trpc-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import type { SessionStore } from './auth/session-store';
-import type { UserStore } from './auth/user-store';
+import type { SessionStore, UserStore } from './auth/ports';
 import type { BffConfig } from './config';
 import { errorResponse } from './http';
 import { trpcResponseMeta } from './trpc/cache';
 import { createContextFactory } from './trpc/context';
 import { createAppRouter } from './trpc/router';
+
+export const TRPC_ENDPOINT = '/trpc';
 
 export interface AppDeps {
   config: BffConfig;
@@ -40,8 +41,9 @@ export function createApp(deps: AppDeps) {
   });
 
   app.use(
-    '/trpc/*',
+    `${TRPC_ENDPOINT}/*`,
     trpcServer({
+      endpoint: TRPC_ENDPOINT,
       router: createAppRouter(deps),
       createContext: createContextFactory(deps),
       responseMeta: trpcResponseMeta,

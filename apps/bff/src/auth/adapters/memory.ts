@@ -1,26 +1,9 @@
 import type { User } from '@tooday/shared';
+import { DomainError } from '../../errors';
+import type { CreateUserInput, Session, SessionStore, UserStore } from '../ports';
 
 interface UserRecord extends User {
   passwordHash: string;
-}
-
-export interface CreateUserInput {
-  email: string;
-  password: string;
-  name: string;
-}
-
-export interface UserStore {
-  create(input: CreateUserInput): Promise<User>;
-  verifyCredentials(input: { email: string; password: string }): Promise<User | null>;
-  findById(id: string): User | null;
-}
-
-export class DuplicateEmailError extends Error {
-  constructor(email: string) {
-    super(`이미 가입된 이메일입니다: ${email}`);
-    this.name = 'DuplicateEmailError';
-  }
 }
 
 function toUser({ id, email, name }: UserRecord): User {
@@ -34,7 +17,7 @@ export class InMemoryUserStore implements UserStore {
   async create({ email, password, name }: CreateUserInput): Promise<User> {
     const normalizedEmail = email.trim().toLowerCase();
     if (this.idByEmail.has(normalizedEmail)) {
-      throw new DuplicateEmailError(normalizedEmail);
+      throw new DomainError('EMAIL_TAKEN');
     }
     const record: UserRecord = {
       id: crypto.randomUUID(),
@@ -55,8 +38,43 @@ export class InMemoryUserStore implements UserStore {
     return valid ? toUser(record) : null;
   }
 
-  findById(id: string): User | null {
+  async findById(id: string): Promise<User | null> {
     const record = this.byId.get(id);
     return record ? toUser(record) : null;
+  }
+}
+
+function generateToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export class InMemorySessionStore implements SessionStore {
+  private readonly sessions = new Map<string, Session>();
+
+  constructor(private readonly ttlMs: number) {}
+
+  async create(userId: string): Promise<Session> {
+    const session: Session = {
+      token: generateToken(),
+      userId,
+      expiresAt: Date.now() + this.ttlMs,
+    };
+    this.sessions.set(session.token, session);
+    return session;
+  }
+
+  async get(token: string): Promise<Session | null> {
+    const session = this.sessions.get(token);
+    if (!session) return null;
+    if (session.expiresAt <= Date.now()) {
+      this.sessions.delete(token);
+      return null;
+    }
+    return session;
+  }
+
+  async revoke(token: string): Promise<void> {
+    this.sessions.delete(token);
   }
 }
