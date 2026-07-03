@@ -12,7 +12,7 @@ export interface CreateUserInput {
 
 export interface UserStore {
   create(input: CreateUserInput): Promise<User>;
-  verifyCredentials(email: string, password: string): Promise<User | null>;
+  verifyCredentials(input: { email: string; password: string }): Promise<User | null>;
   findById(id: string): User | null;
 }
 
@@ -47,7 +47,7 @@ export class InMemoryUserStore implements UserStore {
     return toUser(record);
   }
 
-  async verifyCredentials(email: string, password: string): Promise<User | null> {
+  async verifyCredentials({ email, password }: { email: string; password: string }): Promise<User | null> {
     const id = this.idByEmail.get(email.trim().toLowerCase());
     const record = id ? this.byId.get(id) : undefined;
     if (!record) return null;

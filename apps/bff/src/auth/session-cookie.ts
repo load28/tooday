@@ -9,7 +9,7 @@ export const SESSION_COOKIE_ATTRIBUTES = {
   path: '/',
 } as const;
 
-export function serializeSessionCookie(config: BffConfig, token: string): string {
+export function serializeSessionCookie({ config, token }: { config: BffConfig; token: string }): string {
   return serialize(config.cookieName, token, {
     ...SESSION_COOKIE_ATTRIBUTES,
     secure: config.cookieSecure,

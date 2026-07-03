@@ -23,7 +23,7 @@ export interface TrpcContextDeps {
 
 export function createContextFactory({ config, sessions, users }: TrpcContextDeps) {
   return (opts: FetchCreateContextFnOptions, c: HonoContext): TrpcContext => {
-    const sessionToken = extractSessionToken(c, config.cookieName);
+    const sessionToken = extractSessionToken({ c, cookieName: config.cookieName });
     const session = sessionToken ? sessions.get(sessionToken) : null;
     const user = session ? users.findById(session.userId) : null;
 
@@ -31,7 +31,7 @@ export function createContextFactory({ config, sessions, users }: TrpcContextDep
       user,
       sessionToken,
       setSessionCookie: (token) => {
-        opts.resHeaders.append('set-cookie', serializeSessionCookie(config, token));
+        opts.resHeaders.append('set-cookie', serializeSessionCookie({ config, token }));
       },
       clearSessionCookie: () => {
         opts.resHeaders.append('set-cookie', serializeSessionCookieRemoval(config));
