@@ -1,6 +1,7 @@
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?url';
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
 import type { RouterAppContext } from '@/app/trpc.ts';
@@ -24,13 +25,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       },
     ],
     links: [
-      // Pretendard는 CSS @import 대신 link로 로드한다 — panda가 생성 규칙을
-      // global.css에 주입하면 @import가 선두 규칙이 아니게 되어 무시된다.
-      { rel: 'preconnect', href: 'https://cdn.jsdelivr.net', crossOrigin: '' },
+      // Pretendard는 CDN 대신 pretendard 패키지를 번들해 자체 오리진에서 서빙한다.
+      // global.css의 @import로 두면 panda가 생성 규칙을 주입해 @import가
+      // 선두 규칙이 아니게 되어 무시되므로 link로 분리해 로드한다.
       {
         rel: 'stylesheet',
-        crossOrigin: '',
-        href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
+        href: pretendardCss,
       },
       {
         rel: 'stylesheet',

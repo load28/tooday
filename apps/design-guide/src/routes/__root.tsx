@@ -1,6 +1,7 @@
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?url';
 import type { ReactNode } from 'react';
 import globalCss from '../global.css?url';
 
@@ -16,12 +17,8 @@ export const Route = createRootRoute({
       { title: 'TooDay · Design Guide' },
     ],
     links: [
-      { rel: 'preconnect', href: 'https://cdn.jsdelivr.net', crossOrigin: '' },
-      {
-        rel: 'stylesheet',
-        crossOrigin: '',
-        href: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
-      },
+      // Pretendard는 CDN 대신 pretendard 패키지를 번들해 자체 오리진에서 서빙한다
+      { rel: 'stylesheet', href: pretendardCss },
       { rel: 'stylesheet', href: globalCss },
     ],
   }),
