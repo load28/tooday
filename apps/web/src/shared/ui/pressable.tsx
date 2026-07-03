@@ -69,6 +69,7 @@ const pressableRecipe = cva({
       sm: { height: 'controlSm', paddingX: 'xl', textStyle: 'bodySm' },
       md: { height: 'tap', paddingX: '2xl', textStyle: 'body' },
       lg: { height: 'tapLg', paddingX: '3xl', textStyle: 'bodyLg' },
+      xl: { height: 'tapXl', paddingX: '3xl', textStyle: 'bodyLgStrong' },
       icon: { height: 'tap', width: 'tap', paddingX: '0' },
       iconLg: { height: 'tapLg', width: 'tapLg', paddingX: '0' },
     },
