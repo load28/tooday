@@ -1,9 +1,9 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { loginRequestSchema } from '@tooday/shared';
+import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
-import { firstErrorMessage, hasTrpcErrorCode, SERVER_ERROR_MESSAGES, TRPC_ERROR_CODES } from '@/shared/form';
+import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
@@ -20,6 +20,11 @@ const formCls = css({
 });
 
 const submitCls = css({ width: '100%' });
+
+const messages = {
+  email: '이메일을 입력해 주세요.',
+  password: '비밀번호를 입력해 주세요.',
+} satisfies FormMessages<LoginRequest>;
 
 const signupLinkCls = css({
   textStyle: 'bodyStrong',
@@ -53,9 +58,9 @@ export function LoginScreen() {
           return undefined;
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
-            return { fields: { password: SERVER_ERROR_MESSAGES.invalidCredentials } };
+            return { fields: { password: '이메일 또는 비밀번호가 올바르지 않습니다.' } };
           }
-          return { form: error instanceof Error ? error.message : SERVER_ERROR_MESSAGES.fallback };
+          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
         }
       },
     },
@@ -100,7 +105,7 @@ export function LoginScreen() {
                 onBlur={field.handleBlur}
                 // trim: 자동완성이 붙이는 앞뒤 공백 제거
                 onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
-                error={firstErrorMessage(field.state.meta.errors)}
+                error={fieldErrorMessage(field.state.meta.errors, messages.email)}
               />
             )}
           </form.Field>
@@ -116,7 +121,7 @@ export function LoginScreen() {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
-                error={firstErrorMessage(field.state.meta.errors)}
+                error={fieldErrorMessage(field.state.meta.errors, messages.password)}
               />
             )}
           </form.Field>
