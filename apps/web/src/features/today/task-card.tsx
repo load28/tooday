@@ -4,11 +4,11 @@ import { getProject, PROJECT_COLOR, type Task } from '@/features/today/mock';
 import { useT } from '@/shared/i18n';
 import { Card, Dot, HStack, Text } from '@/shared/ui';
 
+// 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
 const cardCls = css({
   display: 'flex',
   alignItems: 'flex-start',
   gap: 'xl',
-  padding: '14px 16px',
 });
 
 const bodyCls = css({
@@ -71,7 +71,7 @@ export function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
   const isDone = task.status === 'done';
 
   return (
-    <Card selected={task.status === 'doing'} className={cardCls}>
+    <Card padding="md" selected={task.status === 'doing'} className={cardCls}>
       <button type="button" onClick={onClick} className={bodyCls}>
         <Text as="h3" variant="subtitle" tone={isDone ? 'tertiary' : 'default'} truncate className={cx(isDone && titleDoneCls)}>
           {task.title}

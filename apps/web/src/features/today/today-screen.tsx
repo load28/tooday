@@ -12,9 +12,9 @@ import { AppBar, Card, Pressable, Screen, Section, Stack, TabBar, Text } from '@
 
 const pageCls = css({ paddingBottom: '4xl' });
 
+// 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
 const heroCls = css({
   margin: '4px 16px 16px',
-  padding: '20px 22px 22px',
   display: 'flex',
   flexDirection: 'column',
   gap: 'xl',
@@ -120,7 +120,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
       }
     >
       <div className={pageCls}>
-        <Card radius="2xl" className={heroCls}>
+        <Card radius="2xl" padding="lg" className={heroCls}>
           <Stack gap="xs">
             <Text variant="label" tone="brand">
               {day.isToday ? format(t.today.hero.today, { date: day.label }) : day.label}
