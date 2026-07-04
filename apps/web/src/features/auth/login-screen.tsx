@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { css } from 'styled-system/css';
-import { HStack, Pressable, Screen, Stack, Text, TextField } from '@/shared/ui';
+import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
   display: 'flex',
@@ -105,9 +105,9 @@ export function LoginScreen() {
         </Stack>
 
         <Stack gap="2xl">
-          <Pressable type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit} loading={login.isPending}>
+          <Button type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit} loading={login.isPending}>
             로그인
-          </Pressable>
+          </Button>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
               아직 계정이 없나요?
