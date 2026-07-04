@@ -56,12 +56,11 @@ export function SignupScreen() {
       onSubmitAsync: async ({ value }) => {
         try {
           await signup.mutateAsync(value);
-          return undefined;
         } catch (error) {
+          // 예측되지 않은 에러의 메시지는 사용자에게 렌더링하지 않는다
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
             return { fields: { email: '이미 가입된 이메일입니다.' } };
           }
-          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
         }
       },
     },
@@ -157,15 +156,6 @@ export function SignupScreen() {
                 가입하기
               </Button>
             )}
-          </form.Subscribe>
-          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
-            {(formError) =>
-              typeof formError === 'string' ? (
-                <Text variant="bodySm" tone="danger" align="center">
-                  {formError}
-                </Text>
-              ) : null
-            }
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
