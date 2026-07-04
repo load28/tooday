@@ -8,31 +8,46 @@ import type {
 } from '@bff/modules/task/ports';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { newId } from '@bff/platform/ids';
+import { orderKeyAfter } from '@bff/platform/ordering';
 import type { Project, Task } from '@tooday/shared';
 
 interface ProjectRecord extends Project {
   userId: string;
+  position: string;
 }
 
 interface TaskRecord extends Task {
   userId: string;
+  position: string;
 }
 
 function toProject({ id, name, color }: ProjectRecord): Project {
   return { id, name, color };
 }
 
-function toTask({ userId: _userId, ...task }: TaskRecord): Task {
+function toTask({ userId: _userId, position: _position, ...task }: TaskRecord): Task {
   return task;
+}
+
+function byPosition(a: { position: string; id: string }, b: { position: string; id: string }): number {
+  return a.position < b.position ? -1 : a.position > b.position ? 1 : a.id < b.id ? -1 : 1;
 }
 
 export class InMemoryProjectStore implements ProjectStore {
   private readonly byId = new Map<string, ProjectRecord>();
 
+  private lastPosition(userId: string): string | null {
+    let last: string | null = null;
+    for (const record of this.byId.values()) {
+      if (record.userId === userId && (last === null || record.position > last)) last = record.position;
+    }
+    return last;
+  }
+
   async listByUser(userId: string): Promise<Project[]> {
     return [...this.byId.values()]
       .filter((record) => record.userId === userId)
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort(byPosition)
       .map(toProject);
   }
 
@@ -42,7 +57,7 @@ export class InMemoryProjectStore implements ProjectStore {
   }
 
   async create({ userId, name, color }: CreateProjectInput): Promise<Project> {
-    const record: ProjectRecord = { id: newId(), userId, name, color };
+    const record: ProjectRecord = { id: newId(), userId, name, color, position: orderKeyAfter(this.lastPosition(userId)) };
     this.byId.set(record.id, record);
     return toProject(record);
   }
@@ -58,6 +73,14 @@ export class InMemoryTaskStore implements TaskStore {
       .map(toTask);
   }
 
+  private lastPosition(userId: string): string | null {
+    let last: string | null = null;
+    for (const record of this.byId.values()) {
+      if (record.userId === userId && (last === null || record.position > last)) last = record.position;
+    }
+    return last;
+  }
+
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
     const record: TaskRecord = {
       id: newId(),
@@ -69,6 +92,7 @@ export class InMemoryTaskStore implements TaskStore {
       durationMin,
       status: 'todo',
       version: 1,
+      position: orderKeyAfter(this.lastPosition(userId)),
     };
     this.byId.set(record.id, record);
     return toTask(record);

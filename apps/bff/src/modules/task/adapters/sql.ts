@@ -9,6 +9,7 @@ import type {
 import type { DatabaseSchema } from '@bff/platform/db/schema';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { newId } from '@bff/platform/ids';
+import { orderKeyAfter } from '@bff/platform/ordering';
 import type { Project, Task } from '@tooday/shared';
 import type { Kysely } from 'kysely';
 
@@ -47,7 +48,7 @@ export class SqlProjectStore implements ProjectStore {
       .select(['id', 'name', 'color'])
       .where('user_id', '=', userId)
       .orderBy('position')
-      .orderBy('name')
+      .orderBy('id')
       .execute();
   }
 
@@ -62,10 +63,17 @@ export class SqlProjectStore implements ProjectStore {
   }
 
   async create({ userId, name, color }: CreateProjectInput): Promise<Project> {
+    const last = await this.db
+      .selectFrom('projects')
+      .select('position')
+      .where('user_id', '=', userId)
+      .orderBy('position', 'desc')
+      .limit(1)
+      .executeTakeFirst();
     const project: Project = { id: newId(), name, color };
     await this.db
       .insertInto('projects')
-      .values({ ...project, user_id: userId })
+      .values({ ...project, user_id: userId, position: orderKeyAfter(last?.position ?? null) })
       .execute();
     return project;
   }
@@ -88,6 +96,13 @@ export class SqlTaskStore implements TaskStore {
   }
 
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
+    const last = await this.db
+      .selectFrom('tasks')
+      .select('position')
+      .where('user_id', '=', userId)
+      .orderBy('position', 'desc')
+      .limit(1)
+      .executeTakeFirst();
     const row = await this.db
       .insertInto('tasks')
       .values({
@@ -99,6 +114,7 @@ export class SqlTaskStore implements TaskStore {
         start_at: startAt,
         duration_min: durationMin,
         status: 'todo',
+        position: orderKeyAfter(last?.position ?? null),
         completed_at: null,
       })
       .returning(TASK_COLUMNS)

@@ -1,3 +1,4 @@
+import { orderKeyAfter } from '@bff/platform/ordering';
 import type { Kysely, Migration, MigrationProvider } from 'kysely';
 import { sql } from 'kysely';
 
@@ -88,9 +89,61 @@ const migration0001Init: Migration = {
   },
 };
 
+/**
+ * 0002 — 수동 정렬 키를 float 중간값에서 Figma 방식 fractional index(text)로 전환.
+ *
+ * float는 같은 틈을 ~50번 쪼개면 정밀도가 고갈되지만 문자열 키는 자릿수를
+ * 늘리면 되므로 고갈이 없다. 바이트 순서 비교가 전제라 collate "C"를 강제한다.
+ * 기존 float 값(전부 기본값 0)은 생성 순서(id = UUIDv7 = 시간순)대로 백필한다.
+ */
+const migration0002FractionalPosition: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    for (const table of ['projects', 'tasks'] as const) {
+      await db.schema.alterTable(table).addColumn('position_key', sql`text collate "C"`).execute();
+
+      // 유저별로 (기존 position, 생성 순서) 순서를 보존하며 키 체인을 생성
+      const rows = await sql<{ id: string; user_id: string }>`
+        select id, user_id from ${sql.table(table)} order by user_id, position, id
+      `.execute(db);
+      let currentUser: string | null = null;
+      let last: string | null = null;
+      for (const row of rows.rows) {
+        if (row.user_id !== currentUser) {
+          currentUser = row.user_id;
+          last = null;
+        }
+        last = orderKeyAfter(last);
+        await sql`update ${sql.table(table)} set position_key = ${last} where id = ${row.id}`.execute(db);
+      }
+
+      await db.schema
+        .alterTable(table)
+        .alterColumn('position_key', (col) => col.setNotNull())
+        .execute();
+      await db.schema.alterTable(table).dropColumn('position').execute();
+      await db.schema.alterTable(table).renameColumn('position_key', 'position').execute();
+    }
+
+    // dropColumn이 옛 인덱스를 함께 지우므로 새 text 컬럼으로 재생성
+    await db.schema.createIndex('projects_user_id_position').on('projects').columns(['user_id', 'position']).execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    for (const table of ['projects', 'tasks'] as const) {
+      await db.schema.alterTable(table).dropColumn('position').execute();
+      await db.schema
+        .alterTable(table)
+        .addColumn('position', 'double precision', (col) => col.notNull().defaultTo(0))
+        .execute();
+    }
+    await db.schema.createIndex('projects_user_id_position').on('projects').columns(['user_id', 'position']).execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
+  '0002_fractional_position': migration0002FractionalPosition,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {

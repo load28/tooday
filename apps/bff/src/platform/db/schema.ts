@@ -23,8 +23,8 @@ export interface ProjectsTable {
   user_id: string;
   name: string;
   color: ProjectColor;
-  /** 유저별 수동 정렬 순서 (칸반 보드 대비) */
-  position: Generated<number>;
+  /** 수동 정렬 — fractional index 키 (collate "C", platform/ordering.ts로만 생성) */
+  position: string;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }
@@ -40,8 +40,8 @@ export interface TasksTable {
   start_at: string;
   duration_min: number;
   status: TaskStatus;
-  /** 같은 (status) 컬럼 내 수동 정렬 순서 (칸반 보드 대비) */
-  position: Generated<number>;
+  /** 수동 정렬 — fractional index 키 (collate "C", platform/ordering.ts로만 생성) */
+  position: string;
   /** 낙관적 잠금 — 쓰기마다 +1, 클라이언트는 읽은 version으로 갱신을 조건부 실행한다 */
   version: Generated<number>;
   completed_at: Date | null;
