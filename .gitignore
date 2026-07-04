@@ -20,3 +20,11 @@ todos.json
 
 # 로컬 데이터 (PGlite 등)
 **/.data
+
+# sqlite
+*.sqlite
+*.sqlite-*
+
+# [epiq]: local hydrated state is never committed
+.epiq/events/
+.epiq/log/
