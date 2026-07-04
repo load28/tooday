@@ -1,6 +1,7 @@
+import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
 import { css, cva, cx } from 'styled-system/css';
-import { getProject, PROJECT_COLOR, type Task } from '@/features/today/mock';
+import { PROJECT_COLOR } from '@/features/today/project-color';
 import { useT } from '@/shared/i18n';
 import { Card, Dot, HStack, Text } from '@/shared/ui';
 
@@ -60,13 +61,13 @@ const checkRecipe = cva({
 
 type TaskCardProps = {
   task: Task;
-  onToggle?: (id: string) => void;
+  project: Project | undefined;
+  onToggle?: (task: Task) => void;
   onClick?: () => void;
 };
 
-export function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
+export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
   const t = useT();
-  const project = getProject(task.projectId);
   const accent = project ? PROJECT_COLOR[project.color] : PROJECT_COLOR.gray;
   const isDone = task.status === 'done';
 
@@ -87,7 +88,7 @@ export function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
         type="button"
         aria-label={t.today.toggleDone}
         aria-pressed={isDone}
-        onClick={() => onToggle?.(task.id)}
+        onClick={() => onToggle?.(task)}
         className={checkRecipe({ status: task.status })}
       >
         {isDone ? (

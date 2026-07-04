@@ -1,5 +1,6 @@
 import { createApp } from '@bff/app';
 import { SqlSessionStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
+import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
 import { loadConfig } from '@bff/platform/config';
 import { migrate } from '@bff/platform/db/migrate';
 import { createSqliteDatabase } from '@bff/platform/db/sqlite';
@@ -16,6 +17,8 @@ const app = createApp({
   config,
   users: new SqlUserStore(db),
   sessions: new SqlSessionStore({ db, ttlMs: config.sessionTtlMs }),
+  tasks: new SqlTaskStore(db),
+  projects: new SqlProjectStore(db),
   logger,
 });
 

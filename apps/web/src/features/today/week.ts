@@ -19,15 +19,32 @@ export const WEEK_START_OFFSET = -2;
 export const WEEK_LENGTH = 7;
 export const TODAY_INDEX = -WEEK_START_OFFSET;
 
+function dateAtOffset(now: Date, offset: number): Date {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+}
+
+/** 로컬 기준 'YYYY-MM-DD' — 서버 계약(taskSchema.date)과 같은 표현 */
+export function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/** 주간 창의 양 끝 날짜 — task.range 쿼리 입력. loader와 화면이 같은 값을 계산한다. */
+export function weekRange(now: Date): { from: string; to: string } {
+  return {
+    from: toIsoDate(dateAtOffset(now, WEEK_START_OFFSET)),
+    to: toIsoDate(dateAtOffset(now, WEEK_START_OFFSET + WEEK_LENGTH - 1)),
+  };
+}
+
 export function buildWeek(now: Date, locale: Locale): DayCell[] {
   const dowFormat = new Intl.DateTimeFormat(locale, { weekday: 'short' });
   const labelFormat = new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'long' });
 
   return Array.from({ length: WEEK_LENGTH }, (_, i) => {
     const offset = WEEK_START_OFFSET + i;
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const date = dateAtOffset(now, offset);
     return {
-      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+      key: toIsoDate(date),
       offset,
       dow: dowFormat.format(date),
       day: date.getDate(),
