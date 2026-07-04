@@ -1,5 +1,6 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
+import '@/app/validation.ts';
 import { createTrpc } from '@/app/trpc.ts';
 import { routeTree } from '@/routeTree.gen.ts';
 
