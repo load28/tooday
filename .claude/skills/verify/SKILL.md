@@ -34,3 +34,6 @@ cd apps/web && bun run dev
   실행 중인 BFF는 열린 inode를 계속 쓰므로 이전 데이터가 살아있다.
 - 인증 플로우: 비로그인 → `/_public`(login/signup), 로그인 상태로 public 경로 접근 시 `/`(→/today) 리다이렉트.
 - BFF 요청 로그가 background task output 파일에 남는다 — 4xx/5xx 확인에 유용.
+- 웹 dev 서버를 재시작할 때 이전 프로세스의 자식이 3000 포트를 물고 남을 수 있다.
+  새 서버가 3001로 뜨면 E2E가 좀비(옛 코드) 서버를 치게 된다 — 재시작 후 반드시
+  task output에서 `Local: http://localhost:3000` 인지 확인하고, 아니면 `fuser -k 3000/tcp`.
