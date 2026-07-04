@@ -1,9 +1,9 @@
-import { msg } from './message';
+import { defineMessages } from './message';
+import type { MessageSchema } from './schema';
 
-// 기준(canonical) 사전. 이 상수의 리터럴 타입이 모든 locale의 구조·템플릿 파라미터 계약이 된다.
-// 값은 순수 문자열만 — loader가 JSON으로 직렬화해 클라이언트로 내려주기 때문에 함수를 둘 수 없다.
-// 파라미터 문구는 msg<'이름'>()('...{이름}...')으로 선언해 플레이스홀더 오타를 컴파일 타임에 잡는다.
-export const ko = {
+// 순수 문자열 데이터만 둔다 — 구조와 플레이스홀더 계약은 schema.ts가 소유하고,
+// 빌더가 어긋남(파라미터 오타, 선언에 없는 {…}, 키 누락/초과)을 컴파일 에러로 잡는다.
+export const ko = defineMessages<MessageSchema>()({
   common: {
     brand: 'TooDay',
     error: {
@@ -43,7 +43,7 @@ export const ko = {
       nameRequired: '이름을 입력해 주세요.',
       emailInvalid: '올바른 이메일을 입력해 주세요.',
       emailTaken: '이미 가입된 이메일입니다.',
-      passwordTooShort: msg<'min'>()('비밀번호는 {min}자 이상 입력해 주세요.'),
+      passwordTooShort: '비밀번호는 {min}자 이상 입력해 주세요.',
     },
   },
-} as const;
+});

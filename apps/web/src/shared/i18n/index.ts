@@ -1,16 +1,15 @@
 import { createContext, useContext } from 'react';
-import type { ko } from './ko';
+import type { MessagesOf, TextsOf } from './message';
+import type { MessageSchema } from './schema';
 
-/**
- * 기준 사전(ko)의 리터럴 타입. 클라이언트는 항상 이 타입으로 사전을 다룬다 —
- * 런타임 데이터는 선택된 locale의 JSON이지만, 구조와 {param} 템플릿이 계약으로 동일하다.
- */
-export type Messages = typeof ko;
+export { defineMessages, format } from './message';
+export type { MessageSchema } from './schema';
 
-/** 다른 locale 사전이 지켜야 하는 구조 계약 (문구 내용은 자유, 잎은 전부 문자열) */
-type Shape<T> = { [K in keyof T]: T[K] extends string ? string : Shape<T[K]> };
+/** 클라이언트 뷰 타입 — 스키마에서 파생. 체이닝 자동완성과 format() 파라미터 추론의 원천. */
+export type Messages = MessagesOf<MessageSchema>;
 
-export type Dictionary = Shape<Messages>;
+/** 전달(JSON) 형태 — 잎이 전부 순수 문자열 */
+export type Dictionary = TextsOf<MessageSchema>;
 
 export const SUPPORTED_LOCALES = ['ko'] as const;
 
@@ -37,8 +36,6 @@ export function resolveLocale(preference: string | null | undefined): Locale {
   return DEFAULT_LOCALE;
 }
 
-export { format, msg } from './message';
-
 interface I18nState {
   locale: Locale;
   dictionary: Dictionary;
@@ -61,7 +58,6 @@ export function useLocale(): Locale {
 }
 
 export function useT(): Messages {
-  // 런타임 값은 선택된 locale의 사전이지만, 타입은 기준(ko) 리터럴로 본다 —
-  // 체이닝 자동완성과 format()의 {param} 추론이 여기서 나온다.
+  // 런타임 값은 선택된 locale의 JSON 사전이지만, 타입은 스키마에서 파생된 브랜드 뷰로 본다
   return useI18n().dictionary as Messages;
 }
