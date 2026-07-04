@@ -1,8 +1,9 @@
+import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { MIN_PASSWORD_LENGTH, signupRequestSchema } from '@tooday/shared';
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
+import { firstErrorMessage, trpcErrorCode } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
@@ -28,23 +29,9 @@ const loginLinkCls = css({
   _focusVisible: { outline: 'none', boxShadow: 'focus' },
 });
 
-type FieldErrors = Partial<Record<'name' | 'email' | 'password', string>>;
-
-// 스키마는 검증만 하고 사용자향 문구는 화면이 소유한다. 필드당 규칙이 하나라
-// 필드 단위 매핑으로 충분 — 규칙이 늘어나면 issue.code로 세분화한다.
-const FIELD_ERROR_MESSAGES: Record<keyof FieldErrors, string> = {
-  name: '이름을 입력해 주세요.',
-  email: '올바른 이메일을 입력해 주세요.',
-  password: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.`,
-};
-
 export function SignupScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const signup = useMutation(
     trpc.auth.signup.mutationOptions({
@@ -55,59 +42,38 @@ export function SignupScreen() {
     }),
   );
 
-  const emailTaken = signup.isError && signup.error.data?.code === 'CONFLICT';
-
-  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && password.length > 0;
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!canSubmit || signup.isPending) return;
-
-    const parsed = signupRequestSchema.safeParse({ name, email: email.trim(), password });
-    if (!parsed.success) {
-      const errors: FieldErrors = {};
-      for (const issue of parsed.error.issues) {
-        const field = issue.path[0];
-        if ((field === 'name' || field === 'email' || field === 'password') && !errors[field]) {
-          errors[field] = FIELD_ERROR_MESSAGES[field];
+  const form = useForm({
+    defaultValues: { name: '', email: '', password: '' },
+    // 첫 제출까지는 조용히, 제출 후에는 입력할 때마다 재검증해 에러를 갱신한다
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: signupRequestSchema,
+      // 스키마 검증 통과 후 실행되는 제출 본체 — 서버 에러를 코드 기반으로 필드에 매핑한다
+      onSubmitAsync: async ({ value }) => {
+        try {
+          await signup.mutateAsync(value);
+          return undefined;
+        } catch (error) {
+          if (trpcErrorCode(error) === 'CONFLICT') {
+            return { fields: { email: '이미 가입된 이메일입니다.' } };
+          }
+          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
         }
-      }
-      setFieldErrors(errors);
-      return;
-    }
-    setFieldErrors({});
-    signup.mutate(parsed.data);
-  };
-
-  // 입력을 다시 시작하면 해당 필드의 검증 에러와 이전 가입 실패 에러를 지운다
-  const clearFieldError = (field: keyof FieldErrors) => {
-    if (signup.isError) signup.reset();
-    if (fieldErrors[field]) setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
-
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearFieldError('name');
-    setName(event.currentTarget.value);
-  };
-
-  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearFieldError('email');
-    setEmail(event.currentTarget.value);
-  };
-
-  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearFieldError('password');
-    setPassword(event.currentTarget.value);
-  };
-
-  // 서버 에러도 코드(CONFLICT) 기반으로 화면이 문구를 소유하고, 그 외에는 서버 메시지로 폴백
-  const emailError = fieldErrors.email ?? (emailTaken ? '이미 가입된 이메일입니다.' : undefined);
-  const passwordError = fieldErrors.password ?? (signup.isError && !emailTaken ? signup.error.message : undefined);
+      },
+    },
+  });
 
   return (
     <Screen>
-      {/* noValidate: 이메일 형식 검증을 브라우저 네이티브 대신 공유 스키마(zod)로 일원화 */}
-      <form className={formCls} onSubmit={handleSubmit} noValidate>
+      {/* noValidate: 검증은 브라우저 네이티브 대신 공유 스키마(zod)가 담당 */}
+      <form
+        className={formCls}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void form.handleSubmit();
+        }}
+      >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
             TooDay
@@ -121,48 +87,84 @@ export function SignupScreen() {
         </Stack>
 
         <Stack gap="2xl">
-          <TextField
-            label="이름"
-            size="xl"
-            type="text"
-            name="name"
-            autoComplete="name"
-            placeholder="이름"
-            value={name}
-            onChange={handleNameChange}
-            error={fieldErrors.name}
-          />
-          <TextField
-            label="이메일"
-            size="xl"
-            type="email"
-            name="email"
-            inputMode="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder="you@example.com"
-            value={email}
-            onChange={handleEmailChange}
-            error={emailError}
-          />
-          <TextField
-            label="비밀번호"
-            size="xl"
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            placeholder="8자 이상"
-            value={password}
-            onChange={handlePasswordChange}
-            error={passwordError}
-          />
+          <form.Field name="name">
+            {(field) => (
+              <TextField
+                label="이름"
+                size="xl"
+                type="text"
+                name="name"
+                autoComplete="name"
+                placeholder="이름"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                error={firstErrorMessage(field.state.meta.errors)}
+              />
+            )}
+          </form.Field>
+          <form.Field name="email">
+            {(field) => (
+              <TextField
+                label="이메일"
+                size="xl"
+                type="email"
+                name="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="you@example.com"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                // 이메일에는 공백이 올 수 없으므로 자동완성이 붙이는 공백을 입력 시점에 제거한다
+                onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
+                error={firstErrorMessage(field.state.meta.errors)}
+              />
+            )}
+          </form.Field>
+          <form.Field name="password">
+            {(field) => (
+              <TextField
+                label="비밀번호"
+                size="xl"
+                type="password"
+                name="password"
+                autoComplete="new-password"
+                placeholder="8자 이상"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                error={firstErrorMessage(field.state.meta.errors)}
+              />
+            )}
+          </form.Field>
         </Stack>
 
         <Stack gap="2xl">
-          <Button type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit} loading={signup.isPending}>
-            가입하기
-          </Button>
+          <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
+            {([values, isSubmitting]) => (
+              <Button
+                type="submit"
+                tone="brand"
+                size="xl"
+                className={submitCls}
+                disabled={!(values.name.trim() && values.email.trim() && values.password)}
+                loading={isSubmitting}
+              >
+                가입하기
+              </Button>
+            )}
+          </form.Subscribe>
+          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+            {(formError) =>
+              typeof formError === 'string' ? (
+                <Text variant="bodySm" tone="danger" align="center">
+                  {formError}
+                </Text>
+              ) : null
+            }
+          </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
               이미 계정이 있나요?

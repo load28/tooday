@@ -1,7 +1,9 @@
+import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { loginRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
+import { firstErrorMessage, trpcErrorCode } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
@@ -30,8 +32,6 @@ const signupLinkCls = css({
 export function LoginScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
   const login = useMutation(
     trpc.auth.login.mutationOptions({
@@ -42,28 +42,38 @@ export function LoginScreen() {
     }),
   );
 
-  const canSubmit = email.trim().length > 0 && password.length > 0;
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!canSubmit || login.isPending) return;
-    login.mutate({ email: email.trim(), password });
-  };
-
-  // 입력을 다시 시작하면 이전 로그인 실패 에러를 지운다
-  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (login.isError) login.reset();
-    setEmail(event.currentTarget.value);
-  };
-
-  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (login.isError) login.reset();
-    setPassword(event.currentTarget.value);
-  };
+  const form = useForm({
+    defaultValues: { email: '', password: '' },
+    // 첫 제출까지는 조용히, 제출 후에는 입력할 때마다 재검증해 에러를 갱신한다
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: loginRequestSchema,
+      // 스키마 검증 통과 후 실행되는 제출 본체 — 서버 에러를 코드 기반으로 필드에 매핑한다
+      onSubmitAsync: async ({ value }) => {
+        try {
+          await login.mutateAsync(value);
+          return undefined;
+        } catch (error) {
+          if (trpcErrorCode(error) === 'UNAUTHORIZED') {
+            return { fields: { password: '이메일 또는 비밀번호가 올바르지 않습니다.' } };
+          }
+          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
+        }
+      },
+    },
+  });
 
   return (
     <Screen>
-      <form className={formCls} onSubmit={handleSubmit}>
+      {/* noValidate: 검증은 브라우저 네이티브 대신 공유 스키마(zod)가 담당 */}
+      <form
+        className={formCls}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void form.handleSubmit();
+        }}
+      >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
             TooDay
@@ -77,37 +87,68 @@ export function LoginScreen() {
         </Stack>
 
         <Stack gap="2xl">
-          <TextField
-            label="이메일"
-            size="xl"
-            type="email"
-            name="email"
-            inputMode="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder="you@example.com"
-            value={email}
-            onChange={handleEmailChange}
-            invalid={login.isError}
-          />
-          <TextField
-            label="비밀번호"
-            size="xl"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={handlePasswordChange}
-            error={login.isError ? login.error.message : undefined}
-          />
+          <form.Field name="email">
+            {(field) => (
+              <TextField
+                label="이메일"
+                size="xl"
+                type="email"
+                name="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="you@example.com"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                // 이메일에는 공백이 올 수 없으므로 자동완성이 붙이는 공백을 입력 시점에 제거한다
+                onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
+                error={firstErrorMessage(field.state.meta.errors)}
+              />
+            )}
+          </form.Field>
+          <form.Field name="password">
+            {(field) => (
+              <TextField
+                label="비밀번호"
+                size="xl"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                placeholder="비밀번호"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
+                error={firstErrorMessage(field.state.meta.errors)}
+              />
+            )}
+          </form.Field>
         </Stack>
 
         <Stack gap="2xl">
-          <Button type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit} loading={login.isPending}>
-            로그인
-          </Button>
+          <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
+            {([values, isSubmitting]) => (
+              <Button
+                type="submit"
+                tone="brand"
+                size="xl"
+                className={submitCls}
+                disabled={!(values.email.trim() && values.password)}
+                loading={isSubmitting}
+              >
+                로그인
+              </Button>
+            )}
+          </form.Subscribe>
+          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+            {(formError) =>
+              typeof formError === 'string' ? (
+                <Text variant="bodySm" tone="danger" align="center">
+                  {formError}
+                </Text>
+              ) : null
+            }
+          </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
               아직 계정이 없나요?

@@ -25,6 +25,8 @@ cd apps/web && bun run dev
   페이지 로드 후 하이드레이션 대기(~2초)도 필요하다.
 - 필드 비우기: click → `ControlOrMeta+a` → `Backspace`.
 - 하이드레이션 mismatch 콘솔 에러(`style={{}}`)는 기존부터 있는 노이즈다.
+- 기존 값에 `pressSequentially`로 덧붙일 때 커서가 맨 앞일 수 있다('short'+'123' → '123short').
+  항상 clear 후 전체를 다시 입력하라.
 
 ## 가라앉기 쉬운 함정
 
