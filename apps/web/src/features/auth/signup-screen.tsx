@@ -1,10 +1,23 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { MIN_PASSWORD_LENGTH, signupRequestSchema } from '@tooday/shared';
+import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
+import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
+
+// 폼 스키마는 화면 소유. 요청 스키마의 entries를 하한으로 상속하고 UI 전용 필드/규칙은 여기에 얹는다.
+const signupFormSchema = v.object({
+  ...signupRequestSchema.entries,
+});
+
+type SignupFormValues = v.InferInput<typeof signupFormSchema>;
+
+// 폼 값 → 요청 페이로드 변환. 요청 계약이 바뀌면 여기서 컴파일 에러가 난다.
+function toSignupRequest({ name, email, password }: SignupFormValues): SignupRequest {
+  return { name, email, password };
+}
 
 const formCls = css({
   display: 'flex',
@@ -25,7 +38,7 @@ const messages = {
   name: { min_length: '이름을 입력해 주세요.' },
   email: { email: '올바른 이메일을 입력해 주세요.' },
   password: { min_length: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.` },
-} satisfies FormMessages<typeof signupRequestSchema>;
+} satisfies FormMessages<typeof signupFormSchema>;
 
 const loginLinkCls = css({
   textStyle: 'bodyStrong',
@@ -52,15 +65,16 @@ export function SignupScreen() {
     defaultValues: { name: '', email: '', password: '' },
     validationLogic: revalidateLogic(),
     validators: {
-      onDynamic: signupRequestSchema,
+      onDynamic: signupFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await signup.mutateAsync(value);
+          await signup.mutateAsync(toSignupRequest(value));
         } catch (error) {
-          // 예측되지 않은 에러의 메시지는 사용자에게 렌더링하지 않는다
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
             return { fields: { email: '이미 가입된 이메일입니다.' } };
           }
+          // 예측되지 않은 에러는 서버 메시지 대신 고정 문구만 보여준다 (fields 키가 있어야 form이 폼 레벨 에러로 해석된다)
+          return { form: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', fields: {} };
         }
       },
     },
@@ -156,6 +170,15 @@ export function SignupScreen() {
                 가입하기
               </Button>
             )}
+          </form.Subscribe>
+          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+            {(formError) =>
+              typeof formError === 'string' ? (
+                <Text variant="bodySm" tone="danger" align="center">
+                  {formError}
+                </Text>
+              ) : null
+            }
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
