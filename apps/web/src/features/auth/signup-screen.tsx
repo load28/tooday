@@ -4,7 +4,7 @@ import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
-import { fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
+import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { format, useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
@@ -71,10 +71,9 @@ export function SignupScreen() {
           await signup.mutateAsync(toSignupRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
-            return { fields: { email: t.auth.signup.emailTaken } };
+            return fieldErrors(signupFormSchema, { email: t.auth.signup.emailTaken });
           }
-          // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: t.common.error.unexpected, fields: {} };
+          return formError(t.common.error.unexpected);
         }
       },
     },

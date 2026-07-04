@@ -4,7 +4,7 @@ import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
-import { fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
+import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
@@ -70,10 +70,9 @@ export function LoginScreen() {
           await login.mutateAsync(toLoginRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
-            return { fields: { password: t.auth.login.invalidCredentials } };
+            return fieldErrors(loginFormSchema, { password: t.auth.login.invalidCredentials });
           }
-          // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: t.common.error.unexpected, fields: {} };
+          return formError(t.common.error.unexpected);
         }
       },
     },
