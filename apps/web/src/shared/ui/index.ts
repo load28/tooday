@@ -11,6 +11,7 @@ export { Pressable } from '@/shared/ui/pressable';
 export { Row } from '@/shared/ui/row';
 export { Screen } from '@/shared/ui/screen';
 export { Section } from '@/shared/ui/section';
+export { Spinner } from '@/shared/ui/spinner';
 export { HStack, Spacer, Stack } from '@/shared/ui/stack';
 export { Surface } from '@/shared/ui/surface';
 export { Text } from '@/shared/ui/text';

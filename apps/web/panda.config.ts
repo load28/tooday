@@ -355,6 +355,10 @@ export default defineConfig({
       },
 
       keyframes: {
+        toodaySpin: {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
         toodayFadeIn: {
           from: { opacity: '0' },
           to: { opacity: '1' },
