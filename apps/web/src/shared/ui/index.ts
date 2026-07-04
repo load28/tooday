@@ -15,5 +15,6 @@ export { Section } from '@/shared/ui/section';
 export { Spinner } from '@/shared/ui/spinner';
 export { HStack, Spacer, Stack } from '@/shared/ui/stack';
 export { Surface } from '@/shared/ui/surface';
+export { TabBar } from '@/shared/ui/tab-bar';
 export { Text } from '@/shared/ui/text';
 export { TextField } from '@/shared/ui/text-field';
