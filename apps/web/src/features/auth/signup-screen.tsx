@@ -2,10 +2,9 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
-import { useMemo } from 'react';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
-import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
+import { fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { format, useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
@@ -47,15 +46,11 @@ export function SignupScreen() {
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
 
-  const messages = useMemo(
-    () =>
-      ({
-        name: { min_length: t.auth.signup.nameRequired },
-        email: { email: t.auth.signup.emailInvalid },
-        password: { min_length: format(t.auth.signup.passwordTooShort, { min: MIN_PASSWORD_LENGTH }) },
-      }) satisfies FormMessages<typeof signupFormSchema>,
-    [t],
-  );
+  const messages = useFormMessages(signupFormSchema, (t) => ({
+    name: { min_length: t.auth.signup.nameRequired },
+    email: { email: t.auth.signup.emailInvalid },
+    password: { min_length: format(t.auth.signup.passwordTooShort, { min: MIN_PASSWORD_LENGTH }) },
+  }));
 
   const signup = useMutation(
     trpc.auth.signup.mutationOptions({

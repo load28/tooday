@@ -1,5 +1,7 @@
 import { TRPCClientError } from '@trpc/client';
+import { useMemo } from 'react';
 import type * as v from 'valibot';
+import { type Messages, useT } from '@/shared/i18n';
 
 /** BFF가 DomainError를 tRPC로 매핑해 내려주는 전송 코드 중 화면이 분기하는 것들 */
 export const TRPC_ERROR_CODES = {
@@ -22,6 +24,20 @@ export type FieldMessage = string | Partial<Record<string, string>>;
 export type FormMessages<TSchema extends { entries: v.ObjectEntries }> = {
   [K in keyof TSchema['entries']]?: string | Partial<Record<v.InferIssue<TSchema['entries'][K]>['type'], string>>;
 };
+
+/**
+ * 폼 스키마에 맞는 화면 소유 문구 맵을 만든다. 필드/issue 타입 키가 스키마에서
+ * 추론되고, t 주입과 locale 변경 시 재계산(useMemo)을 훅이 담당한다.
+ * build는 t 외의 입력이 없는 순수 함수여야 한다.
+ */
+export function useFormMessages<TSchema extends { entries: v.ObjectEntries }>(
+  _schema: TSchema,
+  build: (t: Messages) => FormMessages<TSchema>,
+): FormMessages<TSchema> {
+  const t = useT();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: build는 인라인 순수 함수라 t만 의존성으로 본다
+  return useMemo(() => build(t), [t]);
+}
 
 /**
  * TanStack Form 필드 에러에서 표시할 문구를 고른다.

@@ -2,10 +2,9 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
-import { useMemo } from 'react';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
-import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
+import { fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
@@ -47,14 +46,10 @@ export function LoginScreen() {
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
 
-  const messages = useMemo(
-    () =>
-      ({
-        email: { min_length: t.auth.login.emailRequired },
-        password: { min_length: t.auth.login.passwordRequired },
-      }) satisfies FormMessages<typeof loginFormSchema>,
-    [t],
-  );
+  const messages = useFormMessages(loginFormSchema, (t) => ({
+    email: { min_length: t.auth.login.emailRequired },
+    password: { min_length: t.auth.login.passwordRequired },
+  }));
 
   const login = useMutation(
     trpc.auth.login.mutationOptions({
