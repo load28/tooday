@@ -1,5 +1,6 @@
 export { AppBar } from '@/shared/ui/app-bar';
 export { BottomSheet } from '@/shared/ui/bottom-sheet';
+export { Button } from '@/shared/ui/button';
 export { Card } from '@/shared/ui/card';
 export { Chip } from '@/shared/ui/chip';
 export { Divider } from '@/shared/ui/divider';

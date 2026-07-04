@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Pressable } from '@/shared/ui/pressable';
+import { Button } from '@/shared/ui/button';
 
-describe('Pressable', () => {
+describe('Button', () => {
   afterEach(cleanup);
 
   it('평상시에는 children을 그대로 렌더하고 클릭을 전달한다', () => {
     const onClick = vi.fn();
-    render(<Pressable onClick={onClick}>로그인</Pressable>);
+    render(<Button onClick={onClick}>로그인</Button>);
 
     const button = screen.getByRole('button', { name: '로그인' });
     button.click();
@@ -20,12 +20,12 @@ describe('Pressable', () => {
   it('loading 중에는 클릭이 차단되고 포커스는 유지된다', () => {
     const onClick = vi.fn();
     render(
-      <Pressable loading onClick={onClick}>
+      <Button loading onClick={onClick}>
         로그인
-      </Pressable>,
+      </Button>,
     );
 
-    const button = screen.getByRole('button');
+    const button = screen.getByRole<HTMLButtonElement>('button');
     button.focus();
     button.click();
 
@@ -37,7 +37,7 @@ describe('Pressable', () => {
   });
 
   it('loading 중에도 라벨은 DOM에 남고 accessible name에 로딩 상태가 합성된다', () => {
-    render(<Pressable loading>로그인</Pressable>);
+    render(<Button loading>로그인</Button>);
 
     const button = screen.getByRole('button', { name: '로그인 로딩 중' });
     expect(button.hasAttribute('data-loading')).toBe(true);
@@ -46,9 +46,9 @@ describe('Pressable', () => {
 
   it('loadingText와 spinner slot으로 로딩 표현을 교체할 수 있다', () => {
     render(
-      <Pressable loading loadingText="저장 중…" spinner={<span data-testid="custom-spinner" />}>
+      <Button loading loadingText="저장 중…" spinner={<span data-testid="custom-spinner" />}>
         저장
-      </Pressable>,
+      </Button>,
     );
 
     expect(screen.getByText('저장 중…')).toBeDefined();
@@ -59,9 +59,9 @@ describe('Pressable', () => {
     const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
     render(
       <form onSubmit={onSubmit}>
-        <Pressable type="submit" loading>
+        <Button type="submit" loading>
           로그인
-        </Pressable>
+        </Button>
       </form>,
     );
 
