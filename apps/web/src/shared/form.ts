@@ -40,6 +40,25 @@ export function useFormMessages<TSchema extends { entries: v.ObjectEntries }>(
 }
 
 /**
+ * onSubmitAsync에서 서버 에러를 특정 필드로 매핑해 반환할 때 쓴다.
+ * 필드 키가 폼 스키마에서 추론되므로 오타는 컴파일 에러가 된다.
+ */
+export function fieldErrors<TSchema extends { entries: v.ObjectEntries }>(
+  _schema: TSchema,
+  fields: Partial<Record<Extract<keyof TSchema['entries'], string>, string>>,
+): { fields: Partial<Record<Extract<keyof TSchema['entries'], string>, string>> } {
+  return { fields };
+}
+
+/**
+ * onSubmitAsync에서 특정 필드에 귀속되지 않는 폼 레벨 에러를 반환할 때 쓴다.
+ * form-core는 fields 키 존재로 폼 에러를 판별하므로 빈 fields를 반드시 동반해야 한다 — 그 규약을 여기서 보증한다.
+ */
+export function formError(message: string): { form: string; fields: Record<string, never> } {
+  return { form: message, fields: {} };
+}
+
+/**
  * TanStack Form 필드 에러에서 표시할 문구를 고른다.
  * 서버 매핑 문자열(onSubmitAsync fields) > 화면 소유 문구(단일/issue 타입별) > issue 기본 문구 순.
  */
