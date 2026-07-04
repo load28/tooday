@@ -7,14 +7,12 @@ import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
-// 폼 스키마는 화면 소유. 요청 스키마의 entries를 하한으로 상속하고 UI 전용 필드/규칙은 여기에 얹는다.
 const loginFormSchema = v.object({
   ...loginRequestSchema.entries,
 });
 
 type LoginFormValues = v.InferInput<typeof loginFormSchema>;
 
-// 폼 값 → 요청 페이로드 변환. 요청 계약이 바뀌면 여기서 컴파일 에러가 난다.
 function toLoginRequest({ email, password }: LoginFormValues): LoginRequest {
   return { email, password };
 }
@@ -72,7 +70,7 @@ export function LoginScreen() {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
             return { fields: { password: '이메일 또는 비밀번호가 올바르지 않습니다.' } };
           }
-          // 예측되지 않은 에러는 서버 메시지 대신 고정 문구만 보여준다 (fields 키가 있어야 form이 폼 레벨 에러로 해석된다)
+          // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
           return { form: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', fields: {} };
         }
       },
