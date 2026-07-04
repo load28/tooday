@@ -50,9 +50,9 @@ export function SignupScreen() {
   const messages = useMemo(
     () =>
       ({
-        name: { min_length: t('auth.signup.nameRequired') },
-        email: { email: t('auth.signup.emailInvalid') },
-        password: { min_length: t('auth.signup.passwordTooShort', { min: MIN_PASSWORD_LENGTH }) },
+        name: { min_length: t.auth.signup.nameRequired },
+        email: { email: t.auth.signup.emailInvalid },
+        password: { min_length: t.auth.signup.passwordTooShort({ min: MIN_PASSWORD_LENGTH }) },
       }) satisfies FormMessages<typeof signupFormSchema>,
     [t],
   );
@@ -76,10 +76,10 @@ export function SignupScreen() {
           await signup.mutateAsync(toSignupRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
-            return { fields: { email: t('auth.signup.emailTaken') } };
+            return { fields: { email: t.auth.signup.emailTaken } };
           }
           // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: t('common.error.unexpected'), fields: {} };
+          return { form: t.common.error.unexpected, fields: {} };
         }
       },
     },
@@ -97,13 +97,13 @@ export function SignupScreen() {
       >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
-            {t('common.brand')}
+            {t.common.brand}
           </Text>
           <Text as="h1" variant="display">
-            {t('auth.signup.title')}
+            {t.auth.signup.title}
           </Text>
           <Text variant="body" tone="tertiary">
-            {t('auth.signup.subtitle')}
+            {t.auth.signup.subtitle}
           </Text>
         </Stack>
 
@@ -111,12 +111,12 @@ export function SignupScreen() {
           <form.Field name="name">
             {(field) => (
               <TextField
-                label={t('auth.name.label')}
+                label={t.auth.name.label}
                 size="xl"
                 type="text"
                 name="name"
                 autoComplete="name"
-                placeholder={t('auth.name.placeholder')}
+                placeholder={t.auth.name.placeholder}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -127,7 +127,7 @@ export function SignupScreen() {
           <form.Field name="email">
             {(field) => (
               <TextField
-                label={t('auth.email.label')}
+                label={t.auth.email.label}
                 size="xl"
                 type="email"
                 name="email"
@@ -135,7 +135,7 @@ export function SignupScreen() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                placeholder={t('auth.email.placeholder')}
+                placeholder={t.auth.email.placeholder}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -146,12 +146,12 @@ export function SignupScreen() {
           <form.Field name="password">
             {(field) => (
               <TextField
-                label={t('auth.password.label')}
+                label={t.auth.password.label}
                 size="xl"
                 type="password"
                 name="password"
                 autoComplete="new-password"
-                placeholder={t('auth.signup.passwordPlaceholder')}
+                placeholder={t.auth.signup.passwordPlaceholder}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -172,7 +172,7 @@ export function SignupScreen() {
                 disabled={!(values.name.trim() && values.email.trim() && values.password)}
                 loading={isSubmitting}
               >
-                {t('auth.signup.submit')}
+                {t.auth.signup.submit}
               </Button>
             )}
           </form.Subscribe>
@@ -187,10 +187,10 @@ export function SignupScreen() {
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
-              {t('auth.signup.hasAccount')}
+              {t.auth.signup.hasAccount}
             </Text>
             <Link to="/login" className={loginLinkCls}>
-              {t('auth.signup.loginLink')}
+              {t.auth.signup.loginLink}
             </Link>
           </HStack>
         </Stack>

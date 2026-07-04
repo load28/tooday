@@ -50,8 +50,8 @@ export function LoginScreen() {
   const messages = useMemo(
     () =>
       ({
-        email: { min_length: t('auth.login.emailRequired') },
-        password: { min_length: t('auth.login.passwordRequired') },
+        email: { min_length: t.auth.login.emailRequired },
+        password: { min_length: t.auth.login.passwordRequired },
       }) satisfies FormMessages<typeof loginFormSchema>,
     [t],
   );
@@ -75,10 +75,10 @@ export function LoginScreen() {
           await login.mutateAsync(toLoginRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
-            return { fields: { password: t('auth.login.invalidCredentials') } };
+            return { fields: { password: t.auth.login.invalidCredentials } };
           }
           // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: t('common.error.unexpected'), fields: {} };
+          return { form: t.common.error.unexpected, fields: {} };
         }
       },
     },
@@ -96,13 +96,13 @@ export function LoginScreen() {
       >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
-            {t('common.brand')}
+            {t.common.brand}
           </Text>
           <Text as="h1" variant="display">
-            {t('auth.login.title')}
+            {t.auth.login.title}
           </Text>
           <Text variant="body" tone="tertiary">
-            {t('auth.login.subtitle')}
+            {t.auth.login.subtitle}
           </Text>
         </Stack>
 
@@ -110,7 +110,7 @@ export function LoginScreen() {
           <form.Field name="email">
             {(field) => (
               <TextField
-                label={t('auth.email.label')}
+                label={t.auth.email.label}
                 size="xl"
                 type="email"
                 name="email"
@@ -118,7 +118,7 @@ export function LoginScreen() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                placeholder={t('auth.email.placeholder')}
+                placeholder={t.auth.email.placeholder}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -129,12 +129,12 @@ export function LoginScreen() {
           <form.Field name="password">
             {(field) => (
               <TextField
-                label={t('auth.password.label')}
+                label={t.auth.password.label}
                 size="xl"
                 type="password"
                 name="password"
                 autoComplete="current-password"
-                placeholder={t('auth.login.passwordPlaceholder')}
+                placeholder={t.auth.login.passwordPlaceholder}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -155,7 +155,7 @@ export function LoginScreen() {
                 disabled={!(values.email.trim() && values.password)}
                 loading={isSubmitting}
               >
-                {t('auth.login.submit')}
+                {t.auth.login.submit}
               </Button>
             )}
           </form.Subscribe>
@@ -170,10 +170,10 @@ export function LoginScreen() {
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
-              {t('auth.login.noAccount')}
+              {t.auth.login.noAccount}
             </Text>
             <Link to="/signup" className={signupLinkCls}>
-              {t('auth.login.signupLink')}
+              {t.auth.login.signupLink}
             </Link>
           </HStack>
         </Stack>
