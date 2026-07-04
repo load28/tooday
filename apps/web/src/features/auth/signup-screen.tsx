@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
-import { firstErrorMessage, trpcErrorCode } from '@/shared/form';
+import { firstErrorMessage, hasTrpcErrorCode, SERVER_ERROR_MESSAGES, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
@@ -44,20 +44,18 @@ export function SignupScreen() {
 
   const form = useForm({
     defaultValues: { name: '', email: '', password: '' },
-    // 첫 제출까지는 조용히, 제출 후에는 입력할 때마다 재검증해 에러를 갱신한다
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: signupRequestSchema,
-      // 스키마 검증 통과 후 실행되는 제출 본체 — 서버 에러를 코드 기반으로 필드에 매핑한다
       onSubmitAsync: async ({ value }) => {
         try {
           await signup.mutateAsync(value);
           return undefined;
         } catch (error) {
-          if (trpcErrorCode(error) === 'CONFLICT') {
-            return { fields: { email: '이미 가입된 이메일입니다.' } };
+          if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
+            return { fields: { email: SERVER_ERROR_MESSAGES.emailTaken } };
           }
-          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
+          return { form: error instanceof Error ? error.message : SERVER_ERROR_MESSAGES.fallback };
         }
       },
     },
@@ -65,7 +63,6 @@ export function SignupScreen() {
 
   return (
     <Screen>
-      {/* noValidate: 검증은 브라우저 네이티브 대신 공유 스키마(zod)가 담당 */}
       <form
         className={formCls}
         noValidate
@@ -117,7 +114,7 @@ export function SignupScreen() {
                 placeholder="you@example.com"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                // 이메일에는 공백이 올 수 없으므로 자동완성이 붙이는 공백을 입력 시점에 제거한다
+                // trim: 자동완성이 붙이는 앞뒤 공백 제거
                 onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
                 error={firstErrorMessage(field.state.meta.errors)}
               />
