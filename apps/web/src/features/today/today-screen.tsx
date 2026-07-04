@@ -1,11 +1,12 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useNavigate, useRouteContext } from '@tanstack/react-router';
+import type { Task, TaskRangeResponse } from '@tooday/shared';
 import { Bell, CalendarDays, CalendarX2, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
-import { MOCK_TASKS_BY_OFFSET, type Task, timeToMin } from '@/features/today/mock';
 import { TaskCard } from '@/features/today/task-card';
-import { buildWeek } from '@/features/today/week';
+import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
 import { format, type Messages, useLocale, useT } from '@/shared/i18n';
 import { AppBar, Card, Pressable, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
@@ -47,6 +48,11 @@ const emptyCls = css({ paddingY: '60px', paddingX: '4xl' });
 type DaySection = 'morning' | 'afternoon' | 'evening';
 const SECTION_ORDER: DaySection[] = ['morning', 'afternoon', 'evening'];
 
+function timeToMin(time: string): number {
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
 function sectionOf(startAt: string): DaySection {
   const hour = Math.floor(timeToMin(startAt) / 60);
   if (hour < 12) return 'morning';
@@ -68,26 +74,55 @@ type TodayScreenProps = {
 
 export function TodayScreen({ now }: TodayScreenProps) {
   const navigate = useNavigate();
+  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
   const locale = useLocale();
 
   const days = useMemo(() => buildWeek(new Date(now), locale), [now, locale]);
   const [activeOffset, setActiveOffset] = useState(0);
-  const [tasksByOffset, setTasksByOffset] = useState<Record<number, Task[]>>(MOCK_TASKS_BY_OFFSET);
+
+  // loader가 같은 범위를 ensureQueryData로 채워 두므로 첫 렌더에서 suspend 하지 않는다
+  const rangeQuery = trpc.task.range.queryOptions(weekRange(new Date(now)));
+  const { data } = useSuspenseQuery(rangeQuery);
+
+  const projectById = useMemo(() => new Map(data.projects.map((project) => [project.id, project])), [data.projects]);
+  const tasksByDate = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const task of data.tasks) {
+      const list = map.get(task.date);
+      if (list) list.push(task);
+      else map.set(task.date, [task]);
+    }
+    return map;
+  }, [data.tasks]);
+
+  const setStatus = useMutation(
+    trpc.task.setStatus.mutationOptions({
+      onMutate: async ({ id, status }) => {
+        await queryClient.cancelQueries({ queryKey: rangeQuery.queryKey });
+        const previous = queryClient.getQueryData(rangeQuery.queryKey);
+        queryClient.setQueryData(
+          rangeQuery.queryKey,
+          (old: TaskRangeResponse | undefined) =>
+            old && { ...old, tasks: old.tasks.map((task) => (task.id === id ? { ...task, status } : task)) },
+        );
+        return { previous };
+      },
+      onError: (_error, _input, context) => {
+        if (context?.previous) queryClient.setQueryData(rangeQuery.queryKey, context.previous);
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: rangeQuery.queryKey }),
+    }),
+  );
 
   const day = days.find((d) => d.offset === activeOffset) ?? days[0];
   if (!day) return null;
 
-  const tasks = [...(tasksByOffset[day.offset] ?? [])].sort((a, b) => timeToMin(a.startAt) - timeToMin(b.startAt));
+  const tasks = tasksByDate.get(day.key) ?? [];
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
-  const toggleTask = (id: string) => {
-    setTasksByOffset((prev) => ({
-      ...prev,
-      [day.offset]: (prev[day.offset] ?? []).map((task) =>
-        task.id === id ? { ...task, status: task.status === 'done' ? 'todo' : 'done' } : task,
-      ),
-    }));
+  const toggleTask = (task: Task) => {
+    setStatus.mutate({ id: task.id, status: task.status === 'done' ? 'todo' : 'done' });
   };
 
   return (
@@ -140,7 +175,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
         <WeekStrip
           days={days}
           activeOffset={activeOffset}
-          hasTasks={(offset) => (tasksByOffset[offset] ?? []).length > 0}
+          hasTasks={(cell) => (tasksByDate.get(cell.key) ?? []).length > 0}
           onSelect={setActiveOffset}
         />
 
@@ -173,6 +208,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
                       </div>
                       <TaskCard
                         task={task}
+                        project={task.projectId !== null ? projectById.get(task.projectId) : undefined}
                         onToggle={toggleTask}
                         onClick={() => navigate({ to: '/tasks/$taskId', params: { taskId: task.id } })}
                       />

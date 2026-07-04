@@ -56,7 +56,7 @@ const dotRecipe = cva({
 type WeekStripProps = {
   days: DayCell[];
   activeOffset: number;
-  hasTasks: (offset: number) => boolean;
+  hasTasks: (day: DayCell) => boolean;
   onSelect: (offset: number) => void;
 };
 
@@ -65,7 +65,7 @@ export function WeekStrip({ days, activeOffset, hasTasks, onSelect }: WeekStripP
     <div className={stripCls}>
       {days.map((d) => {
         const isActive = d.offset === activeOffset;
-        const marked = hasTasks(d.offset);
+        const marked = hasTasks(d);
         return (
           <button
             key={d.key}

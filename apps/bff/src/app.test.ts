@@ -2,9 +2,17 @@ import { describe, expect, it } from 'bun:test';
 import { createApp } from '@bff/app';
 import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
 import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
+import { InMemoryProjectStore, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
-import { authResponseSchema, meResponseSchema, TRPC_ENDPOINT } from '@tooday/shared';
+import {
+  authResponseSchema,
+  meResponseSchema,
+  projectSchema,
+  TRPC_ENDPOINT,
+  taskRangeResponseSchema,
+  taskSchema,
+} from '@tooday/shared';
 import * as v from 'valibot';
 
 function setup(overrides: Partial<BffConfig> = {}) {
@@ -22,6 +30,8 @@ function setup(overrides: Partial<BffConfig> = {}) {
     config,
     users: new InMemoryUserStore(),
     sessions: new InMemorySessionStore(config.sessionTtlMs),
+    tasks: new InMemoryTaskStore(),
+    projects: new InMemoryProjectStore(),
   });
   return { app, config };
 }
@@ -217,6 +227,123 @@ describe('HTTP 캐시 정책', () => {
     const res = await app.request(trpcPath('pub.doesNotExist'));
     expect(res.status).toBe(404);
     expect(res.headers.get('cache-control')).toBe(PRIVATE_CACHE_CONTROL);
+  });
+});
+
+describe('task — 메인(오늘) 화면 데이터', () => {
+  const RANGE = { from: '2026-07-02', to: '2026-07-08' };
+  const TASK_INPUT = { title: '디자인 토큰 정리', projectId: null, date: '2026-07-04', startAt: '10:00', durationMin: 90 };
+
+  function authHeader(token: string): Record<string, string> {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  function rangePath(input: { from: string; to: string } = RANGE): string {
+    return `${trpcPath('task.range')}?input=${encodeURIComponent(JSON.stringify(input))}`;
+  }
+
+  async function fetchRange(app: TestApp, token: string) {
+    const res = await app.request(rangePath(), { headers: authHeader(token) });
+    return { res, data: await unwrapTrpcData({ res, schema: taskRangeResponseSchema }) };
+  }
+
+  async function createProject(app: TestApp, token: string) {
+    const res = await app.request(
+      trpcPath('task.createProject'),
+      postJson({ input: { name: 'TooDay 앱', color: 'blue' }, headers: authHeader(token) }),
+    );
+    const { project } = await unwrapTrpcData({ res, schema: v.object({ project: projectSchema }) });
+    return project;
+  }
+
+  async function createTask(app: TestApp, token: string, input: Record<string, unknown>) {
+    const res = await app.request(trpcPath('task.create'), postJson({ input, headers: authHeader(token) }));
+    return res;
+  }
+
+  async function signupOther(app: TestApp) {
+    const res = await app.request(
+      trpcPath('auth.signup'),
+      postJson({ input: { email: 'other@tooday.app', password: 'password123', name: '아더' } }),
+    );
+    return unwrapTrpcData({ res, schema: authResponseSchema });
+  }
+
+  it('인증 없이는 401을 반환한다', async () => {
+    const { app } = setup();
+    const res = await app.request(rangePath());
+    expect(res.status).toBe(401);
+  });
+
+  it('새 유저의 범위 조회는 빈 목록이다 (프라이빗, no-store)', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+
+    const { res, data } = await fetchRange(app, token);
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ tasks: [], projects: [] });
+    expect(res.headers.get('cache-control')).toBe(PRIVATE_CACHE_CONTROL);
+  });
+
+  it('프로젝트·태스크를 만들면 범위 조회에 함께 내려온다 — 범위 밖은 제외, 날짜·시작시각 정렬', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+    const project = await createProject(app, token);
+
+    await createTask(app, token, { ...TASK_INPUT, title: '오후 작업', projectId: project.id, startAt: '13:30' });
+    await createTask(app, token, { ...TASK_INPUT, title: '아침 작업', projectId: project.id, startAt: '07:30' });
+    await createTask(app, token, { ...TASK_INPUT, title: '전날 작업', date: '2026-07-03' });
+    await createTask(app, token, { ...TASK_INPUT, title: '범위 밖 작업', date: '2026-07-20' });
+
+    const { data } = await fetchRange(app, token);
+    expect(data.projects).toEqual([project]);
+    expect(data.tasks.map((task) => task.title)).toEqual(['전날 작업', '아침 작업', '오후 작업']);
+    expect(data.tasks.every((task) => task.status === 'todo')).toBe(true);
+  });
+
+  it('setStatus가 상태를 바꾸고 조회에 반영된다', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+
+    const createRes = await createTask(app, token, TASK_INPUT);
+    const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+
+    const res = await app.request(
+      trpcPath('task.setStatus'),
+      postJson({ input: { id: task.id, status: 'done' }, headers: authHeader(token) }),
+    );
+    const { task: updated } = await unwrapTrpcData({ res, schema: v.object({ task: taskSchema }) });
+    expect(updated).toEqual({ ...task, status: 'done' });
+
+    const { data } = await fetchRange(app, token);
+    expect(data.tasks).toEqual([updated]);
+  });
+
+  it('다른 유저의 데이터는 보이지 않고, 상태 변경은 404를 반환한다', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+    const createRes = await createTask(app, token, TASK_INPUT);
+    const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+
+    const other = await signupOther(app);
+    const { data } = await fetchRange(app, other.token);
+    expect(data).toEqual({ tasks: [], projects: [] });
+
+    const res = await app.request(
+      trpcPath('task.setStatus'),
+      postJson({ input: { id: task.id, status: 'done' }, headers: authHeader(other.token) }),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it('다른 유저의 프로젝트로는 태스크를 만들 수 없다 (404)', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+    const project = await createProject(app, token);
+
+    const other = await signupOther(app);
+    const res = await createTask(app, other.token, { ...TASK_INPUT, projectId: project.id });
+    expect(res.status).toBe(404);
   });
 });
 

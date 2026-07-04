@@ -1,4 +1,5 @@
 import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
 import type { Logger } from '@bff/platform/logging';
@@ -15,6 +16,8 @@ export interface AppDeps {
   config: BffConfig;
   users: UserStore;
   sessions: SessionStore;
+  tasks: TaskStore;
+  projects: ProjectStore;
   logger?: Logger;
 }
 
