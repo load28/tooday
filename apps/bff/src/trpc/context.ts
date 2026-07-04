@@ -1,4 +1,4 @@
-import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { SessionStore } from '@bff/modules/auth/ports';
 import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
 import { extractSessionToken } from '@bff/modules/auth/token';
 import type { BffConfig } from '@bff/platform/config';
@@ -17,17 +17,16 @@ export type TrpcContext = {
 export interface TrpcContextDeps {
   config: BffConfig;
   sessions: SessionStore;
-  users: UserStore;
 }
 
-export function createContextFactory({ config, sessions, users }: TrpcContextDeps) {
+export function createContextFactory({ config, sessions }: TrpcContextDeps) {
   return async (opts: FetchCreateContextFnOptions, c: HonoContext): Promise<TrpcContext> => {
     const sessionToken = extractSessionToken({ c, cookieName: config.cookieName });
-    const session = sessionToken ? await sessions.get(sessionToken) : null;
-    const user = session ? await users.findById(session.userId) : null;
+    // 인증 핫패스는 요청마다 타므로 세션+유저를 단일 조회로 가져온다
+    const auth = sessionToken ? await sessions.getWithUser(sessionToken) : null;
 
     return {
-      user,
+      user: auth?.user ?? null,
       sessionToken,
       setSessionCookie: (token) => {
         opts.resHeaders.append('set-cookie', serializeSessionCookie({ config, token }));

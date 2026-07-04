@@ -22,14 +22,17 @@ function setup(overrides: Partial<BffConfig> = {}) {
     cookieName: 'tooday_session',
     cookieSecure: false,
     sessionTtlMs: 60_000,
-    databasePath: ':memory:',
+    databaseUrl: null,
+    pgliteDataDir: 'memory://',
+    pgPoolSize: 1,
     logFormat: 'pretty',
     ...overrides,
   };
+  const users = new InMemoryUserStore();
   const app = createApp({
     config,
-    users: new InMemoryUserStore(),
-    sessions: new InMemorySessionStore(config.sessionTtlMs),
+    users,
+    sessions: new InMemorySessionStore({ ttlMs: config.sessionTtlMs, users }),
     tasks: new InMemoryTaskStore(),
     projects: new InMemoryProjectStore(),
   });
@@ -301,22 +304,43 @@ describe('task — 메인(오늘) 화면 데이터', () => {
     expect(data.tasks.every((task) => task.status === 'todo')).toBe(true);
   });
 
-  it('setStatus가 상태를 바꾸고 조회에 반영된다', async () => {
+  it('setStatus가 상태를 바꾸고 version을 올려 조회에 반영된다', async () => {
     const { app } = setup();
     const { token } = await signup(app);
 
     const createRes = await createTask(app, token, TASK_INPUT);
     const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+    expect(task.version).toBe(1);
 
     const res = await app.request(
       trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'done' }, headers: authHeader(token) }),
+      postJson({ input: { id: task.id, status: 'done', version: task.version }, headers: authHeader(token) }),
     );
     const { task: updated } = await unwrapTrpcData({ res, schema: v.object({ task: taskSchema }) });
-    expect(updated).toEqual({ ...task, status: 'done' });
+    expect(updated).toEqual({ ...task, status: 'done', version: 2 });
 
     const { data } = await fetchRange(app, token);
     expect(data.tasks).toEqual([updated]);
+  });
+
+  it('낡은 version으로 setStatus 하면 409를 반환한다 (낙관적 잠금)', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+    const createRes = await createTask(app, token, TASK_INPUT);
+    const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+
+    const first = await app.request(
+      trpcPath('task.setStatus'),
+      postJson({ input: { id: task.id, status: 'doing', version: 1 }, headers: authHeader(token) }),
+    );
+    expect(first.status).toBe(200);
+
+    // 다른 기기가 먼저 수정한 시나리오 — 같은 version 재사용
+    const stale = await app.request(
+      trpcPath('task.setStatus'),
+      postJson({ input: { id: task.id, status: 'done', version: 1 }, headers: authHeader(token) }),
+    );
+    expect(stale.status).toBe(409);
   });
 
   it('다른 유저의 데이터는 보이지 않고, 상태 변경은 404를 반환한다', async () => {
@@ -331,7 +355,7 @@ describe('task — 메인(오늘) 화면 데이터', () => {
 
     const res = await app.request(
       trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'done' }, headers: authHeader(other.token) }),
+      postJson({ input: { id: task.id, status: 'done', version: task.version }, headers: authHeader(other.token) }),
     );
     expect(res.status).toBe(404);
   });

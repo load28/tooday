@@ -98,13 +98,17 @@ export function TodayScreen({ now }: TodayScreenProps) {
 
   const setStatus = useMutation(
     trpc.task.setStatus.mutationOptions({
-      onMutate: async ({ id, status }) => {
+      onMutate: async ({ id, status, version }) => {
         await queryClient.cancelQueries({ queryKey: rangeQuery.queryKey });
         const previous = queryClient.getQueryData(rangeQuery.queryKey);
+        // 서버가 version을 +1 하므로 낙관적 캐시도 같이 올린다 — 연속 토글이 낡은 version을 보내지 않게
         queryClient.setQueryData(
           rangeQuery.queryKey,
           (old: TaskRangeResponse | undefined) =>
-            old && { ...old, tasks: old.tasks.map((task) => (task.id === id ? { ...task, status } : task)) },
+            old && {
+              ...old,
+              tasks: old.tasks.map((task) => (task.id === id ? { ...task, status, version: version + 1 } : task)),
+            },
         );
         return { previous };
       },
@@ -122,7 +126,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
   const toggleTask = (task: Task) => {
-    setStatus.mutate({ id: task.id, status: task.status === 'done' ? 'todo' : 'done' });
+    setStatus.mutate({ id: task.id, status: task.status === 'done' ? 'todo' : 'done', version: task.version });
   };
 
   return (

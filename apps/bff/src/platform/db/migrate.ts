@@ -1,45 +1,17 @@
+import { StaticMigrationProvider } from '@bff/platform/db/migrations';
 import type { DatabaseSchema } from '@bff/platform/db/schema';
 import type { Kysely } from 'kysely';
+import { Migrator } from 'kysely';
 
-export async function migrate(db: Kysely<DatabaseSchema>): Promise<void> {
-  await db.schema
-    .createTable('users')
-    .ifNotExists()
-    .addColumn('id', 'text', (col) => col.primaryKey())
-    .addColumn('email', 'text', (col) => col.notNull().unique())
-    .addColumn('name', 'text', (col) => col.notNull())
-    .addColumn('password_hash', 'text', (col) => col.notNull())
-    .execute();
-
-  await db.schema
-    .createTable('sessions')
-    .ifNotExists()
-    .addColumn('token', 'text', (col) => col.primaryKey())
-    .addColumn('user_id', 'text', (col) => col.notNull().references('users.id'))
-    .addColumn('expires_at', 'integer', (col) => col.notNull())
-    .execute();
-
-  await db.schema
-    .createTable('projects')
-    .ifNotExists()
-    .addColumn('id', 'text', (col) => col.primaryKey())
-    .addColumn('user_id', 'text', (col) => col.notNull().references('users.id'))
-    .addColumn('name', 'text', (col) => col.notNull())
-    .addColumn('color', 'text', (col) => col.notNull())
-    .execute();
-
-  await db.schema
-    .createTable('tasks')
-    .ifNotExists()
-    .addColumn('id', 'text', (col) => col.primaryKey())
-    .addColumn('user_id', 'text', (col) => col.notNull().references('users.id'))
-    .addColumn('project_id', 'text', (col) => col.references('projects.id'))
-    .addColumn('title', 'text', (col) => col.notNull())
-    .addColumn('date', 'text', (col) => col.notNull())
-    .addColumn('start_at', 'text', (col) => col.notNull())
-    .addColumn('duration_min', 'integer', (col) => col.notNull())
-    .addColumn('status', 'text', (col) => col.notNull())
-    .execute();
-
-  await db.schema.createIndex('tasks_user_id_date').ifNotExists().on('tasks').columns(['user_id', 'date']).execute();
+/**
+ * 버전드 마이그레이션 실행. Migrator가 이력 테이블(kysely_migration)과
+ * 잠금 테이블로 적용 여부·동시 실행을 관리하므로 부팅 시 항상 호출해도 안전하다.
+ */
+export async function migrateToLatest(db: Kysely<DatabaseSchema>): Promise<{ applied: string[] }> {
+  const migrator = new Migrator({ db, provider: new StaticMigrationProvider() });
+  const { error, results } = await migrator.migrateToLatest();
+  if (error) {
+    throw error instanceof Error ? error : new Error(String(error));
+  }
+  return { applied: (results ?? []).filter((r) => r.status === 'Success').map((r) => r.migrationName) };
 }

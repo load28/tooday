@@ -25,6 +25,8 @@ export const taskSchema = v.object({
   startAt: isoTimeSchema,
   durationMin: v.pipe(v.number(), v.integer(), v.minValue(1)),
   status: taskStatusSchema,
+  /** 낙관적 잠금 버전 — 쓰기 요청은 읽은 시점의 version을 함께 보내고, 서버는 일치할 때만 반영한다 */
+  version: v.pipe(v.number(), v.integer(), v.minValue(1)),
 });
 
 export const taskRangeRequestSchema = v.object({
@@ -49,6 +51,8 @@ export const createTaskRequestSchema = v.object({
 export const setTaskStatusRequestSchema = v.object({
   id: v.string(),
   status: taskStatusSchema,
+  /** 읽은 시점의 version — 불일치(다른 기기에서 먼저 수정)면 CONFLICT */
+  version: v.pipe(v.number(), v.integer(), v.minValue(1)),
 });
 
 export const createProjectRequestSchema = v.object({

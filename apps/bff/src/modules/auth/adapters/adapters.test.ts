@@ -2,8 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
 import { SqlSessionStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
 import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
-import { migrate } from '@bff/platform/db/migrate';
-import { createSqliteDatabase } from '@bff/platform/db/sqlite';
+import { testDatabase } from '@bff/platform/db/testing';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 
 interface Stores {
@@ -19,16 +18,15 @@ interface Implementation {
 const IMPLEMENTATIONS: Implementation[] = [
   {
     name: 'memory',
-    make: async ({ ttlMs }) => ({
-      users: new InMemoryUserStore(),
-      sessions: new InMemorySessionStore(ttlMs),
-    }),
+    make: async ({ ttlMs }) => {
+      const users = new InMemoryUserStore();
+      return { users, sessions: new InMemorySessionStore({ ttlMs, users }) };
+    },
   },
   {
-    name: 'sql(sqlite)',
+    name: 'sql(pglite)',
     make: async ({ ttlMs }) => {
-      const db = createSqliteDatabase(':memory:');
-      await migrate(db);
+      const db = await testDatabase();
       return { users: new SqlUserStore(db), sessions: new SqlSessionStore({ db, ttlMs }) };
     },
   },
@@ -45,13 +43,13 @@ for (const { name, make } of IMPLEMENTATIONS) {
 
       const found = await users.findById(created.id);
       expect(found).toEqual(created);
-      expect(await users.findById('missing-id')).toBeNull();
+      expect(await users.findById(crypto.randomUUID())).toBeNull();
     });
 
     it('중복 이메일이면 DomainError(EMAIL_TAKEN)를 던진다', async () => {
       const { users } = await make({ ttlMs: 60_000 });
       await users.create(INPUT);
-      expect(users.create(INPUT)).rejects.toMatchObject(new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN));
+      await expect(users.create(INPUT)).rejects.toMatchObject(new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN));
     });
 
     it('자격 증명을 검증한다', async () => {
@@ -74,12 +72,25 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await sessions.get(session.token)).toBeNull();
     });
 
-    it('만료된 세션은 조회되지 않는다', async () => {
+    it('getWithUser는 세션과 유저를 함께 반환한다', async () => {
+      const { users, sessions } = await make({ ttlMs: 60_000 });
+      const user = await users.create(INPUT);
+      const session = await sessions.create(user.id);
+
+      expect(await sessions.getWithUser(session.token)).toEqual({ session, user });
+      expect(await sessions.getWithUser('unknown-token')).toBeNull();
+    });
+
+    it('만료된 세션은 조회되지 않고, deleteExpired가 청소한다', async () => {
       const { users, sessions } = await make({ ttlMs: -1 });
       const user = await users.create(INPUT);
 
-      const session = await sessions.create(user.id);
-      expect(await sessions.get(session.token)).toBeNull();
+      await sessions.create(user.id);
+      const expired = await sessions.create(user.id);
+      expect(await sessions.get(expired.token)).toBeNull(); // 조회가 만료 행 하나를 지운다
+
+      expect(await sessions.deleteExpired()).toBe(1);
+      expect(await sessions.deleteExpired()).toBe(0);
     });
   });
 }

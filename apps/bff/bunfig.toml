@@ -1,0 +1,3 @@
+# PGlite(WASM Postgres) 첫 부팅이 수 초라 기본 5초 타임아웃으로는 첫 테스트가 죽는다
+[test]
+timeout = 30000
