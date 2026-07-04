@@ -37,16 +37,7 @@ export function resolveLocale(preference: string | null | undefined): Locale {
   return DEFAULT_LOCALE;
 }
 
-type ParamKeys<S extends string> = S extends `${string}{${infer P}}${infer Rest}` ? P | ParamKeys<Rest> : never;
-
-/** {param} 플레이스홀더를 값으로 치환한다. 파라미터 키는 템플릿 리터럴 타입에서 추론되어 강제된다. */
-export function format<S extends string>(
-  template: S,
-  ...params: ParamKeys<S> extends never ? [] : [Record<ParamKeys<S>, string | number>]
-): string {
-  const values = (params[0] ?? {}) as Record<string, string | number>;
-  return template.replace(/\{(\w+)\}/g, (placeholder, key: string) => (key in values ? String(values[key]) : placeholder));
-}
+export { format, msg } from './message';
 
 interface I18nState {
   locale: Locale;
