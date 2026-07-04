@@ -1,7 +1,7 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
+import { MIN_PASSWORD_LENGTH, signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -22,10 +22,10 @@ const formCls = css({
 const submitCls = css({ width: '100%' });
 
 const messages = {
-  name: '이름을 입력해 주세요.',
-  email: '올바른 이메일을 입력해 주세요.',
-  password: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.`,
-} satisfies FormMessages<SignupRequest>;
+  name: { min_length: '이름을 입력해 주세요.' },
+  email: { email: '올바른 이메일을 입력해 주세요.' },
+  password: { min_length: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.` },
+} satisfies FormMessages<typeof signupRequestSchema>;
 
 const loginLinkCls = css({
   textStyle: 'bodyStrong',
@@ -120,8 +120,7 @@ export function SignupScreen() {
                 placeholder="you@example.com"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                // trim: 자동완성이 붙이는 앞뒤 공백 제거
-                onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
                 error={fieldErrorMessage(field.state.meta.errors, messages.email)}
               />
             )}

@@ -62,3 +62,9 @@ export const signupRequestSchema = z.object({
 5. **하지 말 것**: zod-i18n 도입(v4 미지원), v3식 `{ message }`·`.flatten()` 레시피 복사, 스키마에 사용자 문구 추가(우선순위 역전 때문에 이후 매핑 계층이 무력화됨).
 
 **조사 한계**: 생태계 사례(tRPC 예제, cal.com)는 대부분 zod v3 시대 코드라 "실무 사례 = v4 모범 사례"는 아니다. "errorFormatter + flatten이 tRPC 공식 권장"이라는 통설은 검증에서 기각됐다(문서에 예시로만 존재). supabase/documenso 등 다른 대형 코드베이스는 검증된 근거를 확보하지 못했다.
+
+---
+
+## 결정 (2026-07-04)
+
+C 패턴을 채택하되 zod 대신 **valibot**으로 구현했다. 결정적 근거: zod는 스키마 타입에서 규칙 정보가 지워져 "필드별 발생 가능 에러 종류"를 추론할 수 없지만, valibot은 `v.InferIssue<(typeof schema.entries)['email']>['type']`으로 필드별 issue 타입 유니언이 추론된다. 이를 이용해 각 화면이 `FormMessages<typeof schema>`(apps/web/src/shared/form.ts)로 문구를 소유하며, 존재하지 않는 필드 키나 그 필드에서 발생 불가능한 issue 타입은 컴파일 에러가 된다. 전역 error map/locale 설정은 제거 — i18n은 화면 컴포넌트 레벨 책임으로 두는 것이 SSR(요청 스코프)에서도 가장 깨끗하다. tRPC v11과 TanStack Form 모두 Standard Schema로 valibot을 그대로 받는다.

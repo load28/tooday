@@ -1,7 +1,7 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
+import { loginRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -22,9 +22,9 @@ const formCls = css({
 const submitCls = css({ width: '100%' });
 
 const messages = {
-  email: '이메일을 입력해 주세요.',
-  password: '비밀번호를 입력해 주세요.',
-} satisfies FormMessages<LoginRequest>;
+  email: { min_length: '이메일을 입력해 주세요.' },
+  password: { min_length: '비밀번호를 입력해 주세요.' },
+} satisfies FormMessages<typeof loginRequestSchema>;
 
 const signupLinkCls = css({
   textStyle: 'bodyStrong',
@@ -103,8 +103,7 @@ export function LoginScreen() {
                 placeholder="you@example.com"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                // trim: 자동완성이 붙이는 앞뒤 공백 제거
-                onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
+                onChange={(event) => field.handleChange(event.currentTarget.value)}
                 error={fieldErrorMessage(field.state.meta.errors, messages.email)}
               />
             )}

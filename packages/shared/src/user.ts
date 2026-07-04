@@ -1,14 +1,14 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
-export const userSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  name: z.string(),
+export const userSchema = v.object({
+  id: v.string(),
+  email: v.string(),
+  name: v.string(),
 });
 
-export const meResponseSchema = z.object({
+export const meResponseSchema = v.object({
   user: userSchema,
 });
 
-export type User = z.infer<typeof userSchema>;
-export type MeResponse = z.infer<typeof meResponseSchema>;
+export type User = v.InferOutput<typeof userSchema>;
+export type MeResponse = v.InferOutput<typeof meResponseSchema>;
