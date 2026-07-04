@@ -2,9 +2,11 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
+import { useMemo } from 'react';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
+import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const loginFormSchema = v.object({
@@ -32,11 +34,6 @@ const formCls = css({
 
 const submitCls = css({ width: '100%' });
 
-const messages = {
-  email: { min_length: '이메일을 입력해 주세요.' },
-  password: { min_length: '비밀번호를 입력해 주세요.' },
-} satisfies FormMessages<typeof loginFormSchema>;
-
 const signupLinkCls = css({
   textStyle: 'bodyStrong',
   color: 'textBrand',
@@ -48,6 +45,16 @@ const signupLinkCls = css({
 export function LoginScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const t = useT();
+
+  const messages = useMemo(
+    () =>
+      ({
+        email: { min_length: t('auth.login.emailRequired') },
+        password: { min_length: t('auth.login.passwordRequired') },
+      }) satisfies FormMessages<typeof loginFormSchema>,
+    [t],
+  );
 
   const login = useMutation(
     trpc.auth.login.mutationOptions({
@@ -68,10 +75,10 @@ export function LoginScreen() {
           await login.mutateAsync(toLoginRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
-            return { fields: { password: '이메일 또는 비밀번호가 올바르지 않습니다.' } };
+            return { fields: { password: t('auth.login.invalidCredentials') } };
           }
           // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', fields: {} };
+          return { form: t('common.error.unexpected'), fields: {} };
         }
       },
     },
@@ -89,13 +96,13 @@ export function LoginScreen() {
       >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
-            TooDay
+            {t('common.brand')}
           </Text>
           <Text as="h1" variant="display">
-            로그인
+            {t('auth.login.title')}
           </Text>
           <Text variant="body" tone="tertiary">
-            이메일과 비밀번호를 입력해 주세요.
+            {t('auth.login.subtitle')}
           </Text>
         </Stack>
 
@@ -103,7 +110,7 @@ export function LoginScreen() {
           <form.Field name="email">
             {(field) => (
               <TextField
-                label="이메일"
+                label={t('auth.email.label')}
                 size="xl"
                 type="email"
                 name="email"
@@ -111,7 +118,7 @@ export function LoginScreen() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                placeholder="you@example.com"
+                placeholder={t('auth.email.placeholder')}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -122,12 +129,12 @@ export function LoginScreen() {
           <form.Field name="password">
             {(field) => (
               <TextField
-                label="비밀번호"
+                label={t('auth.password.label')}
                 size="xl"
                 type="password"
                 name="password"
                 autoComplete="current-password"
-                placeholder="비밀번호"
+                placeholder={t('auth.login.passwordPlaceholder')}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -148,7 +155,7 @@ export function LoginScreen() {
                 disabled={!(values.email.trim() && values.password)}
                 loading={isSubmitting}
               >
-                로그인
+                {t('auth.login.submit')}
               </Button>
             )}
           </form.Subscribe>
@@ -163,10 +170,10 @@ export function LoginScreen() {
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
-              아직 계정이 없나요?
+              {t('auth.login.noAccount')}
             </Text>
             <Link to="/signup" className={signupLinkCls}>
-              가입하기
+              {t('auth.login.signupLink')}
             </Link>
           </HStack>
         </Stack>

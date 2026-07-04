@@ -2,9 +2,11 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
+import { useMemo } from 'react';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
+import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const signupFormSchema = v.object({
@@ -32,12 +34,6 @@ const formCls = css({
 
 const submitCls = css({ width: '100%' });
 
-const messages = {
-  name: { min_length: '이름을 입력해 주세요.' },
-  email: { email: '올바른 이메일을 입력해 주세요.' },
-  password: { min_length: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.` },
-} satisfies FormMessages<typeof signupFormSchema>;
-
 const loginLinkCls = css({
   textStyle: 'bodyStrong',
   color: 'textBrand',
@@ -49,6 +45,17 @@ const loginLinkCls = css({
 export function SignupScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const t = useT();
+
+  const messages = useMemo(
+    () =>
+      ({
+        name: { min_length: t('auth.signup.nameRequired') },
+        email: { email: t('auth.signup.emailInvalid') },
+        password: { min_length: t('auth.signup.passwordTooShort', { min: MIN_PASSWORD_LENGTH }) },
+      }) satisfies FormMessages<typeof signupFormSchema>,
+    [t],
+  );
 
   const signup = useMutation(
     trpc.auth.signup.mutationOptions({
@@ -69,10 +76,10 @@ export function SignupScreen() {
           await signup.mutateAsync(toSignupRequest(value));
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
-            return { fields: { email: '이미 가입된 이메일입니다.' } };
+            return { fields: { email: t('auth.signup.emailTaken') } };
           }
           // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
-          return { form: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', fields: {} };
+          return { form: t('common.error.unexpected'), fields: {} };
         }
       },
     },
@@ -90,13 +97,13 @@ export function SignupScreen() {
       >
         <Stack gap="lg">
           <Text variant="label" tone="brand">
-            TooDay
+            {t('common.brand')}
           </Text>
           <Text as="h1" variant="display">
-            회원가입
+            {t('auth.signup.title')}
           </Text>
           <Text variant="body" tone="tertiary">
-            이름, 이메일, 비밀번호를 입력해 주세요.
+            {t('auth.signup.subtitle')}
           </Text>
         </Stack>
 
@@ -104,12 +111,12 @@ export function SignupScreen() {
           <form.Field name="name">
             {(field) => (
               <TextField
-                label="이름"
+                label={t('auth.name.label')}
                 size="xl"
                 type="text"
                 name="name"
                 autoComplete="name"
-                placeholder="이름"
+                placeholder={t('auth.name.placeholder')}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -120,7 +127,7 @@ export function SignupScreen() {
           <form.Field name="email">
             {(field) => (
               <TextField
-                label="이메일"
+                label={t('auth.email.label')}
                 size="xl"
                 type="email"
                 name="email"
@@ -128,7 +135,7 @@ export function SignupScreen() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                placeholder="you@example.com"
+                placeholder={t('auth.email.placeholder')}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -139,12 +146,12 @@ export function SignupScreen() {
           <form.Field name="password">
             {(field) => (
               <TextField
-                label="비밀번호"
+                label={t('auth.password.label')}
                 size="xl"
                 type="password"
                 name="password"
                 autoComplete="new-password"
-                placeholder="8자 이상"
+                placeholder={t('auth.signup.passwordPlaceholder')}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
@@ -165,7 +172,7 @@ export function SignupScreen() {
                 disabled={!(values.name.trim() && values.email.trim() && values.password)}
                 loading={isSubmitting}
               >
-                가입하기
+                {t('auth.signup.submit')}
               </Button>
             )}
           </form.Subscribe>
@@ -180,10 +187,10 @@ export function SignupScreen() {
           </form.Subscribe>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
-              이미 계정이 있나요?
+              {t('auth.signup.hasAccount')}
             </Text>
             <Link to="/login" className={loginLinkCls}>
-              로그인
+              {t('auth.signup.loginLink')}
             </Link>
           </HStack>
         </Stack>
