@@ -8,6 +8,39 @@ export interface MessageSchema {
     error: {
       unexpected: Msg;
     };
+    duration: {
+      minutes: Msg<'min'>;
+      hours: Msg<'hour'>;
+      hoursMinutes: Msg<'hour' | 'min'>;
+    };
+  };
+  nav: {
+    label: Msg;
+    today: Msg;
+    projects: Msg;
+  };
+  today: {
+    title: Msg;
+    hero: {
+      // '오늘 · 5월 3일 토요일' — 오늘이 아닌 날은 date만 그대로 보여준다
+      today: Msg<'date'>;
+      // 카운트만 색을 달리 입히므로 문장을 세 조각으로 나눠 선언한다
+      remainingPrefix: Msg;
+      remainingCount: Msg<'count'>;
+      remainingSuffix: Msg;
+    };
+    section: {
+      morning: Msg;
+      afternoon: Msg;
+      evening: Msg;
+    };
+    empty: {
+      title: Msg;
+      description: Msg;
+    };
+    notifications: Msg;
+    addTask: Msg;
+    toggleDone: Msg;
   };
   auth: {
     name: {

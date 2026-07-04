@@ -9,6 +9,37 @@ export const ko = defineMessages<MessageSchema>()({
     error: {
       unexpected: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
     },
+    duration: {
+      minutes: '{min}분',
+      hours: '{hour}시간',
+      hoursMinutes: '{hour}시간 {min}분',
+    },
+  },
+  nav: {
+    label: '주요 메뉴',
+    today: '오늘',
+    projects: '프로젝트',
+  },
+  today: {
+    title: '오늘',
+    hero: {
+      today: '오늘 · {date}',
+      remainingPrefix: '할 일',
+      remainingCount: '{count}개',
+      remainingSuffix: '남았어요',
+    },
+    section: {
+      morning: '오전',
+      afternoon: '오후',
+      evening: '저녁',
+    },
+    empty: {
+      title: '이 날에는 일정이 없어요',
+      description: '새 태스크를 추가해 하루를 계획해 보세요',
+    },
+    notifications: '알림',
+    addTask: '태스크 추가',
+    toggleDone: '완료 토글',
   },
   auth: {
     name: {
