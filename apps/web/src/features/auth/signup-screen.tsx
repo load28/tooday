@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { signupRequestSchema } from '@tooday/shared';
+import { MIN_PASSWORD_LENGTH, signupRequestSchema } from '@tooday/shared';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { css } from 'styled-system/css';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -29,6 +29,14 @@ const loginLinkCls = css({
 });
 
 type FieldErrors = Partial<Record<'name' | 'email' | 'password', string>>;
+
+// 스키마는 검증만 하고 사용자향 문구는 화면이 소유한다. 필드당 규칙이 하나라
+// 필드 단위 매핑으로 충분 — 규칙이 늘어나면 issue.code로 세분화한다.
+const FIELD_ERROR_MESSAGES: Record<keyof FieldErrors, string> = {
+  name: '이름을 입력해 주세요.',
+  email: '올바른 이메일을 입력해 주세요.',
+  password: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.`,
+};
 
 export function SignupScreen() {
   const router = useRouter();
@@ -61,7 +69,7 @@ export function SignupScreen() {
       for (const issue of parsed.error.issues) {
         const field = issue.path[0];
         if ((field === 'name' || field === 'email' || field === 'password') && !errors[field]) {
-          errors[field] = issue.message;
+          errors[field] = FIELD_ERROR_MESSAGES[field];
         }
       }
       setFieldErrors(errors);
@@ -92,7 +100,8 @@ export function SignupScreen() {
     setPassword(event.currentTarget.value);
   };
 
-  const emailError = fieldErrors.email ?? (emailTaken ? signup.error.message : undefined);
+  // 서버 에러도 코드(CONFLICT) 기반으로 화면이 문구를 소유하고, 그 외에는 서버 메시지로 폴백
+  const emailError = fieldErrors.email ?? (emailTaken ? '이미 가입된 이메일입니다.' : undefined);
   const passwordError = fieldErrors.password ?? (signup.isError && !emailTaken ? signup.error.message : undefined);
 
   return (
