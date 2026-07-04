@@ -1,9 +1,9 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
-import { signupRequestSchema } from '@tooday/shared';
+import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
-import { firstErrorMessage, hasTrpcErrorCode, SERVER_ERROR_MESSAGES, TRPC_ERROR_CODES } from '@/shared/form';
+import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const formCls = css({
@@ -20,6 +20,12 @@ const formCls = css({
 });
 
 const submitCls = css({ width: '100%' });
+
+const messages = {
+  name: '이름을 입력해 주세요.',
+  email: '올바른 이메일을 입력해 주세요.',
+  password: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.`,
+} satisfies FormMessages<SignupRequest>;
 
 const loginLinkCls = css({
   textStyle: 'bodyStrong',
@@ -53,9 +59,9 @@ export function SignupScreen() {
           return undefined;
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
-            return { fields: { email: SERVER_ERROR_MESSAGES.emailTaken } };
+            return { fields: { email: '이미 가입된 이메일입니다.' } };
           }
-          return { form: error instanceof Error ? error.message : SERVER_ERROR_MESSAGES.fallback };
+          return { form: error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.' };
         }
       },
     },
@@ -96,7 +102,7 @@ export function SignupScreen() {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
-                error={firstErrorMessage(field.state.meta.errors)}
+                error={fieldErrorMessage(field.state.meta.errors, messages.name)}
               />
             )}
           </form.Field>
@@ -116,7 +122,7 @@ export function SignupScreen() {
                 onBlur={field.handleBlur}
                 // trim: 자동완성이 붙이는 앞뒤 공백 제거
                 onChange={(event) => field.handleChange(event.currentTarget.value.trim())}
-                error={firstErrorMessage(field.state.meta.errors)}
+                error={fieldErrorMessage(field.state.meta.errors, messages.email)}
               />
             )}
           </form.Field>
@@ -132,7 +138,7 @@ export function SignupScreen() {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.currentTarget.value)}
-                error={firstErrorMessage(field.state.meta.errors)}
+                error={fieldErrorMessage(field.state.meta.errors, messages.password)}
               />
             )}
           </form.Field>
