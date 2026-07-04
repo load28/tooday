@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
-import { useT } from '@/shared/i18n';
+import { format, useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const signupFormSchema = v.object({
@@ -52,7 +52,7 @@ export function SignupScreen() {
       ({
         name: { min_length: t.auth.signup.nameRequired },
         email: { email: t.auth.signup.emailInvalid },
-        password: { min_length: t.auth.signup.passwordTooShort({ min: MIN_PASSWORD_LENGTH }) },
+        password: { min_length: format(t.auth.signup.passwordTooShort, { min: MIN_PASSWORD_LENGTH }) },
       }) satisfies FormMessages<typeof signupFormSchema>,
     [t],
   );
