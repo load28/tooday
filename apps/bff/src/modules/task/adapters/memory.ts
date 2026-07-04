@@ -6,6 +6,8 @@ import type {
   SetTaskStatusInput,
   TaskStore,
 } from '@bff/modules/task/ports';
+import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
+import { newId } from '@bff/platform/ids';
 import type { Project, Task } from '@tooday/shared';
 
 interface ProjectRecord extends Project {
@@ -40,7 +42,7 @@ export class InMemoryProjectStore implements ProjectStore {
   }
 
   async create({ userId, name, color }: CreateProjectInput): Promise<Project> {
-    const record: ProjectRecord = { id: crypto.randomUUID(), userId, name, color };
+    const record: ProjectRecord = { id: newId(), userId, name, color };
     this.byId.set(record.id, record);
     return toProject(record);
   }
@@ -58,7 +60,7 @@ export class InMemoryTaskStore implements TaskStore {
 
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
     const record: TaskRecord = {
-      id: crypto.randomUUID(),
+      id: newId(),
       userId,
       projectId,
       title,
@@ -66,15 +68,20 @@ export class InMemoryTaskStore implements TaskStore {
       startAt,
       durationMin,
       status: 'todo',
+      version: 1,
     };
     this.byId.set(record.id, record);
     return toTask(record);
   }
 
-  async setStatus({ userId, id, status }: SetTaskStatusInput): Promise<Task | null> {
+  async setStatus({ userId, id, status, version }: SetTaskStatusInput): Promise<Task | null> {
     const record = this.byId.get(id);
     if (!record || record.userId !== userId) return null;
+    if (record.version !== version) {
+      throw new DomainError(DOMAIN_ERROR_CODES.TASK_VERSION_CONFLICT);
+    }
     record.status = status;
+    record.version += 1;
     return toTask(record);
   }
 }

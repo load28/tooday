@@ -1,6 +1,7 @@
-import type { CreateUserInput, Session, SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { CreateUserInput, Session, SessionStore, SessionWithUser, UserStore } from '@bff/modules/auth/ports';
 import { generateSessionToken } from '@bff/modules/auth/session-token';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
+import { newId } from '@bff/platform/ids';
 import type { User } from '@tooday/shared';
 
 interface UserRecord extends User {
@@ -21,7 +22,7 @@ export class InMemoryUserStore implements UserStore {
       throw new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN);
     }
     const record: UserRecord = {
-      id: crypto.randomUUID(),
+      id: newId(),
       email: normalizedEmail,
       name,
       passwordHash: await Bun.password.hash(password),
@@ -47,8 +48,13 @@ export class InMemoryUserStore implements UserStore {
 
 export class InMemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, Session>();
+  private readonly ttlMs: number;
+  private readonly users: UserStore;
 
-  constructor(private readonly ttlMs: number) {}
+  constructor({ ttlMs, users }: { ttlMs: number; users: UserStore }) {
+    this.ttlMs = ttlMs;
+    this.users = users;
+  }
 
   async create(userId: string): Promise<Session> {
     const session: Session = {
@@ -70,7 +76,26 @@ export class InMemorySessionStore implements SessionStore {
     return session;
   }
 
+  async getWithUser(token: string): Promise<SessionWithUser | null> {
+    const session = await this.get(token);
+    if (!session) return null;
+    const user = await this.users.findById(session.userId);
+    return user ? { session, user } : null;
+  }
+
   async revoke(token: string): Promise<void> {
     this.sessions.delete(token);
+  }
+
+  async deleteExpired(): Promise<number> {
+    const now = Date.now();
+    let deleted = 0;
+    for (const [token, session] of this.sessions) {
+      if (session.expiresAt <= now) {
+        this.sessions.delete(token);
+        deleted += 1;
+      }
+    }
+    return deleted;
   }
 }

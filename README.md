@@ -17,7 +17,10 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   모든 데이터 API는 `/trpc` — 프라이빗(`auth.*`, `user.*`)은 `private, no-store`,
   공개(`pub.*`) 쿼리만 public Cache-Control로 HTTP 캐시를 탄다.
   클라이언트는 노배치(`httpLink`)가 기본.
-  저장소는 SQLite(`bun:sqlite`)가 기본이며 Kysely(타입드 SQL + 다이얼렉트)로 접근 —
+  저장소는 PostgreSQL — 배포는 `DATABASE_URL`(pg 커넥션 풀), 개발·테스트는
+  미설정 시 임베디드 PGlite(WASM Postgres)로 동일한 SQL·마이그레이션을 실행한다.
+  접근은 Kysely(타입드 SQL + 다이얼렉트), 스키마 변경은 버전드 마이그레이션
+  (`platform/db/migrations.ts`, 부팅 시 Kysely Migrator가 적용)로만 한다.
   스토어(포트) ↔ Kysely ↔ 다이얼렉트 계층 분리로 엔진 교체 시 코어 무변경.
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세

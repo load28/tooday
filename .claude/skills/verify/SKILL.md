@@ -8,8 +8,8 @@ description: TooDay 웹+BFF를 실제로 띄워 변경사항을 E2E로 관찰하
 ## 서버 띄우기 (둘 다 백그라운드)
 
 ```bash
-# BFF (port 3002) — DB는 임시 경로로 격리
-cd apps/bff && BFF_DATABASE_PATH=/tmp/verify.sqlite bun run dev
+# BFF (port 3002) — DB는 임시 PGlite 디렉토리로 격리 (DATABASE_URL을 주면 실 Postgres)
+cd apps/bff && BFF_PGLITE_DIR=/tmp/verify-pg bun run dev
 
 # 웹 (port 3000)
 cd apps/web && bun run dev
@@ -30,8 +30,8 @@ cd apps/web && bun run dev
 
 ## 가라앉기 쉬운 함정
 
-- 테스트 계정 이메일은 `u${Date.now()}@example.com`처럼 실행마다 고유하게. sqlite 파일을 지워도
-  실행 중인 BFF는 열린 inode를 계속 쓰므로 이전 데이터가 살아있다.
+- 테스트 계정 이메일은 `u${Date.now()}@example.com`처럼 실행마다 고유하게. PGlite 데이터
+  디렉토리를 지워도 실행 중인 BFF에는 이전 상태가 남아 있을 수 있다 — 초기화는 디렉토리 삭제 후 BFF 재시작.
 - 인증 플로우: 비로그인 → `/_public`(login/signup), 로그인 상태로 public 경로 접근 시 `/`(→/today) 리다이렉트.
 - BFF 요청 로그가 background task output 파일에 남는다 — 4xx/5xx 확인에 유용.
 - 웹 dev 서버를 재시작할 때 이전 프로세스의 자식이 3000 포트를 물고 남을 수 있다.

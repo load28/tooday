@@ -6,7 +6,11 @@ export interface BffConfig {
   cookieName: string;
   cookieSecure: boolean;
   sessionTtlMs: number;
-  databasePath: string;
+  /** PostgreSQL 연결 문자열. 미설정이면 임베디드 PGlite(개발·테스트)로 동작한다. */
+  databaseUrl: string | null;
+  /** PGlite 데이터 디렉토리 — 'memory://'는 인메모리 */
+  pgliteDataDir: string;
+  pgPoolSize: number;
   logFormat: LogFormat;
 }
 
@@ -23,7 +27,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     cookieName: env.BFF_SESSION_COOKIE ?? 'tooday_session',
     cookieSecure: isProduction,
     sessionTtlMs: Number(env.BFF_SESSION_TTL_MS ?? WEEK_MS),
-    databasePath: env.BFF_DATABASE_PATH ?? 'tooday.sqlite',
+    databaseUrl: env.DATABASE_URL ?? null,
+    pgliteDataDir: env.BFF_PGLITE_DIR ?? '.data/pglite',
+    pgPoolSize: Number(env.BFF_PG_POOL_SIZE ?? 10),
     logFormat:
       env.BFF_LOG_FORMAT === 'json' || env.BFF_LOG_FORMAT === 'pretty' ? env.BFF_LOG_FORMAT : isProduction ? 'json' : 'pretty',
   };
