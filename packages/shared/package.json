@@ -1,15 +1,15 @@
 {
   "name": "@tooday/shared",
   "version": "0.0.0",
-  "private": true,
-  "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
+  "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "type": "module",
   "dependencies": {
-    "zod": "^4.4.3"
+    "valibot": "^1.4.2"
   }
 }

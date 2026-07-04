@@ -5,7 +5,7 @@ import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modu
 import type { BffConfig } from '@bff/platform/config';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import { authResponseSchema, meResponseSchema, TRPC_ENDPOINT } from '@tooday/shared';
-import { z } from 'zod';
+import * as v from 'valibot';
 
 function setup(overrides: Partial<BffConfig> = {}) {
   const config: BffConfig = {
@@ -46,11 +46,17 @@ function sessionCookieHeader({ config, token }: { config: BffConfig; token: stri
   return `${config.cookieName}=${token}`;
 }
 
-const trpcSuccessEnvelopeSchema = z.object({ result: z.object({ data: z.unknown() }) });
+const trpcSuccessEnvelopeSchema = v.object({ result: v.object({ data: v.unknown() }) });
 
-async function unwrapTrpcData<T>({ res, schema }: { res: Response; schema: z.ZodType<T> }): Promise<T> {
-  const envelope = trpcSuccessEnvelopeSchema.parse(await res.json());
-  return schema.parse(envelope.result.data);
+async function unwrapTrpcData<TSchema extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>({
+  res,
+  schema,
+}: {
+  res: Response;
+  schema: TSchema;
+}): Promise<v.InferOutput<TSchema>> {
+  const envelope = v.parse(trpcSuccessEnvelopeSchema, await res.json());
+  return v.parse(schema, envelope.result.data);
 }
 
 async function signup(app: TestApp) {
@@ -191,7 +197,7 @@ describe('HTTP 캐시 정책', () => {
     const res = await app.request(trpcPath('pub.appConfig'));
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe(serializePublicCacheControl(CACHE_DIRECTIVES_BY_PATH['pub.appConfig']));
-    const { version } = await unwrapTrpcData({ res, schema: z.object({ version: z.string() }) });
+    const { version } = await unwrapTrpcData({ res, schema: v.object({ version: v.string() }) });
     expect(version).toBeDefined();
   });
 
