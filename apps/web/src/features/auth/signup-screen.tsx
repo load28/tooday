@@ -7,14 +7,12 @@ import * as v from 'valibot';
 import { type FormMessages, fieldErrorMessage, hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
-// 폼 스키마는 화면 소유. 요청 스키마의 entries를 하한으로 상속하고 UI 전용 필드/규칙은 여기에 얹는다.
 const signupFormSchema = v.object({
   ...signupRequestSchema.entries,
 });
 
 type SignupFormValues = v.InferInput<typeof signupFormSchema>;
 
-// 폼 값 → 요청 페이로드 변환. 요청 계약이 바뀌면 여기서 컴파일 에러가 난다.
 function toSignupRequest({ name, email, password }: SignupFormValues): SignupRequest {
   return { name, email, password };
 }
@@ -73,7 +71,7 @@ export function SignupScreen() {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
             return { fields: { email: '이미 가입된 이메일입니다.' } };
           }
-          // 예측되지 않은 에러는 서버 메시지 대신 고정 문구만 보여준다 (fields 키가 있어야 form이 폼 레벨 에러로 해석된다)
+          // fields 키가 있어야 form이 폼 레벨 에러로 해석된다
           return { form: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.', fields: {} };
         }
       },
