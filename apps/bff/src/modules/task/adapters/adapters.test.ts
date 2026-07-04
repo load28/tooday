@@ -65,15 +65,15 @@ for (const { name, make } of IMPLEMENTATIONS) {
       return stores;
     }
 
-    it('프로젝트를 만들고 유저별로 조회한다', async () => {
+    it('프로젝트를 만들고 유저별로 생성 순서(fractional key 순)로 조회한다', async () => {
       const { projects } = await setup();
-      const second = await projects.create({ userId: USER_A, name: '일상', color: 'mint' });
-      const first = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' });
+      const daily = await projects.create({ userId: USER_A, name: '일상', color: 'mint' });
+      const tooday = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' });
       await projects.create({ userId: USER_B, name: '남의 프로젝트', color: 'gray' });
 
-      expect(await projects.listByUser(USER_A)).toEqual([first, second]);
-      expect(await projects.findById({ userId: USER_A, id: first.id })).toEqual(first);
-      expect(await projects.findById({ userId: USER_B, id: first.id })).toBeNull();
+      expect(await projects.listByUser(USER_A)).toEqual([daily, tooday]);
+      expect(await projects.findById({ userId: USER_A, id: tooday.id })).toEqual(tooday);
+      expect(await projects.findById({ userId: USER_B, id: tooday.id })).toBeNull();
     });
 
     it('태스크를 범위로 조회한다 — 유저·범위 필터, 날짜·시작시각 정렬', async () => {
