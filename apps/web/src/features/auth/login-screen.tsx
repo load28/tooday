@@ -105,8 +105,8 @@ export function LoginScreen() {
         </Stack>
 
         <Stack gap="2xl">
-          <Pressable type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit || login.isPending}>
-            {login.isPending ? '로그인 중…' : '로그인'}
+          <Pressable type="submit" tone="brand" size="xl" className={submitCls} disabled={!canSubmit} loading={login.isPending}>
+            로그인
           </Pressable>
           <HStack gap="md" justify="center">
             <Text variant="bodySm" tone="tertiary">
