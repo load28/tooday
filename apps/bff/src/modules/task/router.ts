@@ -1,6 +1,6 @@
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
-import type { SyncHub } from '@bff/platform/sync-hub';
+import type { SyncBroker } from '@bff/platform/sync-broker';
 import { protectedProcedure, router } from '@bff/trpc/init';
 import type { SyncChangesResponse, TaskRangeResponse } from '@tooday/shared';
 import {
@@ -14,7 +14,7 @@ import {
 export interface TaskRouterDeps {
   tasks: TaskStore;
   projects: ProjectStore;
-  sync: SyncHub;
+  sync: SyncBroker;
 }
 
 export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {

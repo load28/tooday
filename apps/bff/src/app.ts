@@ -5,7 +5,7 @@ import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
 import type { Logger } from '@bff/platform/logging';
 import { createLogger, createRequestLogger } from '@bff/platform/logging';
-import type { SyncHub } from '@bff/platform/sync-hub';
+import type { SyncBroker } from '@bff/platform/sync-broker';
 import { trpcResponseMeta } from '@bff/trpc/cache';
 import { createContextFactory } from '@bff/trpc/context';
 import { createAppRouter } from '@bff/trpc/router';
@@ -21,7 +21,7 @@ export interface AppDeps {
   sessions: SessionStore;
   tasks: TaskStore;
   projects: ProjectStore;
-  sync: SyncHub;
+  sync: SyncBroker;
   logger?: Logger;
 }
 

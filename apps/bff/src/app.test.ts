@@ -4,7 +4,7 @@ import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapt
 import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
 import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
-import { SyncHub } from '@bff/platform/sync-hub';
+import { InMemorySyncBroker } from '@bff/platform/sync-broker';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import {
   authResponseSchema,
@@ -33,7 +33,7 @@ function setup(overrides: Partial<BffConfig> = {}) {
   };
   const users = new InMemoryUserStore();
   const counter = new InMemorySyncCounter();
-  const sync = new SyncHub();
+  const sync = new InMemorySyncBroker();
   const app = createApp({
     config,
     users,
