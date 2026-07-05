@@ -7,6 +7,8 @@
 - [README.md](README.md) — 아키텍처, 디렉토리 전략(도메인 수직 슬라이스 + 헥사고날
   라이트, 의존 방향), 스택, 스크립트. 작업 전 반드시 읽는다.
 - [docs/authentication-architecture.md](docs/authentication-architecture.md) — 인증 구조.
+- [docs/task-sharing-architecture.md](docs/task-sharing-architecture.md) — 태스크 공유 설계 제안
+  (미구현). 지금 동기화 원리(스냅샷+seq+tombstone+커서)를 재사용해 채팅 공유·변경 반영을 얹는 방법.
 
 ## 컨벤션 (docs/conventions/)
 
