@@ -2,13 +2,16 @@ import { describe, expect, it } from 'bun:test';
 import { createApp } from '@bff/app';
 import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
 import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
-import { InMemoryProjectStore, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
+import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
+import { SyncHub } from '@bff/platform/sync-hub';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import {
   authResponseSchema,
   meResponseSchema,
   projectSchema,
+  SYNC_EVENTS_PATH,
+  syncChangesResponseSchema,
   TRPC_ENDPOINT,
   taskRangeResponseSchema,
   taskSchema,
@@ -29,14 +32,17 @@ function setup(overrides: Partial<BffConfig> = {}) {
     ...overrides,
   };
   const users = new InMemoryUserStore();
+  const counter = new InMemorySyncCounter();
+  const sync = new SyncHub();
   const app = createApp({
     config,
     users,
     sessions: new InMemorySessionStore({ ttlMs: config.sessionTtlMs, users }),
-    tasks: new InMemoryTaskStore(),
-    projects: new InMemoryProjectStore(),
+    tasks: new InMemoryTaskStore(counter),
+    projects: new InMemoryProjectStore(counter),
+    sync,
   });
-  return { app, config };
+  return { app, config, sync };
 }
 
 type TestApp = ReturnType<typeof setup>['app'];
@@ -284,7 +290,7 @@ describe('task — 메인(오늘) 화면 데이터', () => {
 
     const { res, data } = await fetchRange(app, token);
     expect(res.status).toBe(200);
-    expect(data).toEqual({ tasks: [], projects: [] });
+    expect(data).toEqual({ tasks: [], projects: [], cursor: 0 });
     expect(res.headers.get('cache-control')).toBe(PRIVATE_CACHE_CONTROL);
   });
 
@@ -304,7 +310,11 @@ describe('task — 메인(오늘) 화면 데이터', () => {
     expect(data.tasks.every((task) => task.status === 'todo')).toBe(true);
   });
 
-  it('setStatus가 상태를 바꾸고 version을 올려 조회에 반영된다', async () => {
+  async function updateTask(app: TestApp, token: string, input: Record<string, unknown>) {
+    return app.request(trpcPath('task.update'), postJson({ input, headers: authHeader(token) }));
+  }
+
+  it('update가 patch의 필드만 적용한다 — 다른 필드의 의도끼리는 충돌하지 않는다 (필드 단위 LWW)', async () => {
     const { app } = setup();
     const { token } = await signup(app);
 
@@ -312,38 +322,45 @@ describe('task — 메인(오늘) 화면 데이터', () => {
     const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
     expect(task.version).toBe(1);
 
-    const res = await app.request(
-      trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'done', version: task.version }, headers: authHeader(token) }),
-    );
-    const { task: updated } = await unwrapTrpcData({ res, schema: v.object({ task: taskSchema }) });
-    expect(updated).toEqual({ ...task, status: 'done', version: 2 });
+    // 기기 A: 상태만 / 기기 B: 제목만 — 서로 덮지 않고 둘 다 반영된다
+    const statusRes = await updateTask(app, token, { id: task.id, patch: { status: 'done' } });
+    const { task: afterStatus } = await unwrapTrpcData({ res: statusRes, schema: v.object({ task: taskSchema }) });
+    expect(afterStatus).toEqual({ ...task, status: 'done', version: 2 });
+
+    const titleRes = await updateTask(app, token, { id: task.id, patch: { title: '디자인 토큰 정리 v2' } });
+    const { task: afterTitle } = await unwrapTrpcData({ res: titleRes, schema: v.object({ task: taskSchema }) });
+    expect(afterTitle).toEqual({ ...task, status: 'done', title: '디자인 토큰 정리 v2', version: 3 });
 
     const { data } = await fetchRange(app, token);
-    expect(data.tasks).toEqual([updated]);
+    expect(data.tasks).toEqual([afterTitle]);
   });
 
-  it('낡은 version으로 setStatus 하면 409를 반환한다 (낙관적 잠금)', async () => {
+  it('같은 필드의 경합은 나중 의도가 이긴다 — 409 없음', async () => {
     const { app } = setup();
     const { token } = await signup(app);
     const createRes = await createTask(app, token, TASK_INPUT);
     const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
 
-    const first = await app.request(
-      trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'doing', version: 1 }, headers: authHeader(token) }),
-    );
+    const first = await updateTask(app, token, { id: task.id, patch: { status: 'done' } });
     expect(first.status).toBe(200);
+    const second = await updateTask(app, token, { id: task.id, patch: { status: 'todo' } });
+    expect(second.status).toBe(200);
 
-    // 다른 기기가 먼저 수정한 시나리오 — 같은 version 재사용
-    const stale = await app.request(
-      trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'done', version: 1 }, headers: authHeader(token) }),
-    );
-    expect(stale.status).toBe(409);
+    const { data } = await fetchRange(app, token);
+    expect(data.tasks[0]?.status).toBe('todo');
   });
 
-  it('다른 유저의 데이터는 보이지 않고, 상태 변경은 404를 반환한다', async () => {
+  it('빈 patch는 400을 반환한다', async () => {
+    const { app } = setup();
+    const { token } = await signup(app);
+    const createRes = await createTask(app, token, TASK_INPUT);
+    const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+
+    const res = await updateTask(app, token, { id: task.id, patch: {} });
+    expect(res.status).toBe(400);
+  });
+
+  it('다른 유저의 데이터는 보이지 않고, 수정은 404를 반환한다', async () => {
     const { app } = setup();
     const { token } = await signup(app);
     const createRes = await createTask(app, token, TASK_INPUT);
@@ -351,12 +368,9 @@ describe('task — 메인(오늘) 화면 데이터', () => {
 
     const other = await signupOther(app);
     const { data } = await fetchRange(app, other.token);
-    expect(data).toEqual({ tasks: [], projects: [] });
+    expect(data).toEqual({ tasks: [], projects: [], cursor: 0 });
 
-    const res = await app.request(
-      trpcPath('task.setStatus'),
-      postJson({ input: { id: task.id, status: 'done', version: task.version }, headers: authHeader(other.token) }),
-    );
+    const res = await updateTask(app, other.token, { id: task.id, patch: { status: 'done' } });
     expect(res.status).toBe(404);
   });
 
@@ -368,6 +382,73 @@ describe('task — 메인(오늘) 화면 데이터', () => {
     const other = await signupOther(app);
     const res = await createTask(app, other.token, { ...TASK_INPUT, projectId: project.id });
     expect(res.status).toBe(404);
+  });
+
+  describe('델타 동기화', () => {
+    async function fetchChanges(app: TestApp, token: string, cursor: number) {
+      const res = await app.request(`${trpcPath('task.changes')}?input=${encodeURIComponent(JSON.stringify({ cursor }))}`, {
+        headers: authHeader(token),
+      });
+      return unwrapTrpcData({ res, schema: syncChangesResponseSchema });
+    }
+
+    it('쓰기마다 커서가 전진하고, 커서 이후의 변경만 내려온다', async () => {
+      const { app } = setup();
+      const { token } = await signup(app);
+
+      const project = await createProject(app, token); // seq 1
+      const createRes = await createTask(app, token, { ...TASK_INPUT, projectId: project.id }); // seq 2
+      const { task } = await unwrapTrpcData({ res: createRes, schema: v.object({ task: taskSchema }) });
+
+      const { data: range } = await fetchRange(app, token);
+      expect(range.cursor).toBe(2);
+
+      // 커서 시점 이후 변경이 없으면 빈 델타
+      const empty = await fetchChanges(app, token, range.cursor);
+      expect(empty).toEqual({ tasks: [], projects: [], cursor: range.cursor });
+
+      // 다른 기기의 수정 → 그 변경 하나만 내려온다
+      await updateTask(app, token, { id: task.id, patch: { status: 'done' } }); // seq 3
+      const delta = await fetchChanges(app, token, range.cursor);
+      expect(delta.cursor).toBe(3);
+      expect(delta.projects).toEqual([]);
+      expect(delta.tasks).toEqual([{ ...task, status: 'done', version: 2, syncSeq: 3, deleted: false }]);
+
+      // 처음(커서 0)부터 당기면 전부 내려온다 — 새 기기 시나리오
+      const full = await fetchChanges(app, token, 0);
+      expect(full.tasks).toHaveLength(1);
+      expect(full.projects).toEqual([{ ...project, syncSeq: 1, deleted: false }]);
+    });
+
+    it('유저별로 격리된다 — 남의 변경은 델타에 실리지 않는다', async () => {
+      const { app } = setup();
+      const { token } = await signup(app);
+      await createTask(app, token, TASK_INPUT);
+
+      const other = await signupOther(app);
+      const delta = await fetchChanges(app, other.token, 0);
+      expect(delta).toEqual({ tasks: [], projects: [], cursor: 0 });
+    });
+
+    it('SSE 신호 채널 — 인증 필수, 쓰기가 일어나면 구독자에게 신호가 간다', async () => {
+      const { app, sync } = setup();
+      const unauthorized = await app.request(SYNC_EVENTS_PATH);
+      expect(unauthorized.status).toBe(401);
+
+      const { token, user } = await signup(app);
+      const res = await app.request(SYNC_EVENTS_PATH, { headers: authHeader(token) });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/event-stream');
+      await res.body?.cancel();
+
+      let signals = 0;
+      const unsubscribe = sync.subscribe(user.id, () => {
+        signals += 1;
+      });
+      await createTask(app, token, TASK_INPUT);
+      expect(signals).toBe(1);
+      unsubscribe();
+    });
   });
 });
 

@@ -4,6 +4,7 @@ import { pubRouter } from '@bff/modules/pub/router';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import { createTaskRouter } from '@bff/modules/task/router';
 import { userRouter } from '@bff/modules/user/router';
+import type { SyncHub } from '@bff/platform/sync-hub';
 import { router } from '@bff/trpc/init';
 
 export interface AppRouterDeps {
@@ -11,6 +12,7 @@ export interface AppRouterDeps {
   sessions: SessionStore;
   tasks: TaskStore;
   projects: ProjectStore;
+  sync: SyncHub;
 }
 
 export function createAppRouter(deps: AppRouterDeps) {

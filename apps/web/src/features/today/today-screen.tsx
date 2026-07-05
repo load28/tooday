@@ -1,11 +1,12 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
-import type { Task, TaskRangeResponse } from '@tooday/shared';
+import type { Task, TaskPatch, TaskRangeResponse } from '@tooday/shared';
 import { Bell, CalendarDays, CalendarX2, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
 import { TaskCard } from '@/features/today/task-card';
+import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
 import { format, type Messages, useLocale, useT } from '@/shared/i18n';
@@ -60,6 +61,11 @@ function sectionOf(startAt: string): DaySection {
   return 'evening';
 }
 
+/** 낙관적 캐시 패치용 — patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게) */
+function definedFields(patch: TaskPatch): Partial<Task> {
+  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as Partial<Task>;
+}
+
 function formatDuration(t: Messages, durationMin: number): string {
   if (durationMin < 60) return format(t.common.duration.minutes, { min: durationMin });
   const hour = Math.floor(durationMin / 60);
@@ -82,8 +88,12 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const [activeOffset, setActiveOffset] = useState(0);
 
   // loader가 같은 범위를 ensureQueryData로 채워 두므로 첫 렌더에서 suspend 하지 않는다
-  const rangeQuery = trpc.task.range.queryOptions(weekRange(new Date(now)));
+  const range = useMemo(() => weekRange(new Date(now)), [now]);
+  const rangeQuery = trpc.task.range.queryOptions(range);
   const { data } = useSuspenseQuery(rangeQuery);
+
+  // 다른 기기의 변경이 SSE 신호 → 델타 → 캐시 패치로 이 화면에 실시간 반영된다
+  useTaskSync(range);
 
   const projectById = useMemo(() => new Map(data.projects.map((project) => [project.id, project])), [data.projects]);
   const tasksByDate = useMemo(() => {
@@ -93,21 +103,26 @@ export function TodayScreen({ now }: TodayScreenProps) {
       if (list) list.push(task);
       else map.set(task.date, [task]);
     }
+    // 델타 패치가 행을 뒤에 붙이므로 표시 순서는 여기서 보장한다
+    for (const list of map.values()) {
+      list.sort((a, b) => timeToMin(a.startAt) - timeToMin(b.startAt));
+    }
     return map;
   }, [data.tasks]);
 
-  const setStatus = useMutation(
-    trpc.task.setStatus.mutationOptions({
-      onMutate: async ({ id, status, version }) => {
+  const updateTask = useMutation(
+    trpc.task.update.mutationOptions({
+      onMutate: async ({ id, patch }) => {
         await queryClient.cancelQueries({ queryKey: rangeQuery.queryKey });
         const previous = queryClient.getQueryData(rangeQuery.queryKey);
-        // 서버가 version을 +1 하므로 낙관적 캐시도 같이 올린다 — 연속 토글이 낡은 version을 보내지 않게
         queryClient.setQueryData(
           rangeQuery.queryKey,
           (old: TaskRangeResponse | undefined) =>
             old && {
               ...old,
-              tasks: old.tasks.map((task) => (task.id === id ? { ...task, status, version: version + 1 } : task)),
+              tasks: old.tasks.map((task) =>
+                task.id === id ? { ...task, ...definedFields(patch), version: task.version + 1 } : task,
+              ),
             },
         );
         return { previous };
@@ -126,7 +141,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
   const toggleTask = (task: Task) => {
-    setStatus.mutate({ id: task.id, status: task.status === 'done' ? 'todo' : 'done', version: task.version });
+    updateTask.mutate({ id: task.id, patch: { status: task.status === 'done' ? 'todo' : 'done' } });
   };
 
   return (

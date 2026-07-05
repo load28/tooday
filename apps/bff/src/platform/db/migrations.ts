@@ -140,10 +140,49 @@ const migration0002FractionalPosition: Migration = {
   },
 };
 
+/**
+ * 0003 — 기기 간 델타 동기화 기반.
+ *
+ * - sync_counters: 유저별 단조증가 시퀀스. 모든 쓰기가 여기서 seq를 발급받아
+ *   행에 찍는다 → 클라이언트는 "커서(마지막으로 본 seq) 이후"만 당겨서 수렴한다.
+ * - tasks/projects.sync_seq: 그 행의 마지막 변경 seq. 기존 행은 0으로 백필 —
+ *   커서는 항상 현재 카운터값에서 시작하므로 0인 행이 델타에 잘못 실릴 일이 없다.
+ * - deleted_at(tombstone): 하드 DELETE는 "사라졌다"는 사실이 델타에 안 담기므로
+ *   소프트 삭제로 전환할 자리. 읽기 경로는 deleted_at IS NULL만 본다.
+ */
+const migration0003Sync: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await db.schema
+      .createTable('sync_counters')
+      .addColumn('user_id', 'uuid', (col) => col.primaryKey().references('users.id').onDelete('cascade'))
+      // integer 상한(유저당 21억 쓰기)은 개인 앱 규모에서 도달 불가 — int8은 드라이버별 파싱 편차가 있어 피한다
+      .addColumn('seq', 'integer', (col) => col.notNull().defaultTo(0))
+      .execute();
+
+    for (const table of ['projects', 'tasks'] as const) {
+      await db.schema
+        .alterTable(table)
+        .addColumn('sync_seq', 'integer', (col) => col.notNull().defaultTo(0))
+        .execute();
+      await db.schema.alterTable(table).addColumn('deleted_at', 'timestamptz').execute();
+      await db.schema.createIndex(`${table}_user_id_sync_seq`).on(table).columns(['user_id', 'sync_seq']).execute();
+    }
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    for (const table of ['projects', 'tasks'] as const) {
+      await db.schema.alterTable(table).dropColumn('sync_seq').execute();
+      await db.schema.alterTable(table).dropColumn('deleted_at').execute();
+    }
+    await db.schema.dropTable('sync_counters').execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
   '0002_fractional_position': migration0002FractionalPosition,
+  '0003_sync': migration0003Sync,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {

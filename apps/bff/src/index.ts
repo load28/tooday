@@ -6,6 +6,7 @@ import { migrateToLatest } from '@bff/platform/db/migrate';
 import { createPgliteDatabase } from '@bff/platform/db/pglite';
 import { createPostgresDatabase } from '@bff/platform/db/postgres';
 import { createLogger } from '@bff/platform/logging';
+import { SyncHub } from '@bff/platform/sync-hub';
 
 const config = loadConfig();
 const logger = createLogger(config.logFormat);
@@ -40,6 +41,7 @@ const app = createApp({
   sessions,
   tasks: new SqlTaskStore(db),
   projects: new SqlProjectStore(db),
+  sync: new SyncHub(),
   logger,
 });
 

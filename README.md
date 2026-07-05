@@ -17,6 +17,9 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   모든 데이터 API는 `/trpc` — 프라이빗(`auth.*`, `user.*`)은 `private, no-store`,
   공개(`pub.*`) 쿼리만 public Cache-Control로 HTTP 캐시를 탄다.
   클라이언트는 노배치(`httpLink`)가 기본.
+  쓰기는 의도(intent) 기반 부분 업데이트(필드 단위 LWW — 409 없음), 기기 간
+  수렴은 유저별 sync seq 커서(`task.changes`) + SSE 신호 채널(`/sync/events`)로
+  한다 — 신호는 힌트, 커서가 진실.
   저장소는 PostgreSQL — 배포는 `DATABASE_URL`(pg 커넥션 풀), 개발·테스트는
   미설정 시 임베디드 PGlite(WASM Postgres)로 동일한 SQL·마이그레이션을 실행한다.
   접근은 Kysely(타입드 SQL + 다이얼렉트), 스키마 변경은 버전드 마이그레이션

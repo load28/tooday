@@ -34,10 +34,14 @@ export const taskRangeRequestSchema = v.object({
   to: isoDateSchema,
 });
 
-/** 메인(오늘) 화면 한 번의 조회로 주간 창의 태스크와 프로젝트 라벨을 함께 내려준다 */
+/**
+ * 메인(오늘) 화면 한 번의 조회로 주간 창의 태스크·프로젝트 라벨과
+ * 동기화 커서(이 유저의 현재 sync seq)를 함께 내려준다.
+ */
 export const taskRangeResponseSchema = v.object({
   tasks: v.array(taskSchema),
   projects: v.array(projectSchema),
+  cursor: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
 
 export const createTaskRequestSchema = v.object({
@@ -48,12 +52,54 @@ export const createTaskRequestSchema = v.object({
   durationMin: v.pipe(v.number(), v.integer(), v.minValue(1)),
 });
 
-export const setTaskStatusRequestSchema = v.object({
-  id: v.string(),
-  status: taskStatusSchema,
-  /** 읽은 시점의 version — 불일치(다른 기기에서 먼저 수정)면 CONFLICT */
-  version: v.pipe(v.number(), v.integer(), v.minValue(1)),
+/**
+ * 의도(intent) 기반 부분 업데이트 — 바꾸려는 필드만 보낸다.
+ * 서버는 최신 행에 이 필드들만 적용하므로(필드 단위 LWW) 행 전체 덮어쓰기가 없고,
+ * 같은 필드를 두 기기가 고치면 나중 의도가 이긴다. 409는 발생하지 않는다.
+ */
+export const taskPatchSchema = v.object({
+  title: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1))),
+  projectId: v.optional(v.nullable(v.string())),
+  date: v.optional(isoDateSchema),
+  startAt: v.optional(isoTimeSchema),
+  durationMin: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+  status: v.optional(taskStatusSchema),
 });
+
+export const updateTaskRequestSchema = v.object({
+  id: v.string(),
+  patch: v.pipe(
+    taskPatchSchema,
+    v.check((patch) => Object.values(patch).some((value) => value !== undefined), 'patch에 바꿀 필드가 최소 하나 필요합니다'),
+  ),
+});
+
+/** 델타 동기화 — 커서(마지막으로 본 sync seq) 이후 바뀐 행을 전부 내려준다. tombstone 포함 */
+export const syncChangesRequestSchema = v.object({
+  cursor: v.pipe(v.number(), v.integer(), v.minValue(0)),
+});
+
+export const taskChangeSchema = v.object({
+  ...taskSchema.entries,
+  syncSeq: v.pipe(v.number(), v.integer(), v.minValue(1)),
+  deleted: v.boolean(),
+});
+
+export const projectChangeSchema = v.object({
+  ...projectSchema.entries,
+  syncSeq: v.pipe(v.number(), v.integer(), v.minValue(1)),
+  deleted: v.boolean(),
+});
+
+export const syncChangesResponseSchema = v.object({
+  tasks: v.array(taskChangeSchema),
+  projects: v.array(projectChangeSchema),
+  /** 다음 요청에 쓸 커서 — max(요청 커서, 반환된 변경의 최대 seq) */
+  cursor: v.pipe(v.number(), v.integer(), v.minValue(0)),
+});
+
+/** SSE 신호 채널 경로 — 데이터는 싣지 않고 "네 데이터 바뀜"만 알린다. 클라이언트는 신호를 받으면 델타를 당긴다 */
+export const SYNC_EVENTS_PATH = '/sync/events';
 
 export const createProjectRequestSchema = v.object({
   name: v.pipe(v.string(), v.trim(), v.minLength(1)),
@@ -67,5 +113,10 @@ export type Task = v.InferOutput<typeof taskSchema>;
 export type TaskRangeRequest = v.InferOutput<typeof taskRangeRequestSchema>;
 export type TaskRangeResponse = v.InferOutput<typeof taskRangeResponseSchema>;
 export type CreateTaskRequest = v.InferOutput<typeof createTaskRequestSchema>;
-export type SetTaskStatusRequest = v.InferOutput<typeof setTaskStatusRequestSchema>;
+export type TaskPatch = v.InferOutput<typeof taskPatchSchema>;
+export type UpdateTaskRequest = v.InferOutput<typeof updateTaskRequestSchema>;
+export type SyncChangesRequest = v.InferOutput<typeof syncChangesRequestSchema>;
+export type TaskChange = v.InferOutput<typeof taskChangeSchema>;
+export type ProjectChange = v.InferOutput<typeof projectChangeSchema>;
+export type SyncChangesResponse = v.InferOutput<typeof syncChangesResponseSchema>;
 export type CreateProjectRequest = v.InferOutput<typeof createProjectRequestSchema>;

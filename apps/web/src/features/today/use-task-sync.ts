@@ -1,0 +1,75 @@
+import { useRouteContext } from '@tanstack/react-router';
+import type { SyncChangesResponse, TaskRangeResponse } from '@tooday/shared';
+import { SYNC_EVENTS_PATH } from '@tooday/shared';
+import { useEffect } from 'react';
+import { BFF_URL } from '@/app/trpc';
+
+/**
+ * 기기 간 실시간 수렴 — SSE로 "네 데이터 바뀜" 신호를 받으면 커서 이후의
+ * 델타(task.changes)를 당겨 range 캐시에 패치한다.
+ *
+ * 신호는 힌트일 뿐 커서가 진실이다: 신호가 유실돼도 재접속 직후 서버가 한 번
+ * 신호를 쏘고, 그때 커서가 끊긴 사이의 변경을 전부 따라잡는다. EventSource의
+ * 자동 재접속이 재연결을 담당한다.
+ */
+export function useTaskSync(range: { from: string; to: string }): void {
+  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+
+  useEffect(() => {
+    const queryKey = trpc.task.range.queryOptions(range).queryKey;
+    let closed = false;
+    let pulling = false;
+    let pending = false;
+
+    const pull = async (): Promise<void> => {
+      if (pulling) {
+        pending = true; // 신호 폭주는 "한 번 더"로 접는다
+        return;
+      }
+      pulling = true;
+      try {
+        do {
+          pending = false;
+          const current = queryClient.getQueryData<TaskRangeResponse>(queryKey);
+          if (!current || closed) return;
+          const delta = await queryClient.fetchQuery(trpc.task.changes.queryOptions({ cursor: current.cursor }));
+          if (delta.cursor === current.cursor) continue;
+          queryClient.setQueryData<TaskRangeResponse>(queryKey, (old) => old && applyDelta(old, delta, range));
+        } while (pending && !closed);
+      } catch {
+        // 델타 실패는 다음 신호(또는 재접속 신호)가 재시도한다
+      } finally {
+        pulling = false;
+      }
+    };
+
+    const source = new EventSource(`${BFF_URL}${SYNC_EVENTS_PATH}`, { withCredentials: true });
+    source.addEventListener('change', () => void pull());
+
+    return () => {
+      closed = true;
+      source.close();
+    };
+  }, [trpc, queryClient, range.from, range.to, range]);
+}
+
+function applyDelta(old: TaskRangeResponse, delta: SyncChangesResponse, range: { from: string; to: string }): TaskRangeResponse {
+  let tasks = old.tasks;
+  for (const change of delta.tasks) {
+    const { syncSeq: _seq, deleted, ...task } = change;
+    tasks = tasks.filter((t) => t.id !== task.id);
+    // 삭제됐거나 주간 창 밖으로 이동한 행은 캐시에서 빠지는 것으로 반영된다
+    if (!deleted && task.date >= range.from && task.date <= range.to) {
+      tasks = [...tasks, task];
+    }
+  }
+  let projects = old.projects;
+  for (const change of delta.projects) {
+    const { syncSeq: _seq, deleted, ...project } = change;
+    projects = projects.filter((p) => p.id !== project.id);
+    if (!deleted) {
+      projects = [...projects, project];
+    }
+  }
+  return { tasks, projects, cursor: Math.max(old.cursor, delta.cursor) };
+}

@@ -1,31 +1,50 @@
 import type {
   CreateProjectInput,
   CreateTaskInput,
+  ListChangesInput,
   ListTasksRangeInput,
   ProjectStore,
-  SetTaskStatusInput,
   TaskStore,
+  UpdateTaskInput,
 } from '@bff/modules/task/ports';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, Task } from '@tooday/shared';
+import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
+
+/** 유저별 단조증가 seq — SQL 구현의 sync_counters에 대응. 두 스토어가 하나를 공유해야 한다 */
+export class InMemorySyncCounter {
+  private readonly seqs = new Map<string, number>();
+
+  next(userId: string): number {
+    const next = (this.seqs.get(userId) ?? 0) + 1;
+    this.seqs.set(userId, next);
+    return next;
+  }
+
+  current(userId: string): number {
+    return this.seqs.get(userId) ?? 0;
+  }
+}
 
 interface ProjectRecord extends Project {
   userId: string;
   position: string;
+  syncSeq: number;
+  deleted: boolean;
 }
 
 interface TaskRecord extends Task {
   userId: string;
   position: string;
+  syncSeq: number;
+  deleted: boolean;
 }
 
 function toProject({ id, name, color }: ProjectRecord): Project {
   return { id, name, color };
 }
 
-function toTask({ userId: _userId, position: _position, ...task }: TaskRecord): Task {
+function toTask({ userId: _u, position: _p, syncSeq: _s, deleted: _d, ...task }: TaskRecord): Task {
   return task;
 }
 
@@ -33,8 +52,14 @@ function byPosition(a: { position: string; id: string }, b: { position: string; 
   return a.position < b.position ? -1 : a.position > b.position ? 1 : a.id < b.id ? -1 : 1;
 }
 
+function bySyncSeq(a: { syncSeq: number }, b: { syncSeq: number }): number {
+  return a.syncSeq - b.syncSeq;
+}
+
 export class InMemoryProjectStore implements ProjectStore {
   private readonly byId = new Map<string, ProjectRecord>();
+
+  constructor(private readonly counter: InMemorySyncCounter) {}
 
   private lastPosition(userId: string): string | null {
     let last: string | null = null;
@@ -46,32 +71,42 @@ export class InMemoryProjectStore implements ProjectStore {
 
   async listByUser(userId: string): Promise<Project[]> {
     return [...this.byId.values()]
-      .filter((record) => record.userId === userId)
+      .filter((record) => record.userId === userId && !record.deleted)
       .sort(byPosition)
       .map(toProject);
   }
 
   async findById({ userId, id }: { userId: string; id: string }): Promise<Project | null> {
     const record = this.byId.get(id);
-    return record && record.userId === userId ? toProject(record) : null;
+    return record && record.userId === userId && !record.deleted ? toProject(record) : null;
   }
 
   async create({ userId, name, color }: CreateProjectInput): Promise<Project> {
-    const record: ProjectRecord = { id: newId(), userId, name, color, position: orderKeyAfter(this.lastPosition(userId)) };
+    const record: ProjectRecord = {
+      id: newId(),
+      userId,
+      name,
+      color,
+      position: orderKeyAfter(this.lastPosition(userId)),
+      syncSeq: this.counter.next(userId),
+      deleted: false,
+    };
     this.byId.set(record.id, record);
     return toProject(record);
+  }
+
+  async changesSince({ userId, cursor }: ListChangesInput): Promise<ProjectChange[]> {
+    return [...this.byId.values()]
+      .filter((record) => record.userId === userId && record.syncSeq > cursor)
+      .sort(bySyncSeq)
+      .map((record) => ({ ...toProject(record), syncSeq: record.syncSeq, deleted: record.deleted }));
   }
 }
 
 export class InMemoryTaskStore implements TaskStore {
   private readonly byId = new Map<string, TaskRecord>();
 
-  async listRange({ userId, from, to }: ListTasksRangeInput): Promise<Task[]> {
-    return [...this.byId.values()]
-      .filter((record) => record.userId === userId && record.date >= from && record.date <= to)
-      .sort((a, b) => a.date.localeCompare(b.date) || a.startAt.localeCompare(b.startAt))
-      .map(toTask);
-  }
+  constructor(private readonly counter: InMemorySyncCounter) {}
 
   private lastPosition(userId: string): string | null {
     let last: string | null = null;
@@ -79,6 +114,13 @@ export class InMemoryTaskStore implements TaskStore {
       if (record.userId === userId && (last === null || record.position > last)) last = record.position;
     }
     return last;
+  }
+
+  async listRange({ userId, from, to }: ListTasksRangeInput): Promise<Task[]> {
+    return [...this.byId.values()]
+      .filter((record) => record.userId === userId && !record.deleted && record.date >= from && record.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startAt.localeCompare(b.startAt))
+      .map(toTask);
   }
 
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
@@ -93,19 +135,35 @@ export class InMemoryTaskStore implements TaskStore {
       status: 'todo',
       version: 1,
       position: orderKeyAfter(this.lastPosition(userId)),
+      syncSeq: this.counter.next(userId),
+      deleted: false,
     };
     this.byId.set(record.id, record);
     return toTask(record);
   }
 
-  async setStatus({ userId, id, status, version }: SetTaskStatusInput): Promise<Task | null> {
+  async update({ userId, id, patch }: UpdateTaskInput): Promise<Task | null> {
     const record = this.byId.get(id);
-    if (!record || record.userId !== userId) return null;
-    if (record.version !== version) {
-      throw new DomainError(DOMAIN_ERROR_CODES.TASK_VERSION_CONFLICT);
-    }
-    record.status = status;
+    if (!record || record.userId !== userId || record.deleted) return null;
+    if (patch.title !== undefined) record.title = patch.title;
+    if (patch.projectId !== undefined) record.projectId = patch.projectId;
+    if (patch.date !== undefined) record.date = patch.date;
+    if (patch.startAt !== undefined) record.startAt = patch.startAt;
+    if (patch.durationMin !== undefined) record.durationMin = patch.durationMin;
+    if (patch.status !== undefined) record.status = patch.status;
     record.version += 1;
+    record.syncSeq = this.counter.next(userId);
     return toTask(record);
+  }
+
+  async changesSince({ userId, cursor }: ListChangesInput): Promise<TaskChange[]> {
+    return [...this.byId.values()]
+      .filter((record) => record.userId === userId && record.syncSeq > cursor)
+      .sort(bySyncSeq)
+      .map((record) => ({ ...toTask(record), syncSeq: record.syncSeq, deleted: record.deleted }));
+  }
+
+  async syncCursor(userId: string): Promise<number> {
+    return this.counter.current(userId);
   }
 }

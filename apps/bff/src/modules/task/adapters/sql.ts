@@ -1,19 +1,21 @@
 import type {
   CreateProjectInput,
   CreateTaskInput,
+  ListChangesInput,
   ListTasksRangeInput,
   ProjectStore,
-  SetTaskStatusInput,
   TaskStore,
+  UpdateTaskInput,
 } from '@bff/modules/task/ports';
 import type { DatabaseSchema } from '@bff/platform/db/schema';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
+import { currentSyncSeq, withUserSyncSeq } from '@bff/platform/db/sync';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, Task } from '@tooday/shared';
+import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
 import type { Kysely } from 'kysely';
 
 const TASK_COLUMNS = ['id', 'project_id', 'title', 'date', 'start_at', 'duration_min', 'status', 'version'] as const;
+const TASK_CHANGE_COLUMNS = [...TASK_COLUMNS, 'sync_seq', 'deleted_at'] as const;
 
 interface TaskRow {
   id: string;
@@ -39,6 +41,10 @@ function toTask(row: TaskRow): Task {
   };
 }
 
+function toTaskChange(row: TaskRow & { sync_seq: number; deleted_at: Date | null }): TaskChange {
+  return { ...toTask(row), syncSeq: row.sync_seq, deleted: row.deleted_at !== null };
+}
+
 export class SqlProjectStore implements ProjectStore {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
 
@@ -47,6 +53,7 @@ export class SqlProjectStore implements ProjectStore {
       .selectFrom('projects')
       .select(['id', 'name', 'color'])
       .where('user_id', '=', userId)
+      .where('deleted_at', 'is', null)
       .orderBy('position')
       .orderBy('id')
       .execute();
@@ -58,24 +65,50 @@ export class SqlProjectStore implements ProjectStore {
       .select(['id', 'name', 'color'])
       .where('user_id', '=', userId)
       .where('id', '=', id)
+      .where('deleted_at', 'is', null)
       .executeTakeFirst();
     return row ?? null;
   }
 
   async create({ userId, name, color }: CreateProjectInput): Promise<Project> {
-    const last = await this.db
+    return withUserSyncSeq(this.db, userId, async (trx, seq) => {
+      const last = await trx
+        .selectFrom('projects')
+        .select('position')
+        .where('user_id', '=', userId)
+        .orderBy('position', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      const project: Project = { id: newId(), name, color };
+      await trx
+        .insertInto('projects')
+        .values({
+          ...project,
+          user_id: userId,
+          position: orderKeyAfter(last?.position ?? null),
+          sync_seq: seq,
+          deleted_at: null,
+        })
+        .execute();
+      return project;
+    });
+  }
+
+  async changesSince({ userId, cursor }: ListChangesInput): Promise<ProjectChange[]> {
+    const rows = await this.db
       .selectFrom('projects')
-      .select('position')
+      .select(['id', 'name', 'color', 'sync_seq', 'deleted_at'])
       .where('user_id', '=', userId)
-      .orderBy('position', 'desc')
-      .limit(1)
-      .executeTakeFirst();
-    const project: Project = { id: newId(), name, color };
-    await this.db
-      .insertInto('projects')
-      .values({ ...project, user_id: userId, position: orderKeyAfter(last?.position ?? null) })
+      .where('sync_seq', '>', cursor)
+      .orderBy('sync_seq')
       .execute();
-    return project;
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      syncSeq: row.sync_seq,
+      deleted: row.deleted_at !== null,
+    }));
   }
 }
 
@@ -87,6 +120,7 @@ export class SqlTaskStore implements TaskStore {
       .selectFrom('tasks')
       .select(TASK_COLUMNS)
       .where('user_id', '=', userId)
+      .where('deleted_at', 'is', null)
       .where('date', '>=', from)
       .where('date', '<=', to)
       .orderBy('date')
@@ -96,59 +130,73 @@ export class SqlTaskStore implements TaskStore {
   }
 
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
-    const last = await this.db
-      .selectFrom('tasks')
-      .select('position')
-      .where('user_id', '=', userId)
-      .orderBy('position', 'desc')
-      .limit(1)
-      .executeTakeFirst();
-    const row = await this.db
-      .insertInto('tasks')
-      .values({
-        id: newId(),
-        user_id: userId,
-        project_id: projectId,
-        title,
-        date,
-        start_at: startAt,
-        duration_min: durationMin,
-        status: 'todo',
-        position: orderKeyAfter(last?.position ?? null),
-        completed_at: null,
-      })
-      .returning(TASK_COLUMNS)
-      .executeTakeFirstOrThrow();
-    return toTask(row);
+    return withUserSyncSeq(this.db, userId, async (trx, seq) => {
+      const last = await trx
+        .selectFrom('tasks')
+        .select('position')
+        .where('user_id', '=', userId)
+        .orderBy('position', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      const row = await trx
+        .insertInto('tasks')
+        .values({
+          id: newId(),
+          user_id: userId,
+          project_id: projectId,
+          title,
+          date,
+          start_at: startAt,
+          duration_min: durationMin,
+          status: 'todo',
+          position: orderKeyAfter(last?.position ?? null),
+          sync_seq: seq,
+          deleted_at: null,
+          completed_at: null,
+        })
+        .returning(TASK_COLUMNS)
+        .executeTakeFirstOrThrow();
+      return toTask(row);
+    });
   }
 
-  async setStatus({ userId, id, status, version }: SetTaskStatusInput): Promise<Task | null> {
-    const now = new Date();
-    const row = await this.db
-      .updateTable('tasks')
-      .set((eb) => ({
-        status,
-        version: eb('version', '+', 1),
-        completed_at: status === 'done' ? now : null,
-        updated_at: now,
-      }))
-      .where('user_id', '=', userId)
-      .where('id', '=', id)
-      .where('version', '=', version)
-      .returning(TASK_COLUMNS)
-      .executeTakeFirst();
-    if (row) return toTask(row);
+  async update({ userId, id, patch }: UpdateTaskInput): Promise<Task | null> {
+    return withUserSyncSeq(this.db, userId, async (trx, seq) => {
+      const now = new Date();
+      const row = await trx
+        .updateTable('tasks')
+        .set((eb) => ({
+          ...(patch.title !== undefined ? { title: patch.title } : {}),
+          ...(patch.projectId !== undefined ? { project_id: patch.projectId } : {}),
+          ...(patch.date !== undefined ? { date: patch.date } : {}),
+          ...(patch.startAt !== undefined ? { start_at: patch.startAt } : {}),
+          ...(patch.durationMin !== undefined ? { duration_min: patch.durationMin } : {}),
+          ...(patch.status !== undefined ? { status: patch.status, completed_at: patch.status === 'done' ? now : null } : {}),
+          version: eb('version', '+', 1),
+          updated_at: now,
+          sync_seq: seq,
+        }))
+        .where('user_id', '=', userId)
+        .where('id', '=', id)
+        .where('deleted_at', 'is', null)
+        .returning(TASK_COLUMNS)
+        .executeTakeFirst();
+      return row ? toTask(row) : null;
+    });
+  }
 
-    // 실패 원인 구분: 행이 존재하면 버전 불일치, 아니면 없는/남의 태스크
-    const exists = await this.db
+  async changesSince({ userId, cursor }: ListChangesInput): Promise<TaskChange[]> {
+    const rows = await this.db
       .selectFrom('tasks')
-      .select('id')
+      .select(TASK_CHANGE_COLUMNS)
       .where('user_id', '=', userId)
-      .where('id', '=', id)
-      .executeTakeFirst();
-    if (exists) {
-      throw new DomainError(DOMAIN_ERROR_CODES.TASK_VERSION_CONFLICT);
-    }
-    return null;
+      .where('sync_seq', '>', cursor)
+      .orderBy('sync_seq')
+      .execute();
+    return rows.map(toTaskChange);
+  }
+
+  async syncCursor(userId: string): Promise<number> {
+    return currentSyncSeq(this.db, userId);
   }
 }
