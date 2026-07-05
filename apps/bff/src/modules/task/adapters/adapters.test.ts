@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'bun:test';
-import { InMemoryProjectStore, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
+import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import { testDatabase } from '@bff/platform/db/testing';
-import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 
 interface Stores {
   projects: ProjectStore;
@@ -20,11 +19,14 @@ interface Implementation {
 const IMPLEMENTATIONS: Implementation[] = [
   {
     name: 'memory',
-    make: async () => ({
-      projects: new InMemoryProjectStore(),
-      tasks: new InMemoryTaskStore(),
-      seedUser: async () => {},
-    }),
+    make: async () => {
+      const counter = new InMemorySyncCounter();
+      return {
+        projects: new InMemoryProjectStore(counter),
+        tasks: new InMemoryTaskStore(counter),
+        seedUser: async () => {},
+      };
+    },
   },
   {
     name: 'sql(pglite)',
@@ -88,32 +90,46 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(listed).toEqual([morning, afternoon, nextDay]);
     });
 
-    it('새 태스크는 version 1로 시작한다', async () => {
+    it('update는 patch의 필드만 적용하고 version을 올린다', async () => {
       const { tasks } = await setup();
       const task = await tasks.create(TASK_INPUT);
       expect(task.version).toBe(1);
-      expect(task.status).toBe('todo');
+
+      const afterStatus = await tasks.update({ userId: USER_A, id: task.id, patch: { status: 'done' } });
+      expect(afterStatus).toEqual({ ...task, status: 'done', version: 2 });
+
+      // 제목만 고쳐도 방금의 status 변경이 보존된다 — 행 전체 덮어쓰기가 아니라는 증거
+      const afterTitle = await tasks.update({ userId: USER_A, id: task.id, patch: { title: '수정된 제목' } });
+      expect(afterTitle).toEqual({ ...task, status: 'done', title: '수정된 제목', version: 3 });
     });
 
-    it('setStatus는 version이 일치할 때만 반영하고 version을 올린다', async () => {
+    it('소유자가 아니거나 없는 태스크의 update는 null을 반환한다', async () => {
       const { tasks } = await setup();
       const task = await tasks.create(TASK_INPUT);
 
-      const updated = await tasks.setStatus({ userId: USER_A, id: task.id, status: 'done', version: 1 });
-      expect(updated).toEqual({ ...task, status: 'done', version: 2 });
-
-      // 읽은 시점(version 1) 그대로 다시 쓰면 충돌 — 다른 기기 선반영 시나리오
-      await expect(tasks.setStatus({ userId: USER_A, id: task.id, status: 'todo', version: 1 })).rejects.toMatchObject(
-        new DomainError(DOMAIN_ERROR_CODES.TASK_VERSION_CONFLICT),
-      );
+      expect(await tasks.update({ userId: USER_B, id: task.id, patch: { status: 'done' } })).toBeNull();
+      expect(await tasks.update({ userId: USER_A, id: crypto.randomUUID(), patch: { status: 'done' } })).toBeNull();
     });
 
-    it('소유자가 아니거나 없는 태스크의 setStatus는 null을 반환한다', async () => {
-      const { tasks } = await setup();
-      const task = await tasks.create(TASK_INPUT);
+    it('쓰기마다 유저의 sync 커서가 전진하고, changesSince는 커서 이후만 내려준다', async () => {
+      const { tasks, projects } = await setup();
+      expect(await tasks.syncCursor(USER_A)).toBe(0);
 
-      expect(await tasks.setStatus({ userId: USER_B, id: task.id, status: 'todo', version: 1 })).toBeNull();
-      expect(await tasks.setStatus({ userId: USER_A, id: crypto.randomUUID(), status: 'todo', version: 1 })).toBeNull();
+      const project = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' }); // seq 1
+      const task = await tasks.create(TASK_INPUT); // seq 2
+      expect(await tasks.syncCursor(USER_A)).toBe(2);
+
+      await tasks.update({ userId: USER_A, id: task.id, patch: { status: 'done' } }); // seq 3
+
+      expect(await tasks.changesSince({ userId: USER_A, cursor: 2 })).toEqual([
+        { ...task, status: 'done', version: 2, syncSeq: 3, deleted: false },
+      ]);
+      expect(await projects.changesSince({ userId: USER_A, cursor: 0 })).toEqual([{ ...project, syncSeq: 1, deleted: false }]);
+      expect(await tasks.changesSince({ userId: USER_A, cursor: 3 })).toEqual([]);
+
+      // 유저 격리 — B의 커서·델타는 A의 쓰기에 영향받지 않는다
+      expect(await tasks.syncCursor(USER_B)).toBe(0);
+      expect(await tasks.changesSince({ userId: USER_B, cursor: 0 })).toEqual([]);
     });
   });
 }

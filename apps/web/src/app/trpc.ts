@@ -6,7 +6,7 @@ import { TRPC_ENDPOINT } from '@tooday/shared';
 import { createTRPCClient, httpLink } from '@trpc/client';
 import { createTRPCOptionsProxy, type TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 
-const BFF_URL = import.meta.env.VITE_BFF_URL ?? 'http://localhost:3002';
+export const BFF_URL = import.meta.env.VITE_BFF_URL ?? 'http://localhost:3002';
 
 // SSR에서만 브라우저가 보낸 세션 쿠키를 BFF로 전달한다.
 // 서버 전용 모듈은 server 브랜치에서만 로드 — 클라이언트 번들에서는 컴파일 시 제거된다.

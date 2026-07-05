@@ -1,16 +1,19 @@
 import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { extractSessionToken } from '@bff/modules/auth/token';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
 import type { Logger } from '@bff/platform/logging';
 import { createLogger, createRequestLogger } from '@bff/platform/logging';
+import type { SyncHub } from '@bff/platform/sync-hub';
 import { trpcResponseMeta } from '@bff/trpc/cache';
 import { createContextFactory } from '@bff/trpc/context';
 import { createAppRouter } from '@bff/trpc/router';
 import { trpcServer } from '@hono/trpc-server';
-import { TRPC_ENDPOINT } from '@tooday/shared';
+import { SYNC_EVENTS_PATH, TRPC_ENDPOINT } from '@tooday/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { streamSSE } from 'hono/streaming';
 
 export interface AppDeps {
   config: BffConfig;
@@ -18,6 +21,7 @@ export interface AppDeps {
   sessions: SessionStore;
   tasks: TaskStore;
   projects: ProjectStore;
+  sync: SyncHub;
   logger?: Logger;
 }
 
@@ -58,6 +62,29 @@ export function createApp(deps: AppDeps) {
       responseMeta: trpcResponseMeta,
     }),
   );
+
+  // 동기화 신호 채널 — "네 데이터 바뀜"만 흘린다. 클라이언트는 신호를 받으면
+  // 자기 커서로 task.changes를 당긴다 (신호 유실·중복은 커서가 흡수).
+  app.get(SYNC_EVENTS_PATH, async (c) => {
+    const token = extractSessionToken({ c, cookieName: deps.config.cookieName });
+    const auth = token ? await deps.sessions.getWithUser(token) : null;
+    if (!auth) {
+      return errorResponse({ c, status: 401, code: 'UNAUTHENTICATED', message: '인증이 필요합니다.' });
+    }
+    const userId = auth.user.id;
+    return streamSSE(c, async (stream) => {
+      const unsubscribe = deps.sync.subscribe(userId, () => {
+        void stream.writeSSE({ event: 'change', data: '' });
+      });
+      stream.onAbort(() => unsubscribe());
+      // 접속(재접속) 직후 한 번 신호 — 끊겨 있던 사이 놓친 변경을 커서로 따라잡게 한다
+      await stream.writeSSE({ event: 'change', data: '' });
+      while (!stream.aborted) {
+        await stream.sleep(25_000);
+        await stream.writeSSE({ event: 'ping', data: '' }); // 프록시 idle timeout 방지
+      }
+    });
+  });
 
   return app.get('/health', (c) => c.json({ status: 'ok' }));
 }

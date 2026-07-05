@@ -4,7 +4,6 @@ export const DOMAIN_ERROR_CODES = {
   UNAUTHENTICATED: 'UNAUTHENTICATED',
   PROJECT_NOT_FOUND: 'PROJECT_NOT_FOUND',
   TASK_NOT_FOUND: 'TASK_NOT_FOUND',
-  TASK_VERSION_CONFLICT: 'TASK_VERSION_CONFLICT',
 } as const;
 
 export type DomainErrorCode = (typeof DOMAIN_ERROR_CODES)[keyof typeof DOMAIN_ERROR_CODES];
@@ -15,7 +14,6 @@ const DOMAIN_ERROR_MESSAGES: Record<DomainErrorCode, string> = {
   UNAUTHENTICATED: '인증이 필요합니다.',
   PROJECT_NOT_FOUND: '프로젝트를 찾을 수 없습니다.',
   TASK_NOT_FOUND: '작업을 찾을 수 없습니다.',
-  TASK_VERSION_CONFLICT: '작업이 다른 곳에서 먼저 수정되었습니다. 새로고침 후 다시 시도해 주세요.',
 };
 
 /** 도메인 계층(스토어, 라우터)이 던지는 유일한 에러 타입. 전송 계층 매핑은 trpc/init.ts가 담당한다. */

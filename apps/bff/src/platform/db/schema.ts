@@ -25,6 +25,10 @@ export interface ProjectsTable {
   color: ProjectColor;
   /** 수동 정렬 — fractional index 키 (collate "C", platform/ordering.ts로만 생성) */
   position: string;
+  /** 이 행의 마지막 변경 seq — 델타 동기화 커서 기준. platform/db/sync.ts로만 발급 */
+  sync_seq: Generated<number>;
+  /** tombstone — 삭제도 델타에 실리도록 소프트 삭제. 읽기는 IS NULL만 */
+  deleted_at: Date | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }
@@ -42,11 +46,21 @@ export interface TasksTable {
   status: TaskStatus;
   /** 수동 정렬 — fractional index 키 (collate "C", platform/ordering.ts로만 생성) */
   position: string;
-  /** 낙관적 잠금 — 쓰기마다 +1, 클라이언트는 읽은 version으로 갱신을 조건부 실행한다 */
+  /** 행 변경 카운터 — 쓰기마다 +1 (캐시 검증·디버깅용) */
   version: Generated<number>;
+  /** 이 행의 마지막 변경 seq — 델타 동기화 커서 기준. platform/db/sync.ts로만 발급 */
+  sync_seq: Generated<number>;
+  /** tombstone — 삭제도 델타에 실리도록 소프트 삭제. 읽기는 IS NULL만 */
+  deleted_at: Date | null;
   completed_at: Date | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
+}
+
+/** 유저별 단조증가 동기화 시퀀스 — 발급은 platform/db/sync.ts의 withUserSyncSeq로만 */
+export interface SyncCountersTable {
+  user_id: string;
+  seq: number;
 }
 
 /** Kysely가 컴파일 타임에 쿼리를 검증하는 기준 스키마 */
@@ -55,4 +69,5 @@ export interface DatabaseSchema {
   sessions: SessionsTable;
   projects: ProjectsTable;
   tasks: TasksTable;
+  sync_counters: SyncCountersTable;
 }
