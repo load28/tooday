@@ -1,5 +1,5 @@
+import { requireAuth } from '@bff/modules/auth/middleware';
 import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
-import { extractSessionToken } from '@bff/modules/auth/token';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
@@ -65,13 +65,8 @@ export function createApp(deps: AppDeps) {
 
   // 동기화 신호 채널 — "네 데이터 바뀜"만 흘린다. 클라이언트는 신호를 받으면
   // 자기 커서로 task.changes를 당긴다 (신호 유실·중복은 커서가 흡수).
-  app.get(SYNC_EVENTS_PATH, async (c) => {
-    const token = extractSessionToken({ c, cookieName: deps.config.cookieName });
-    const auth = token ? await deps.sessions.getWithUser(token) : null;
-    if (!auth) {
-      return errorResponse({ c, status: 401, code: 'UNAUTHENTICATED', message: '인증이 필요합니다.' });
-    }
-    const userId = auth.user.id;
+  app.get(SYNC_EVENTS_PATH, requireAuth({ sessions: deps.sessions, cookieName: deps.config.cookieName }), (c) => {
+    const userId = c.get('auth').user.id;
     return streamSSE(c, async (stream) => {
       const unsubscribe = deps.sync.subscribe(userId, () => {
         void stream.writeSSE({ event: 'change', data: '' });
