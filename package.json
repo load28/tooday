@@ -16,6 +16,10 @@
     "lint:deps": "depcruise --config apps/bff/.dependency-cruiser.cjs apps/bff && depcruise --config apps/web/.dependency-cruiser.cjs apps/web && depcruise --config apps/design-guide/.dependency-cruiser.cjs apps/design-guide && depcruise --config .dependency-cruiser.cjs packages",
     "check": "biome check",
     "format": "biome format",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "infra:reset": "docker compose down -v",
     "prepare": "lefthook install"
   },
   "devDependencies": {
