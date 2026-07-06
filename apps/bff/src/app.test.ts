@@ -28,6 +28,7 @@ function setup(overrides: Partial<BffConfig> = {}) {
     databaseUrl: null,
     pgliteDataDir: 'memory://',
     pgPoolSize: 1,
+    redisUrl: null,
     logFormat: 'pretty',
     ...overrides,
   };
