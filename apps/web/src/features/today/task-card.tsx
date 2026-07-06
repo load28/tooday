@@ -1,8 +1,8 @@
 import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
 import { css, cva, cx } from 'styled-system/css';
-import { PROJECT_COLOR } from '@/features/today/project-color';
 import { useT } from '@/shared/i18n';
+import { PROJECT_COLOR } from '@/shared/project-color';
 import { Card, Dot, HStack, Text } from '@/shared/ui';
 
 // 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다

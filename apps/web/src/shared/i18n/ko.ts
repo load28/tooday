@@ -14,6 +14,14 @@ export const ko = defineMessages<MessageSchema>()({
       hours: '{hour}시간',
       hoursMinutes: '{hour}시간 {min}분',
     },
+    status: {
+      todo: '할 일',
+      doing: '진행 중',
+      done: '완료',
+    },
+    noProject: '프로젝트 없음',
+    back: '뒤로',
+    more: '더보기',
   },
   nav: {
     label: '주요 메뉴',
@@ -40,6 +48,42 @@ export const ko = defineMessages<MessageSchema>()({
     notifications: '알림',
     addTask: '태스크 추가',
     toggleDone: '완료 토글',
+  },
+  projects: {
+    title: '프로젝트',
+    subtitle: '한 곳에서 모아보기',
+    empty: '아직 프로젝트가 없어요',
+    progress: '{done}/{total} 완료',
+    addTask: '태스크 추가',
+  },
+  projectDetail: {
+    badge: '프로젝트',
+    empty: '이 상태의 태스크가 없어요',
+    addTask: '태스크 추가',
+  },
+  taskNew: {
+    title: '새 태스크',
+    titlePlaceholder: '무엇을 할까요?',
+    project: '프로젝트',
+    time: '시간',
+    create: '만들기',
+    selectProject: '프로젝트 선택',
+  },
+  taskDetail: {
+    title: '태스크',
+    project: '프로젝트',
+    date: '날짜',
+    time: '시간',
+    delete: '이 태스크 삭제',
+    notFound: '태스크를 찾을 수 없어요',
+    changeStatus: '상태 변경',
+    changeProject: '프로젝트 변경',
+    changeSchedule: '일정 변경',
+  },
+  schedule: {
+    startLabel: '시작 시각',
+    durationLabel: '기간',
+    apply: '변경 적용',
   },
   auth: {
     name: {

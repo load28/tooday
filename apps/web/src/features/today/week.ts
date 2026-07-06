@@ -1,4 +1,5 @@
 import type { Locale } from '@/shared/i18n';
+import { toIsoDate } from '@/shared/time';
 
 export type DayCell = {
   /** ISO 날짜 문자열 — React key 용 */
@@ -21,11 +22,6 @@ export const TODAY_INDEX = -WEEK_START_OFFSET;
 
 function dateAtOffset(now: Date, offset: number): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-}
-
-/** 로컬 기준 'YYYY-MM-DD' — 서버 계약(taskSchema.date)과 같은 표현 */
-export function toIsoDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 /** 주간 창의 양 끝 날짜 — task.range 쿼리 입력. loader와 화면이 같은 값을 계산한다. */

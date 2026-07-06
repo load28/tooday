@@ -13,6 +13,14 @@ export interface MessageSchema {
       hours: Msg<'hour'>;
       hoursMinutes: Msg<'hour' | 'min'>;
     };
+    status: {
+      todo: Msg;
+      doing: Msg;
+      done: Msg;
+    };
+    noProject: Msg;
+    back: Msg;
+    more: Msg;
   };
   nav: {
     label: Msg;
@@ -41,6 +49,43 @@ export interface MessageSchema {
     notifications: Msg;
     addTask: Msg;
     toggleDone: Msg;
+  };
+  projects: {
+    title: Msg;
+    subtitle: Msg;
+    empty: Msg;
+    // '3/8 완료' — 완료·전체 태스크 수
+    progress: Msg<'done' | 'total'>;
+    addTask: Msg;
+  };
+  projectDetail: {
+    badge: Msg;
+    empty: Msg;
+    addTask: Msg;
+  };
+  taskNew: {
+    title: Msg;
+    titlePlaceholder: Msg;
+    project: Msg;
+    time: Msg;
+    create: Msg;
+    selectProject: Msg;
+  };
+  taskDetail: {
+    title: Msg;
+    project: Msg;
+    date: Msg;
+    time: Msg;
+    delete: Msg;
+    notFound: Msg;
+    changeStatus: Msg;
+    changeProject: Msg;
+    changeSchedule: Msg;
+  };
+  schedule: {
+    startLabel: Msg;
+    durationLabel: Msg;
+    apply: Msg;
   };
   auth: {
     name: {

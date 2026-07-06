@@ -2,8 +2,11 @@ import type {
   CreateProjectInput,
   CreateTaskInput,
   ListChangesInput,
+  ListTasksByProjectInput,
   ListTasksRangeInput,
   ProjectStore,
+  ProjectTaskCounts,
+  TaskRefInput,
   TaskStore,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
@@ -129,6 +132,52 @@ export class SqlTaskStore implements TaskStore {
     return rows.map(toTask);
   }
 
+  async findById({ userId, id }: TaskRefInput): Promise<Task | null> {
+    const row = await this.db
+      .selectFrom('tasks')
+      .select(TASK_COLUMNS)
+      .where('user_id', '=', userId)
+      .where('id', '=', id)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+    return row ? toTask(row) : null;
+  }
+
+  async listByProject({ userId, projectId }: ListTasksByProjectInput): Promise<Task[]> {
+    const rows = await this.db
+      .selectFrom('tasks')
+      .select(TASK_COLUMNS)
+      .where('user_id', '=', userId)
+      .where('project_id', '=', projectId)
+      .where('deleted_at', 'is', null)
+      .orderBy('date')
+      .orderBy('start_at')
+      .execute();
+    return rows.map(toTask);
+  }
+
+  async countsByProject(userId: string): Promise<ProjectTaskCounts[]> {
+    const rows = await this.db
+      .selectFrom('tasks')
+      .select((eb) => [
+        'project_id',
+        eb.fn.countAll().as('total'),
+        // COUNT은 NULL을 세지 않으므로 done 행만 1로 남겨 센다
+        eb.fn.count(eb.case().when('status', '=', 'done').then(eb.val(1)).end()).as('done'),
+      ])
+      .where('user_id', '=', userId)
+      .where('deleted_at', 'is', null)
+      .where('project_id', 'is not', null)
+      .groupBy('project_id')
+      .execute();
+    // pg의 count는 bigint를 문자열로 돌려주므로 여기서 number로 정규화한다
+    return rows.map((row) => ({
+      projectId: row.project_id as string,
+      total: Number(row.total),
+      done: Number(row.done),
+    }));
+  }
+
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
     return withUserSyncSeq(this.db, userId, async (trx, seq) => {
       const last = await trx
@@ -182,6 +231,21 @@ export class SqlTaskStore implements TaskStore {
         .returning(TASK_COLUMNS)
         .executeTakeFirst();
       return row ? toTask(row) : null;
+    });
+  }
+
+  async remove({ userId, id }: TaskRefInput): Promise<boolean> {
+    return withUserSyncSeq(this.db, userId, async (trx, seq) => {
+      const now = new Date();
+      const row = await trx
+        .updateTable('tasks')
+        .set({ deleted_at: now, updated_at: now, sync_seq: seq })
+        .where('user_id', '=', userId)
+        .where('id', '=', id)
+        .where('deleted_at', 'is', null)
+        .returning('id')
+        .executeTakeFirst();
+      return row !== undefined;
     });
   }
 
