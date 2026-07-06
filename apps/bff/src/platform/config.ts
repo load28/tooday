@@ -11,6 +11,8 @@ export interface BffConfig {
   /** PGlite 데이터 디렉토리 — 'memory://'는 인메모리 */
   pgliteDataDir: string;
   pgPoolSize: number;
+  /** Redis 연결 문자열. 설정 시 세션 저장소로 Redis를 쓴다(미설정이면 DB 세션 테이블). */
+  redisUrl: string | null;
   logFormat: LogFormat;
 }
 
@@ -30,6 +32,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     databaseUrl: env.DATABASE_URL ?? null,
     pgliteDataDir: env.BFF_PGLITE_DIR ?? '.data/pglite',
     pgPoolSize: Number(env.BFF_PG_POOL_SIZE ?? 10),
+    redisUrl: env.REDIS_URL ?? null,
     logFormat:
       env.BFF_LOG_FORMAT === 'json' || env.BFF_LOG_FORMAT === 'pretty' ? env.BFF_LOG_FORMAT : isProduction ? 'json' : 'pretty',
   };

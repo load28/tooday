@@ -25,6 +25,10 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   접근은 Kysely(타입드 SQL + 다이얼렉트), 스키마 변경은 버전드 마이그레이션
   (`platform/db/migrations.ts`, 부팅 시 Kysely Migrator가 적용)로만 한다.
   스토어(포트) ↔ Kysely ↔ 다이얼렉트 계층 분리로 엔진 교체 시 코어 무변경.
+  세션은 `SessionStore` 포트라 백엔드 교체가 자유롭다 — `REDIS_URL` 설정 시 Redis
+  (Bun 내장 클라이언트, 네이티브 TTL로 만료 스윕 불필요, 세션 값에 유저 스냅샷을 담아
+  인증 핫패스가 DB를 안 탄다), 미설정이면 DB 세션 테이블(만료 스윕 배치 동반).
+  `DATABASE_URL`과 같은 opt-in 패턴이라 개발·테스트는 외부 의존성 0.
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
   (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).
