@@ -1,0 +1,46 @@
+# 로컬 개발용 인프라 — 실제 서버가 필요한 것만(PostgreSQL, Redis) 한 번에 띄운다.
+# BFF는 이 둘을 기본적으로 요구하지 않는다(미설정이면 임베디드 PGlite + DB 세션).
+# 여기서 띄운 뒤 apps/bff/.env 에 아래 접속 문자열을 넣으면 프로덕션과 같은 경로로 돈다:
+#   DATABASE_URL=postgres://tooday:tooday@localhost:5432/tooday
+#   REDIS_URL=redis://localhost:6379
+#
+# 사용:  bun run infra:up   /  infra:down  /  infra:logs  /  infra:reset
+name: tooday
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tooday}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tooday}
+      POSTGRES_DB: ${POSTGRES_DB:-tooday}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # BFF가 뜨기 전 DB가 실제로 커넥션을 받는지 확인 — up 시 depends_on 게이트로 쓴다.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tooday} -d ${POSTGRES_DB:-tooday}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # appendonly로 재시작에도 세션이 살아남는다(Redis 재기동 = 전원 로그아웃 방지).
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

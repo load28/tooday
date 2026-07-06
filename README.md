@@ -80,3 +80,18 @@ bun run check      # Biome lint + format 검사
 bun run format     # Biome 포맷
 ```
 
+### 로컬 인프라 (Docker)
+
+실제 서버가 필요한 것(PostgreSQL, Redis)만 `docker-compose.yml`로 한 번에 관리한다.
+기본 개발은 이게 없어도 돈다(임베디드 PGlite + DB 세션) — 프로덕션과 같은 경로를 재현할 때만 띄운다.
+
+```bash
+bun run infra:up     # postgres + redis 기동 (healthcheck 통과까지 대기)
+bun run infra:down   # 중지 (데이터 볼륨은 유지)
+bun run infra:logs   # 로그 팔로우
+bun run infra:reset  # 중지 + 볼륨 삭제 (데이터 초기화)
+```
+
+띄운 뒤 `apps/bff/.env`에 `DATABASE_URL` / `REDIS_URL`을 넣으면 해당 백엔드로 붙는다
+(`apps/bff/.env.example` 참고).
+
