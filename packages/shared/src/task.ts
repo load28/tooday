@@ -101,9 +101,39 @@ export const syncChangesResponseSchema = v.object({
 /** SSE 신호 채널 경로 — 데이터는 싣지 않고 "네 데이터 바뀜"만 알린다. 클라이언트는 신호를 받으면 델타를 당긴다 */
 export const SYNC_EVENTS_PATH = '/sync/events';
 
+/** 단건 조회·삭제 요청 — 태스크 id만 */
+export const taskIdRequestSchema = v.object({
+  id: v.string(),
+});
+
 export const createProjectRequestSchema = v.object({
   name: v.pipe(v.string(), v.trim(), v.minLength(1)),
   color: projectColorSchema,
+});
+
+/** 프로젝트 상세(보드) 요청 — 프로젝트 id */
+export const projectDetailRequestSchema = v.object({
+  projectId: v.string(),
+});
+
+/**
+ * 프로젝트 목록 화면용 요약 — 프로젝트 라벨에 진행률(완료/전체 태스크 수)을 얹는다.
+ * 카운트는 삭제되지 않은 태스크 기준이며 서버가 집계해 내려준다.
+ */
+export const projectSummarySchema = v.object({
+  ...projectSchema.entries,
+  totalCount: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  doneCount: v.pipe(v.number(), v.integer(), v.minValue(0)),
+});
+
+export const projectListResponseSchema = v.object({
+  projects: v.array(projectSummarySchema),
+});
+
+/** 프로젝트 상세 — 프로젝트 라벨과 그 프로젝트에 속한 태스크 전부(상태 무관) */
+export const projectDetailResponseSchema = v.object({
+  project: projectSchema,
+  tasks: v.array(taskSchema),
 });
 
 export type TaskStatus = v.InferOutput<typeof taskStatusSchema>;
@@ -119,4 +149,9 @@ export type SyncChangesRequest = v.InferOutput<typeof syncChangesRequestSchema>;
 export type TaskChange = v.InferOutput<typeof taskChangeSchema>;
 export type ProjectChange = v.InferOutput<typeof projectChangeSchema>;
 export type SyncChangesResponse = v.InferOutput<typeof syncChangesResponseSchema>;
+export type TaskIdRequest = v.InferOutput<typeof taskIdRequestSchema>;
 export type CreateProjectRequest = v.InferOutput<typeof createProjectRequestSchema>;
+export type ProjectDetailRequest = v.InferOutput<typeof projectDetailRequestSchema>;
+export type ProjectSummary = v.InferOutput<typeof projectSummarySchema>;
+export type ProjectListResponse = v.InferOutput<typeof projectListResponseSchema>;
+export type ProjectDetailResponse = v.InferOutput<typeof projectDetailResponseSchema>;

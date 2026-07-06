@@ -2,8 +2,11 @@ import type {
   CreateProjectInput,
   CreateTaskInput,
   ListChangesInput,
+  ListTasksByProjectInput,
   ListTasksRangeInput,
   ProjectStore,
+  ProjectTaskCounts,
+  TaskRefInput,
   TaskStore,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
@@ -123,6 +126,30 @@ export class InMemoryTaskStore implements TaskStore {
       .map(toTask);
   }
 
+  async findById({ userId, id }: TaskRefInput): Promise<Task | null> {
+    const record = this.byId.get(id);
+    return record && record.userId === userId && !record.deleted ? toTask(record) : null;
+  }
+
+  async listByProject({ userId, projectId }: ListTasksByProjectInput): Promise<Task[]> {
+    return [...this.byId.values()]
+      .filter((record) => record.userId === userId && !record.deleted && record.projectId === projectId)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startAt.localeCompare(b.startAt))
+      .map(toTask);
+  }
+
+  async countsByProject(userId: string): Promise<ProjectTaskCounts[]> {
+    const counts = new Map<string, ProjectTaskCounts>();
+    for (const record of this.byId.values()) {
+      if (record.userId !== userId || record.deleted || record.projectId === null) continue;
+      const entry = counts.get(record.projectId) ?? { projectId: record.projectId, total: 0, done: 0 };
+      entry.total += 1;
+      if (record.status === 'done') entry.done += 1;
+      counts.set(record.projectId, entry);
+    }
+    return [...counts.values()];
+  }
+
   async create({ userId, title, projectId, date, startAt, durationMin }: CreateTaskInput): Promise<Task> {
     const record: TaskRecord = {
       id: newId(),
@@ -154,6 +181,15 @@ export class InMemoryTaskStore implements TaskStore {
     record.version += 1;
     record.syncSeq = this.counter.next(userId);
     return toTask(record);
+  }
+
+  async remove({ userId, id }: TaskRefInput): Promise<boolean> {
+    const record = this.byId.get(id);
+    if (!record || record.userId !== userId || record.deleted) return false;
+    record.deleted = true;
+    record.version += 1;
+    record.syncSeq = this.counter.next(userId);
+    return true;
   }
 
   async changesSince({ userId, cursor }: ListChangesInput): Promise<TaskChange[]> {

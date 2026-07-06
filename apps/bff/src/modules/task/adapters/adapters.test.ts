@@ -90,6 +90,63 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(listed).toEqual([morning, afternoon, nextDay]);
     });
 
+    it('findById는 소유자의 살아있는 태스크만 돌려준다', async () => {
+      const { tasks } = await setup();
+      const task = await tasks.create(TASK_INPUT);
+
+      expect(await tasks.findById({ userId: USER_A, id: task.id })).toEqual(task);
+      expect(await tasks.findById({ userId: USER_B, id: task.id })).toBeNull();
+      expect(await tasks.findById({ userId: USER_A, id: crypto.randomUUID() })).toBeNull();
+
+      await tasks.remove({ userId: USER_A, id: task.id });
+      expect(await tasks.findById({ userId: USER_A, id: task.id })).toBeNull();
+    });
+
+    it('listByProject는 그 프로젝트의 살아있는 태스크만 날짜·시각 순으로 돌려준다', async () => {
+      const { tasks, projects } = await setup();
+      const project = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' });
+      const other = await projects.create({ userId: USER_A, name: '일상', color: 'mint' });
+
+      const afternoon = await tasks.create({ ...TASK_INPUT, projectId: project.id });
+      const morning = await tasks.create({ ...TASK_INPUT, projectId: project.id, title: '아침', startAt: '07:30' });
+      await tasks.create({ ...TASK_INPUT, projectId: other.id, title: '다른 프로젝트' });
+      await tasks.create({ ...TASK_INPUT, projectId: null, title: '프로젝트 없음' });
+      const removed = await tasks.create({ ...TASK_INPUT, projectId: project.id, title: '삭제될 것' });
+      await tasks.remove({ userId: USER_A, id: removed.id });
+
+      expect(await tasks.listByProject({ userId: USER_A, projectId: project.id })).toEqual([morning, afternoon]);
+      expect(await tasks.listByProject({ userId: USER_B, projectId: project.id })).toEqual([]);
+    });
+
+    it('countsByProject는 프로젝트별 완료/전체를 세고 프로젝트 없는·삭제된 태스크는 뺀다', async () => {
+      const { tasks, projects } = await setup();
+      const project = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' });
+
+      const done = await tasks.create({ ...TASK_INPUT, projectId: project.id, title: '완료할 것' });
+      await tasks.update({ userId: USER_A, id: done.id, patch: { status: 'done' } });
+      await tasks.create({ ...TASK_INPUT, projectId: project.id, title: '남은 것' });
+      await tasks.create({ ...TASK_INPUT, projectId: null, title: '프로젝트 없음' });
+      const removed = await tasks.create({ ...TASK_INPUT, projectId: project.id, title: '삭제될 것' });
+      await tasks.remove({ userId: USER_A, id: removed.id });
+
+      expect(await tasks.countsByProject(USER_A)).toEqual([{ projectId: project.id, total: 2, done: 1 }]);
+      expect(await tasks.countsByProject(USER_B)).toEqual([]);
+    });
+
+    it('remove는 소프트 삭제로 tombstone을 델타에 싣고, 두 번째 삭제는 false다', async () => {
+      const { tasks } = await setup();
+      const task = await tasks.create(TASK_INPUT); // seq 1
+
+      expect(await tasks.remove({ userId: USER_B, id: task.id })).toBe(false);
+      expect(await tasks.remove({ userId: USER_A, id: task.id })).toBe(true); // seq 2
+      expect(await tasks.remove({ userId: USER_A, id: task.id })).toBe(false);
+
+      expect(await tasks.listRange({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' })).toEqual([]);
+      const changes = await tasks.changesSince({ userId: USER_A, cursor: 1 });
+      expect(changes).toHaveLength(1);
+      expect(changes[0]).toMatchObject({ id: task.id, deleted: true });
+    });
+
     it('update는 patch의 필드만 적용하고 version을 올린다', async () => {
       const { tasks } = await setup();
       const task = await tasks.create(TASK_INPUT);

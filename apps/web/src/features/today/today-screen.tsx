@@ -9,7 +9,8 @@ import { TaskCard } from '@/features/today/task-card';
 import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
-import { format, type Messages, useLocale, useT } from '@/shared/i18n';
+import { format, useLocale, useT } from '@/shared/i18n';
+import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Card, Pressable, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
 
 const pageCls = css({ paddingBottom: '4xl' });
@@ -49,11 +50,6 @@ const emptyCls = css({ paddingY: '60px', paddingX: '4xl' });
 type DaySection = 'morning' | 'afternoon' | 'evening';
 const SECTION_ORDER: DaySection[] = ['morning', 'afternoon', 'evening'];
 
-function timeToMin(time: string): number {
-  const [h = 0, m = 0] = time.split(':').map(Number);
-  return h * 60 + m;
-}
-
 function sectionOf(startAt: string): DaySection {
   const hour = Math.floor(timeToMin(startAt) / 60);
   if (hour < 12) return 'morning';
@@ -64,13 +60,6 @@ function sectionOf(startAt: string): DaySection {
 /** 낙관적 캐시 패치용 — patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게) */
 function definedFields(patch: TaskPatch): Partial<Task> {
   return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as Partial<Task>;
-}
-
-function formatDuration(t: Messages, durationMin: number): string {
-  if (durationMin < 60) return format(t.common.duration.minutes, { min: durationMin });
-  const hour = Math.floor(durationMin / 60);
-  const min = durationMin % 60;
-  return min === 0 ? format(t.common.duration.hours, { hour }) : format(t.common.duration.hoursMinutes, { hour, min });
 }
 
 type TodayScreenProps = {
