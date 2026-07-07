@@ -231,6 +231,26 @@ const migration0005ReuseDetection: Migration = {
   },
 };
 
+/**
+ * 0006 — 회전 계보(family)를 표준 용어 세션(session)으로 정정.
+ *
+ * OAuth 회전 계보 = 하나의 로그인 세션이다. 액세스 JWT의 `sid`(OIDC 세션 id 클레임)와
+ * 개념을 일치시켜 family_id → session_id로 컬럼·인덱스를 이름만 바꾼다(데이터 변화 없음).
+ */
+const migration0006SessionId: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await db.schema.alterTable('refresh_tokens').renameColumn('family_id', 'session_id').execute();
+    await db.schema.dropIndex('refresh_tokens_family_id').execute();
+    await db.schema.createIndex('refresh_tokens_session_id').on('refresh_tokens').column('session_id').execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    await db.schema.dropIndex('refresh_tokens_session_id').execute();
+    await db.schema.alterTable('refresh_tokens').renameColumn('session_id', 'family_id').execute();
+    await db.schema.createIndex('refresh_tokens_family_id').on('refresh_tokens').column('family_id').execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
@@ -238,6 +258,7 @@ const MIGRATIONS: Record<string, Migration> = {
   '0003_sync': migration0003Sync,
   '0004_refresh_tokens': migration0004RefreshTokens,
   '0005_reuse_detection': migration0005ReuseDetection,
+  '0006_session_id': migration0006SessionId,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {
