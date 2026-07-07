@@ -54,7 +54,22 @@ export const ko = defineMessages<MessageSchema>()({
     subtitle: '한 곳에서 모아보기',
     empty: '아직 프로젝트가 없어요',
     progress: '{done}/{total} 완료',
-    addTask: '태스크 추가',
+    addProject: '프로젝트 추가',
+  },
+  projectNew: {
+    title: '새 프로젝트',
+    nameLabel: '이름',
+    namePlaceholder: '프로젝트 이름',
+    colorLabel: '색상',
+    color: {
+      blue: '파랑',
+      mint: '민트',
+      violet: '보라',
+      amber: '주황',
+      pink: '핑크',
+      gray: '회색',
+    },
+    create: '만들기',
   },
   projectDetail: {
     badge: '프로젝트',
@@ -68,6 +83,7 @@ export const ko = defineMessages<MessageSchema>()({
     time: '시간',
     create: '만들기',
     selectProject: '프로젝트 선택',
+    createProject: '새 프로젝트 만들기',
   },
   taskDetail: {
     title: '태스크',

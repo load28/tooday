@@ -56,7 +56,23 @@ export interface MessageSchema {
     empty: Msg;
     // '3/8 완료' — 완료·전체 태스크 수
     progress: Msg<'done' | 'total'>;
-    addTask: Msg;
+    addProject: Msg;
+  };
+  projectNew: {
+    title: Msg;
+    nameLabel: Msg;
+    namePlaceholder: Msg;
+    colorLabel: Msg;
+    // 색상 칩의 접근성 라벨 — 키는 프로젝트 색 계약(PROJECT_COLORS)과 1:1
+    color: {
+      blue: Msg;
+      mint: Msg;
+      violet: Msg;
+      amber: Msg;
+      pink: Msg;
+      gray: Msg;
+    };
+    create: Msg;
   };
   projectDetail: {
     badge: Msg;
@@ -70,6 +86,7 @@ export interface MessageSchema {
     time: Msg;
     create: Msg;
     selectProject: Msg;
+    createProject: Msg;
   };
   taskDetail: {
     title: Msg;
