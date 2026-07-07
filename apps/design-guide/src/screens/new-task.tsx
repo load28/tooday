@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { BottomSheet } from '@/components/bottom-sheet';
-import { IconCheck, IconChevronRight } from '@/components/icons';
-import { endTime, formatDuration, getProject, PROJECTS } from '@/lib/data';
+import { IconCheck, IconChevronRight, IconPlus } from '@/components/icons';
+import { endTime, formatDuration, PROJECTS, type Project } from '@/lib/data';
 import { PROJECT_COLOR_HEX, type ProjectColor, TOKENS } from '@/lib/tokens';
+import { NewProjectSheet } from './new-project';
 import { SchedulePicker, taskDetailStyles } from './task-detail';
 
 type NewTaskProps = {
@@ -12,14 +13,16 @@ type NewTaskProps = {
 
 export function NewTask({ onCreate }: NewTaskProps) {
   const [title, setTitle] = useState('');
+  const [projects, setProjects] = useState<Project[]>(PROJECTS);
   const [projectId, setProjectId] = useState(PROJECTS[0]?.id ?? '');
   const [startAt, setStartAt] = useState('09:00');
   const [durationMin, setDurationMin] = useState(30);
   const [memo, setMemo] = useState('');
   const [projOpen, setProjOpen] = useState(false);
+  const [newProjOpen, setNewProjOpen] = useState(false);
   const [schedOpen, setSchedOpen] = useState(false);
 
-  const project = getProject(projectId);
+  const project = projects.find((p) => p.id === projectId);
   const accent = project ? PROJECT_COLOR_HEX[project.color as ProjectColor] : TOKENS.color.projectGray;
   const canCreate = title.trim().length > 0;
 
@@ -98,7 +101,7 @@ export function NewTask({ onCreate }: NewTaskProps) {
 
       <BottomSheet open={projOpen} onClose={() => setProjOpen(false)} title="프로젝트 선택">
         <div style={taskDetailStyles.optList}>
-          {PROJECTS.map((p) => (
+          {projects.map((p) => (
             <button
               key={p.id}
               type="button"
@@ -113,8 +116,31 @@ export function NewTask({ onCreate }: NewTaskProps) {
               {projectId === p.id ? <IconCheck size={20} strokeWidth={2.6} stroke={TOKENS.color.primary} /> : null}
             </button>
           ))}
+          <button
+            type="button"
+            style={{ ...taskDetailStyles.optRow, borderTop: `1px solid ${TOKENS.color.divider}`, borderRadius: 0 }}
+            onClick={() => {
+              setProjOpen(false);
+              setNewProjOpen(true);
+            }}
+          >
+            <span style={{ width: 12, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+              <IconPlus size={16} strokeWidth={2.4} stroke={TOKENS.color.primary} />
+            </span>
+            <span style={{ ...taskDetailStyles.optLabel, color: TOKENS.color.primary }}>새 프로젝트 만들기</span>
+          </button>
         </div>
       </BottomSheet>
+
+      <NewProjectSheet
+        open={newProjOpen}
+        onClose={() => setNewProjOpen(false)}
+        onCreate={(p) => {
+          setProjects((prev) => [...prev, p]);
+          setProjectId(p.id);
+          setNewProjOpen(false);
+        }}
+      />
 
       <BottomSheet open={schedOpen} onClose={() => setSchedOpen(false)} title="시간 설정">
         <SchedulePicker
