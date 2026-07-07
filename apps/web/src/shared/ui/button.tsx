@@ -3,14 +3,19 @@ import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
 
-// 버튼의 시각적 정체성(tone/shape/size)은 베이스가 아니라 여기 산다.
-// cva(utilities 층)라 baseButton(recipes 층)을 항상 결정적으로 덮는다 (docs/conventions/ui-styling.md).
+// 버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — cva(utilities)라 baseButton(recipes 층)을 결정적으로 덮는다.
 const buttonStyle = cva({
   base: { gap: 'md' },
   variants: {
     tone: {
       ghost: { color: 'text', _press: { bg: 'pressedStrong' } },
-      subtle: { bg: 'surfaceMuted', color: 'textSecondary', _press: { bg: 'surfaceSoft' } },
+      // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.
+      subtle: {
+        bg: 'surfaceMuted',
+        color: 'textSecondary',
+        _press: { bg: 'surfaceSoft' },
+        _on: { bg: 'primary', color: 'onPrimary', _press: { bg: 'primaryPressed' } },
+      },
       brand: { bg: 'primary', color: 'onPrimary', _press: { bg: 'primaryPressed' } },
       brandSoft: { bg: 'primarySoft', color: 'primary', _press: { bg: 'primarySofter' } },
       danger: { bg: 'danger', color: 'textInverse', _press: { bg: 'dangerPressed' } },

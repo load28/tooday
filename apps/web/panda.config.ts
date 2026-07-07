@@ -85,6 +85,8 @@ export default defineConfig({
   conditions: {
     extend: {
       press: '&:active, &[data-pressed="true"]',
+      // Ark 토글 계열(ToggleGroup 등)이 붙이는 선택 상태 — JS 조건부 스타일 대신 이걸 쓴다
+      on: '&[data-state="on"]',
     },
   },
 

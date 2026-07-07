@@ -22,8 +22,14 @@
    슬롯당 하나만 둔다.
 
 상태에 따라 바뀌는 시각 요소는 JS 조건부 렌더가 아니라 Ark가 붙이는
-`data-state` 셀렉터로 처리한다 — 예: `ColorSwatchGroup.Indicator`는
-`[data-state="on"] &`에서만 opacity 1이 된다.
+`data-state` 셀렉터로 처리한다 — panda.config의 `_on` 조건(`&[data-state="on"]`)을
+쓴다. 예: `ColorSwatchGroup.Indicator`는 `[data-state="on"] &`에서만 opacity 1이 된다.
+
+**토글(선택) 동작이 필요한 버튼**은 선택 상태를 prop으로 수동 배선하지 않고
+Ark `ToggleGroup`으로 감싼다. 룩에 따라 안에 넣는 것이 갈린다:
+
+- 버튼 룩이면 `Button` — 선택 룩은 Button tone의 `_on`이 처리 (예: 시간 알약).
+- 고유 룩이면 `BaseButton` + 오버레이의 `_on` (예: 색 스와치, 상태 세그먼트).
 
 ## 예 — ColorSwatchGroup
 

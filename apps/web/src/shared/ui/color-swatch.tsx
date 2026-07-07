@@ -3,12 +3,8 @@ import type { ReactNode } from 'react';
 import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 
-// 팔레트 색 단일 선택 그룹 — 구성은 디자인 시스템 관례(Park UI 등)를 따른다:
-//   상태·접근성(aria-pressed, 방향키 roving focus)은 Ark ToggleGroup이 맡고,
-//   클릭 엘리먼트는 베이스 버튼(BaseButton)을 asChild로 재사용하며,
-//   치수·색 등 스와치 고유 스타일은 cva(utilities)로 얹는다 — baseButton이
-//   config recipe(@layer recipes)인 이유가 바로 이 슬롯 override를 결정적으로
-//   만들기 위해서다 (docs/conventions/ui-styling.md).
+// 팔레트 색 단일 선택 그룹 — 상태·접근성은 Ark ToggleGroup, 클릭 엘리먼트는
+// BaseButton(asChild), 스와치 고유 스타일(치수·색)은 cva 오버레이 (docs/conventions/ui-composition.md).
 
 const rootCls = css({ display: 'flex', flexWrap: 'wrap', gap: 'md' });
 
@@ -21,7 +17,7 @@ const swatchItem = cva({
     background: 'var(--swatch-color)',
     color: 'textInverse',
     transition: 'transform {durations.fast} {easings.standard}, box-shadow {durations.fast} {easings.standard}',
-    '&[data-state="on"]': {
+    _on: {
       boxShadow: '0 0 0 2px {colors.surface}, 0 0 0 4px var(--swatch-color)',
       transform: 'scale(1.04)',
     },

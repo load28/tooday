@@ -3,8 +3,7 @@ import { cva, cx } from 'styled-system/css';
 import { tabBarIconWrap, tabBarInner, tabBarNav } from 'styled-system/recipes';
 import { BaseButton } from '@/shared/ui/base-button';
 
-// 리셋·포커스 링·프레스는 BaseButton(recipes 층)이 제공하고, 여기는 탭 고유
-// 레이아웃·타이포·활성 색만 얹는다 (utilities 층이라 결정적으로 이긴다).
+// 탭 고유 레이아웃·활성 색만 — 리셋·포커스 링은 BaseButton이 제공한다.
 const tabBarItem = cva({
   base: {
     flexDirection: 'column',
