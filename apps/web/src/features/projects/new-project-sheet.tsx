@@ -5,10 +5,10 @@ import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { css } from 'styled-system/css';
 import { useT } from '@/shared/i18n';
-import { BottomSheet, Button, ColorSwatch, Stack, Text, TextField } from '@/shared/ui';
+import { BottomSheet, Button, ColorSwatchGroup, Stack, Text, TextField } from '@/shared/ui';
 
 const fullWidthCls = css({ width: '100%' });
-const colorRowCls = css({ display: 'flex', gap: 'md', paddingBlock: '2xs', paddingInline: '2xs' });
+const colorRowCls = css({ paddingBlock: '2xs', paddingInline: '2xs' });
 
 type NewProjectSheetProps = {
   open: boolean;
@@ -70,22 +70,15 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
         <Text variant="label" tone="secondary">
           {t.projectNew.colorLabel}
         </Text>
-        <div className={colorRowCls}>
-          {PROJECT_COLORS.map((option) => {
-            const active = option === color;
-            return (
-              <ColorSwatch
-                key={option}
-                tone={option}
-                selected={active}
-                aria-label={t.projectNew.color[option]}
-                onClick={() => setColor(option)}
-              >
-                {active ? <Check size={18} strokeWidth={3} /> : null}
-              </ColorSwatch>
-            );
-          })}
-        </div>
+        <ColorSwatchGroup value={color} onValueChange={setColor} aria-label={t.projectNew.colorLabel} className={colorRowCls}>
+          {PROJECT_COLORS.map((option) => (
+            <ColorSwatchGroup.Item key={option} value={option} tone={option} aria-label={t.projectNew.color[option]}>
+              <ColorSwatchGroup.Indicator>
+                <Check size={18} strokeWidth={3} />
+              </ColorSwatchGroup.Indicator>
+            </ColorSwatchGroup.Item>
+          ))}
+        </ColorSwatchGroup>
       </Stack>
 
       <Stack gap="md">
