@@ -4,8 +4,6 @@ import { cx } from 'styled-system/css';
 import { fieldRoot } from 'styled-system/recipes';
 import { Text } from '@/shared/ui/text';
 
-// 스타일은 config recipe(recipes/*의 `fieldRoot`). 근거: docs/conventions/ui-styling.md.
-
 type FieldProps = {
   label?: string;
   /** 상시 안내문. 에러가 표시되는 동안에는 숨긴다. */

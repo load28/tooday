@@ -5,8 +5,6 @@ import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from 'style
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
 
-// 스타일은 config recipe(recipes/*의 `sheet*`). 근거: docs/conventions/ui-styling.md.
-
 type BottomSheetProps = {
   open: boolean;
   onClose: () => void;

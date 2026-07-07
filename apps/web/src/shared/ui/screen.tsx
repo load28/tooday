@@ -2,8 +2,6 @@ import type { ReactNode } from 'react';
 import { cx } from 'styled-system/css';
 import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from 'styled-system/recipes';
 
-// 스타일은 config recipe(recipes/*의 `screen*`). 근거: docs/conventions/ui-styling.md.
-
 type ScreenProps = {
   topBar?: ReactNode;
   bottomBar?: ReactNode;

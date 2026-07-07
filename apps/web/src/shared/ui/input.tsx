@@ -3,12 +3,8 @@ import type { ComponentPropsWithRef } from 'react';
 import { cx } from 'styled-system/css';
 import { type InputVariantProps, input } from 'styled-system/recipes';
 
-/**
- * 텍스트 계열 입력 컨트롤의 공용 스타일 — config recipe(recipes/*의 `input`).
- * Field 안에서는 Ark가 data-invalid를 전파하고, 단독 사용 시에는
- * 컨트롤이 직접 aria-invalid를 설정한다 — 둘 다 같은 셀렉터로 스타일링된다.
- * 근거: docs/conventions/ui-styling.md.
- */
+// Field 안에서는 Ark가 data-invalid를, 단독 사용 시엔 컨트롤이 aria-invalid를 설정한다 —
+// 둘 다 같은 셀렉터로 스타일링된다.
 export type InputSize = NonNullable<InputVariantProps['size']>;
 
 type InputOwnProps = {

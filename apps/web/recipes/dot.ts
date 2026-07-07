@@ -1,6 +1,5 @@
 import { defineRecipe } from '@pandacss/dev';
 
-// config recipe(빌드 전용). 근거: docs/conventions/ui-styling.md.
 export const dot = defineRecipe({
   className: 'dot',
   base: { display: 'inline-block', flexShrink: 0, borderRadius: 'full' },

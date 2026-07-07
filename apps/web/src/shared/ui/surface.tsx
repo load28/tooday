@@ -2,8 +2,6 @@ import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { cx } from 'styled-system/css';
 import { type SurfaceVariantProps, surface } from 'styled-system/recipes';
 
-// 스타일은 config recipe(recipes/*의 `surface`). 근거: docs/conventions/ui-styling.md.
-
 type SurfaceBase = SurfaceVariantProps & {
   className?: string;
   children?: ReactNode;
