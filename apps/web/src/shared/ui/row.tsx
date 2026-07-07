@@ -1,52 +1,10 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { css, cva, cx } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
+import { type RowVariantProps, row } from 'styled-system/recipes';
 
-const rowRecipe = cva({
-  base: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'xl',
-    minWidth: 0,
-    width: '100%',
-    color: 'text',
-    textAlign: 'left',
-    transition: 'background-color {durations.fast} {easings.exit}',
-    _press: { transitionDuration: '0ms' },
-  },
-  variants: {
-    density: {
-      compact: { paddingX: 'xl', paddingY: 'md', minHeight: 'tap' },
-      comfortable: { paddingX: '2xl', paddingY: 'xl', minHeight: 'tapLg' },
-      spacious: { paddingX: '2xl', paddingY: '2xl', minHeight: 'tapXl' },
-    },
-    align: {
-      center: { alignItems: 'center' },
-      start: { alignItems: 'flex-start' },
-    },
-    interactive: {
-      true: {
-        cursor: 'pointer',
-        WebkitTapHighlightColor: 'transparent',
-        touchAction: 'manipulation',
-        userSelect: 'none',
-        _press: { bg: 'pressedStrong' },
-      },
-    },
-    inset: {
-      none: {},
-      flush: { paddingX: '0' },
-    },
-  },
-  defaultVariants: {
-    density: 'comfortable',
-    align: 'center',
-    inset: 'none',
-  },
-});
+// 스타일은 config recipe(panda.recipes.ts의 `row`). 근거: docs/conventions/ui-styling.md.
 
-type RowVariants = NonNullable<Parameters<typeof rowRecipe>[0]>;
-
-type RowBase = RowVariants & {
+type RowBase = RowVariantProps & {
   leading?: ReactNode;
   trailing?: ReactNode;
   className?: string;
@@ -67,7 +25,7 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
     <Tag
       {...(isButton ? { type: 'button' } : null)}
       {...rest}
-      className={cx(rowRecipe({ density, align, interactive, inset }), className)}
+      className={cx(row({ density, align, interactive, inset }), className)}
     >
       {leading != null ? <div className={slotLeading}>{leading}</div> : null}
       <div className={slotContent}>{children}</div>

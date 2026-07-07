@@ -1,41 +1,14 @@
-import { cva, cx } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+import { type DividerVariantProps, divider } from 'styled-system/recipes';
 
-const dividerRecipe = cva({
-  base: {
-    border: 'none',
-    background: 'divider',
-    flexShrink: 0,
-  },
-  variants: {
-    orientation: {
-      horizontal: { width: '100%', height: '1px' },
-      vertical: { height: 'auto', alignSelf: 'stretch', width: '1px' },
-    },
-    tone: {
-      subtle: { background: 'divider' },
-      strong: { background: 'border' },
-    },
-    inset: {
-      none: { marginInline: '0' },
-      content: { marginInline: 'pageX' },
-      leading: { marginInlineStart: 'dividerLeadingInset' },
-    },
-  },
-  defaultVariants: {
-    orientation: 'horizontal',
-    tone: 'subtle',
-    inset: 'none',
-  },
-});
+// 스타일은 config recipe(panda.recipes.ts의 `divider`). 근거: docs/conventions/ui-styling.md.
 
-type DividerVariants = NonNullable<Parameters<typeof dividerRecipe>[0]>;
-
-type DividerProps = DividerVariants & {
+type DividerProps = DividerVariantProps & {
   className?: string;
 };
 
 export function Divider({ orientation, tone, inset, className }: DividerProps) {
-  return (
-    <hr aria-orientation={orientation ?? 'horizontal'} className={cx(dividerRecipe({ orientation, tone, inset }), className)} />
-  );
+  // config recipe의 variant prop은 ConditionalValue(반응형 허용)라 문자열일 때만 aria로 넘긴다
+  const ariaOrientation = typeof orientation === 'string' ? orientation : 'horizontal';
+  return <hr aria-orientation={ariaOrientation} className={cx(divider({ orientation, tone, inset }), className)} />;
 }

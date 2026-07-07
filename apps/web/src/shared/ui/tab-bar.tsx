@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
-import { css, cva, cx } from 'styled-system/css';
+import { css, cx } from 'styled-system/css';
+import { tabBarIconWrap, tabBarItem } from 'styled-system/recipes';
+
+// 아이템/아이콘 스타일은 config recipe(panda.recipes.ts의 `tabBarItem`/`tabBarIconWrap`).
+// 근거: docs/conventions/ui-styling.md.
 
 const navCls = css({
   paddingBottom: 'md',
@@ -11,48 +15,6 @@ const innerCls = css({
   gridAutoColumns: '1fr',
   height: 'tabBar',
   paddingTop: 'md',
-});
-
-const itemRecipe = cva({
-  base: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2xs',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    textStyle: 'micro',
-    padding: 0,
-    transition: 'color {durations.base} {easings.standard}',
-    _focusVisible: { outline: 'none', boxShadow: 'focus' },
-  },
-  variants: {
-    active: {
-      true: { color: 'primary', fontWeight: 700 },
-      false: { color: 'textTertiary' },
-    },
-  },
-});
-
-const iconWrapRecipe = cva({
-  base: {
-    width: 'tapXl',
-    height: '1.75rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 'pill',
-    transition: 'background {durations.slow} {easings.standard}',
-  },
-  variants: {
-    active: {
-      true: { bg: 'primarySoft' },
-      false: {},
-    },
-  },
 });
 
 type TabBarItem<K extends string> = {
@@ -81,9 +43,9 @@ export function TabBar<K extends string>({ items, activeKey, onSelect, className
               type="button"
               aria-current={isActive ? 'page' : undefined}
               onClick={() => onSelect?.(key)}
-              className={itemRecipe({ active: isActive })}
+              className={tabBarItem({ active: isActive })}
             >
-              <span className={iconWrapRecipe({ active: isActive })}>{icon}</span>
+              <span className={tabBarIconWrap({ active: isActive })}>{icon}</span>
               <span>{label}</span>
             </button>
           );
