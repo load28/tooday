@@ -1,21 +1,8 @@
 import type { ReactNode } from 'react';
-import { css, cx } from 'styled-system/css';
-import { tabBarIconWrap, tabBarItem } from 'styled-system/recipes';
+import { cx } from 'styled-system/css';
+import { tabBarIconWrap, tabBarInner, tabBarItem, tabBarNav } from 'styled-system/recipes';
 
-// 아이템/아이콘 스타일은 config recipe(panda.recipes.ts의 `tabBarItem`/`tabBarIconWrap`).
-// 근거: docs/conventions/ui-styling.md.
-
-const navCls = css({
-  paddingBottom: 'md',
-});
-
-const innerCls = css({
-  display: 'grid',
-  gridAutoFlow: 'column',
-  gridAutoColumns: '1fr',
-  height: 'tabBar',
-  paddingTop: 'md',
-});
+// 스타일은 config recipe(recipes/*의 `tabBar*`). 근거: docs/conventions/ui-styling.md.
 
 type TabBarItem<K extends string> = {
   key: K;
@@ -33,8 +20,8 @@ type TabBarProps<K extends string> = {
 
 export function TabBar<K extends string>({ items, activeKey, onSelect, className, ...rest }: TabBarProps<K>) {
   return (
-    <nav {...rest} className={cx(navCls, className)}>
-      <div className={innerCls}>
+    <nav {...rest} className={cx(tabBarNav(), className)}>
+      <div className={tabBarInner()}>
         {items.map(({ key, label, icon }) => {
           const isActive = key === activeKey;
           return (

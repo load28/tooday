@@ -1,14 +1,10 @@
 import { Field as ArkField } from '@ark-ui/react/field';
 import type { ReactNode } from 'react';
-import { css, cx } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+import { fieldRoot } from 'styled-system/recipes';
 import { Text } from '@/shared/ui/text';
 
-const rootCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'md',
-  minWidth: 0,
-});
+// 스타일은 config recipe(recipes/*의 `fieldRoot`). 근거: docs/conventions/ui-styling.md.
 
 type FieldProps = {
   label?: string;
@@ -35,7 +31,7 @@ export function Field({ label, helper, error, invalid, required, disabled, class
       invalid={invalid ?? error !== undefined}
       required={required}
       disabled={disabled}
-      className={cx(rootCls, className)}
+      className={cx(fieldRoot(), className)}
     >
       {label !== undefined ? (
         <ArkField.Label asChild>

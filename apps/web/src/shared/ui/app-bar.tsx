@@ -1,39 +1,8 @@
 import type { ReactNode } from 'react';
-import { css, cx } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from 'styled-system/recipes';
 
-const barCls = css({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingBlock: 'appBarPadY',
-  paddingInline: 'appBarPadX',
-  gap: 'appBarGap',
-  minHeight: 'appBar',
-});
-
-const leadingCls = css({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'xs',
-  flex: '0 0 auto',
-});
-
-const titleCls = css({
-  flex: 1,
-  minWidth: 0,
-  textStyle: 'subtitle',
-  color: 'text',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-});
-
-const trailingCls = css({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'xs',
-  flex: '0 0 auto',
-});
+// 스타일은 config recipe(recipes/*의 `appBar*`). 근거: docs/conventions/ui-styling.md.
 
 type AppBarRootProps = {
   children?: ReactNode;
@@ -46,19 +15,19 @@ type AppBarSlotProps = {
 };
 
 function AppBarRoot({ children, className }: AppBarRootProps) {
-  return <header className={cx(barCls, className)}>{children}</header>;
+  return <header className={cx(appBarRoot(), className)}>{children}</header>;
 }
 
 function AppBarLeading({ children, className }: AppBarSlotProps) {
-  return <div className={cx(leadingCls, className)}>{children}</div>;
+  return <div className={cx(appBarLeading(), className)}>{children}</div>;
 }
 
 function AppBarTitle({ children, className }: AppBarSlotProps) {
-  return <span className={cx(titleCls, className)}>{children}</span>;
+  return <span className={cx(appBarTitle(), className)}>{children}</span>;
 }
 
 function AppBarTrailing({ children, className }: AppBarSlotProps) {
-  return <div className={cx(trailingCls, className)}>{children}</div>;
+  return <div className={cx(appBarTrailing(), className)}>{children}</div>;
 }
 
 export const AppBar = Object.assign(AppBarRoot, {

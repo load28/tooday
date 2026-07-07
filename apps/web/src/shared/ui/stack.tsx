@@ -1,29 +1,16 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { css, cx } from 'styled-system/css';
-import type { SystemStyleObject } from 'styled-system/types';
+import { cx } from 'styled-system/css';
+import { spacer, stack } from 'styled-system/recipes';
+
+// 스타일은 config recipe(recipes/*의 `stack`/`spacer`). 근거: docs/conventions/ui-styling.md.
+// alignItems 정렬 기본값은 컴포넌트가 align에 넣어 넘긴다(recipe에서 direction과 겹치지 않게).
 
 type AlignToken = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
 type JustifyToken = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
-
-const ALIGN_MAP: Record<AlignToken, SystemStyleObject['alignItems']> = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  stretch: 'stretch',
-  baseline: 'baseline',
-};
-
-const JUSTIFY_MAP: Record<JustifyToken, SystemStyleObject['justifyContent']> = {
-  start: 'flex-start',
-  center: 'center',
-  end: 'flex-end',
-  between: 'space-between',
-  around: 'space-around',
-  evenly: 'space-evenly',
-};
+type GapToken = '0' | '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 
 type StackBase = {
-  gap?: SystemStyleObject['gap'];
+  gap?: GapToken;
   align?: AlignToken;
   justify?: JustifyToken;
   wrap?: boolean;
@@ -34,24 +21,19 @@ type StackBase = {
 
 type StackProps<T extends ElementType> = StackBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof StackBase | 'as'>;
 
-function buildStackClass(direction: 'row' | 'column', { gap, align, justify, wrap, inline }: StackBase) {
-  return css({
-    display: inline ? 'inline-flex' : 'flex',
-    flexDirection: direction,
-    gap,
-    alignItems: align ? ALIGN_MAP[align] : direction === 'row' ? 'center' : 'stretch',
-    justifyContent: justify ? JUSTIFY_MAP[justify] : 'flex-start',
-    flexWrap: wrap ? 'wrap' : 'nowrap',
-    minWidth: 0,
-  });
-}
-
 export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'xl', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const stackClass = buildStackClass('column', { gap, align, justify, wrap, inline });
+  const cls = stack({
+    direction: 'column',
+    gap,
+    align: align ?? 'stretch',
+    justify: justify ?? 'start',
+    wrap: Boolean(wrap),
+    inline: Boolean(inline),
+  });
   return (
-    <Tag {...rest} className={cx(stackClass, className)}>
+    <Tag {...rest} className={cx(cls, className)}>
       {children}
     </Tag>
   );
@@ -60,24 +42,28 @@ export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
 export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'md', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const stackClass = buildStackClass('row', { gap, align, justify, wrap, inline });
+  const cls = stack({
+    direction: 'row',
+    gap,
+    align: align ?? 'center',
+    justify: justify ?? 'start',
+    wrap: Boolean(wrap),
+    inline: Boolean(inline),
+  });
   return (
-    <Tag {...rest} className={cx(stackClass, className)}>
+    <Tag {...rest} className={cx(cls, className)}>
       {children}
     </Tag>
   );
 }
 
-export function Spacer({ size = 'auto' }: { size?: SystemStyleObject['flexBasis'] | 'auto' }) {
+export function Spacer({ size = 'auto' }: { size?: number | 'auto' }) {
+  const isAuto = size === 'auto';
   return (
     <span
       aria-hidden="true"
-      className={css({
-        flexGrow: size === 'auto' ? 1 : 0,
-        flexShrink: 0,
-        flexBasis: size === 'auto' ? 0 : size,
-        alignSelf: 'stretch',
-      })}
+      className={spacer({ grow: isAuto })}
+      style={isAuto ? undefined : { flexBasis: size, flexShrink: 0 }}
     />
   );
 }

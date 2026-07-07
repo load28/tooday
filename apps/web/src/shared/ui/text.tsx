@@ -2,7 +2,7 @@ import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { cx } from 'styled-system/css';
 import { type TextVariantProps, text } from 'styled-system/recipes';
 
-// 스타일은 config recipe(panda.recipes.ts의 `text`). 근거: docs/conventions/ui-styling.md.
+// 스타일은 config recipe(recipes/*의 `text`). 근거: docs/conventions/ui-styling.md.
 
 type TextVariant = TextVariantProps['variant'];
 type TextTone = TextVariantProps['tone'];
