@@ -5,7 +5,7 @@ import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
 import { useT } from '@/shared/i18n';
 import { endTime, formatDuration } from '@/shared/time';
-import { BottomSheet, Button, Card, Divider, Dot, HStack, Input, Pressable, Row, Stack, Text } from '@/shared/ui';
+import { BottomSheet, Button, Card, Divider, Dot, HStack, Input, Row, Stack, Text } from '@/shared/ui';
 
 /** 프로젝트 선택 시트의 '없음' 옵션 키 — 태스크의 projectId=null에 대응 (UUID와 충돌하지 않는 sentinel) */
 export const NO_PROJECT_KEY = '__none__';
@@ -184,7 +184,7 @@ export function ScheduleSheet({ open, onClose, startAt, durationMin, onApply }: 
           </Text>
           <div className={durationRowCls}>
             {DURATION_OPTIONS.map((option) => (
-              <Pressable
+              <Button
                 key={option}
                 tone={option === draftDuration ? 'brand' : 'subtle'}
                 shape="pill"
@@ -192,7 +192,7 @@ export function ScheduleSheet({ open, onClose, startAt, durationMin, onApply }: 
                 onClick={() => setDraftDuration(option)}
               >
                 {formatDuration(t, option)}
-              </Pressable>
+              </Button>
             ))}
           </div>
         </Stack>

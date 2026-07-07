@@ -16,7 +16,7 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
-import { AppBar, Button, Chip, Dot, Pressable, Screen, Stack, Text } from '@/shared/ui';
+import { AppBar, BaseButton, Button, Chip, Dot, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
   display: 'flex',
@@ -39,15 +39,10 @@ const titleInputCls = css({
   _placeholder: { color: 'textPlaceholder' },
 });
 
-// 상태 알약을 감싸는 탭 타깃 — 색은 Chip이 tone으로 관리하므로 여기선 레이아웃만 준다
+// 상태 알약을 감싸는 탭 타깃 — 리셋·포커스 링은 BaseButton이, 색은 Chip이 tone으로 관리한다
 const statusButtonCls = css({
   alignSelf: 'flex-start',
-  border: 'none',
-  background: 'transparent',
-  padding: 0,
-  cursor: 'pointer',
   borderRadius: 'pill',
-  _focusVisible: { outline: 'none', boxShadow: 'focus' },
 });
 
 const fullWidthCls = css({ width: '100%' });
@@ -133,9 +128,9 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
       topBar={
         <AppBar>
           <AppBar.Leading>
-            <Pressable size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
+            <Button size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
               <ChevronLeft size={22} />
-            </Pressable>
+            </Button>
           </AppBar.Leading>
           <AppBar.Title>{t.taskDetail.title}</AppBar.Title>
         </AppBar>
@@ -158,11 +153,11 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
             className={titleInputCls}
           />
 
-          <button type="button" className={statusButtonCls} onClick={() => setStatusSheetOpen(true)}>
+          <BaseButton className={statusButtonCls} onClick={() => setStatusSheetOpen(true)}>
             <Chip tone={STATUS_CHIP_TONE[task.status]} size="lg" leading={<Dot size="sm" tone={STATUS_DOT_TONE[task.status]} />}>
               {t.common.status[task.status]}
             </Chip>
-          </button>
+          </BaseButton>
         </Stack>
 
         <MetaList>

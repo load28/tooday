@@ -16,7 +16,7 @@ import {
 } from '@/features/tasks/task-fields';
 import { useT } from '@/shared/i18n';
 import { toIsoDate } from '@/shared/time';
-import { AppBar, Button, Pressable, Screen, Stack, Text } from '@/shared/ui';
+import { AppBar, Button, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
   display: 'flex',
@@ -92,9 +92,9 @@ export function NewTaskScreen({ now }: NewTaskScreenProps) {
       topBar={
         <AppBar>
           <AppBar.Leading>
-            <Pressable size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
+            <Button size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
               <ChevronLeft size={22} />
-            </Pressable>
+            </Button>
           </AppBar.Leading>
           <AppBar.Title>{t.taskNew.title}</AppBar.Title>
         </AppBar>

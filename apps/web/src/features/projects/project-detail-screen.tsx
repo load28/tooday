@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { css, cva } from 'styled-system/css';
 import { STATUS_ORDER } from '@/features/tasks/status';
 import { useT } from '@/shared/i18n';
-import { AppBar, Card, Dot, Pressable, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
+import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
 
 const segmentCls = css({
   display: 'grid',
@@ -20,22 +20,15 @@ const segmentCls = css({
   marginBottom: 'lg',
 });
 
+// 리셋·포커스 링은 BaseButton이 제공 — 여기는 세그먼트 고유 스타일만 얹는다.
 const segmentButtonRecipe = cva({
   base: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 'sm',
     height: '36px',
-    border: 'none',
     borderRadius: 'md',
-    background: 'transparent',
     color: 'textTertiary',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
     textStyle: 'bodySm',
     transition: 'color {durations.base} {easings.standard}, background {durations.base} {easings.standard}',
-    _focusVisible: { outline: 'none', boxShadow: 'focus' },
   },
   variants: {
     active: {
@@ -85,20 +78,20 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
       topBar={
         <AppBar>
           <AppBar.Leading>
-            <Pressable size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
+            <Button size="icon" shape="square" aria-label={t.common.back} onClick={() => router.history.back()}>
               <ChevronLeft size={22} />
-            </Pressable>
+            </Button>
           </AppBar.Leading>
           <AppBar.Title>{project.name}</AppBar.Title>
           <AppBar.Trailing>
-            <Pressable
+            <Button
               size="icon"
               shape="square"
               aria-label={t.projectDetail.addTask}
               onClick={() => navigate({ to: '/tasks/new' })}
             >
               <Plus size={22} strokeWidth={2.4} />
-            </Pressable>
+            </Button>
           </AppBar.Trailing>
         </AppBar>
       }
@@ -119,9 +112,8 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
     >
       <div className={segmentCls}>
         {STATUS_ORDER.map((status) => (
-          <button
+          <BaseButton
             key={status}
-            type="button"
             aria-pressed={tab === status}
             className={segmentButtonRecipe({ active: tab === status })}
             onClick={() => setTab(status)}
@@ -130,7 +122,7 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
             <Text variant="micro" tone={tab === status ? 'tertiary' : 'placeholder'}>
               {byStatus[status].length}
             </Text>
-          </button>
+          </BaseButton>
         ))}
       </div>
 
