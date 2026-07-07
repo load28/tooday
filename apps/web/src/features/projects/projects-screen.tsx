@@ -1,8 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import { CalendarDays, LayoutGrid, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
+import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { format, useT } from '@/shared/i18n';
 import { PROJECT_COLOR } from '@/shared/project-color';
 import { AppBar, Card, Dot, HStack, Pressable, Screen, Stack, TabBar, Text } from '@/shared/ui';
@@ -50,13 +52,15 @@ export function ProjectsScreen() {
     data: { projects },
   } = useSuspenseQuery(trpc.task.projects.queryOptions());
 
+  const [createOpen, setCreateOpen] = useState(false);
+
   return (
     <Screen
       topBar={
         <AppBar>
           <AppBar.Title>{t.projects.title}</AppBar.Title>
           <AppBar.Trailing>
-            <Pressable size="icon" shape="square" aria-label={t.projects.addTask} onClick={() => navigate({ to: '/tasks/new' })}>
+            <Pressable size="icon" shape="square" aria-label={t.projects.addProject} onClick={() => setCreateOpen(true)}>
               <Plus size={22} strokeWidth={2.4} />
             </Pressable>
           </AppBar.Trailing>
@@ -126,6 +130,8 @@ export function ProjectsScreen() {
           })}
         </Stack>
       )}
+
+      <NewProjectSheet open={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => setCreateOpen(false)} />
     </Screen>
   );
 }

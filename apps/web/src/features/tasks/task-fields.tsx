@@ -1,5 +1,5 @@
 import type { Project, ProjectColor } from '@tooday/shared';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, Plus } from 'lucide-react';
 import { Children, Fragment, type ReactNode, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
@@ -82,6 +82,12 @@ export type SheetOption<K extends string> = {
   leading?: ReactNode;
 };
 
+/** 옵션 목록 아래에 붙는 보조 액션 — 예: 프로젝트 선택 시트의 '새 프로젝트 만들기' */
+export type SheetAction = {
+  label: string;
+  onClick: () => void;
+};
+
 type OptionSheetProps<K extends string> = {
   open: boolean;
   onClose: () => void;
@@ -89,10 +95,19 @@ type OptionSheetProps<K extends string> = {
   options: SheetOption<K>[];
   selectedKey: K;
   onSelect: (key: K) => void;
+  action?: SheetAction;
 };
 
 /** 단일 선택 바텀시트 — 상태·프로젝트 선택에 공용 */
-export function OptionSheet<K extends string>({ open, onClose, title, options, selectedKey, onSelect }: OptionSheetProps<K>) {
+export function OptionSheet<K extends string>({
+  open,
+  onClose,
+  title,
+  options,
+  selectedKey,
+  onSelect,
+  action,
+}: OptionSheetProps<K>) {
   return (
     <BottomSheet open={open} onClose={onClose} ariaLabel={title}>
       <BottomSheet.Header>
@@ -112,6 +127,22 @@ export function OptionSheet<K extends string>({ open, onClose, title, options, s
             <Text variant="bodyLg">{option.label}</Text>
           </Row>
         ))}
+        {action ? (
+          <>
+            <Divider />
+            <Row
+              as="button"
+              interactive
+              inset="flush"
+              leading={<Plus size={18} strokeWidth={2.4} className={checkCls} />}
+              onClick={action.onClick}
+            >
+              <Text variant="bodyLg" tone="brand">
+                {action.label}
+              </Text>
+            </Row>
+          </>
+        ) : null}
       </Stack>
     </BottomSheet>
   );

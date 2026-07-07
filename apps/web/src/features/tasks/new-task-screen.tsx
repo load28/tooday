@@ -3,6 +3,7 @@ import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
+import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import {
   MetaList,
   MetaRow,
@@ -63,6 +64,7 @@ export function NewTaskScreen({ now }: NewTaskScreenProps) {
   const [startAt, setStartAt] = useState(DEFAULT_START);
   const [durationMin, setDurationMin] = useState(DEFAULT_DURATION);
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
+  const [newProjectSheetOpen, setNewProjectSheetOpen] = useState(false);
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false);
 
   const selectedProject = useMemo(
@@ -150,6 +152,22 @@ export function NewTaskScreen({ now }: NewTaskScreenProps) {
         onSelect={(key) => {
           setProjectId(key === NO_PROJECT_KEY ? null : key);
           setProjectSheetOpen(false);
+        }}
+        action={{
+          label: t.taskNew.createProject,
+          onClick: () => {
+            setProjectSheetOpen(false);
+            setNewProjectSheetOpen(true);
+          },
+        }}
+      />
+
+      <NewProjectSheet
+        open={newProjectSheetOpen}
+        onClose={() => setNewProjectSheetOpen(false)}
+        onCreated={(project) => {
+          setProjectId(project.id);
+          setNewProjectSheetOpen(false);
         }}
       />
 
