@@ -1,7 +1,7 @@
 import { cx } from 'styled-system/css';
 import { type DividerVariantProps, divider } from 'styled-system/recipes';
 
-// 스타일은 config recipe(panda.recipes.ts의 `divider`). 근거: docs/conventions/ui-styling.md.
+// 스타일은 config recipe(recipes/*의 `divider`). 근거: docs/conventions/ui-styling.md.
 
 type DividerProps = DividerVariantProps & {
   className?: string;

@@ -1,9 +1,63 @@
 import { defineConfig } from '@pandacss/dev';
-import { uiRecipes } from './panda.recipes';
-
 // shared/ui 프리미티브 스타일은 cva(atomic)가 아니라 config recipe로 둔다 — 근거는
-// panda.recipes.ts와 docs/conventions/ui-styling.md 참고(요지: recipe 레이어가 utilities
-// override에 항상 져서, 사용처/asChild override가 예측 가능하게 이긴다).
+// docs/conventions/ui-styling.md 참고(요지: recipe 레이어가 utilities override에 항상 져서,
+// 사용처/asChild override가 예측 가능하게 이긴다). 정의는 ./recipes/*에 파일별로 두고
+// 여기서 하나씩 import해 등록한다(런타임 컴포넌트는 styled-system/recipes의 생성 함수를 씀).
+import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from './recipes/app-bar';
+import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from './recipes/bottom-sheet';
+import { card } from './recipes/card';
+import { chip } from './recipes/chip';
+import { divider } from './recipes/divider';
+import { dot } from './recipes/dot';
+import { fieldRoot } from './recipes/field';
+import { input } from './recipes/input';
+import { pressable } from './recipes/pressable';
+import { row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from './recipes/row';
+import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from './recipes/screen';
+import { sectionHeader, sectionHeaderTrailing } from './recipes/section';
+import { spinner } from './recipes/spinner';
+import { spacer, stack } from './recipes/stack';
+import { surface } from './recipes/surface';
+import { tabBarIconWrap, tabBarInner, tabBarItem, tabBarNav } from './recipes/tab-bar';
+import { text } from './recipes/text';
+
+const uiRecipes = {
+  pressable,
+  card,
+  chip,
+  text,
+  surface,
+  dot,
+  divider,
+  spinner,
+  input,
+  row,
+  rowSlotLeading,
+  rowSlotContent,
+  rowSlotTrailing,
+  stack,
+  spacer,
+  screenViewport,
+  screenHeader,
+  screenContent,
+  screenFooter,
+  screenOverlay,
+  sectionHeader,
+  sectionHeaderTrailing,
+  appBarRoot,
+  appBarLeading,
+  appBarTitle,
+  appBarTrailing,
+  sheetPositioner,
+  sheetBackdrop,
+  sheetSurface,
+  sheetHandle,
+  fieldRoot,
+  tabBarNav,
+  tabBarInner,
+  tabBarItem,
+  tabBarIconWrap,
+};
 
 const spacingScale = {
   '0': { value: '0' },

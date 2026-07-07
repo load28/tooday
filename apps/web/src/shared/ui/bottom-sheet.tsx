@@ -1,54 +1,11 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import type { ReactNode } from 'react';
-import { css } from 'styled-system/css';
+import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from 'styled-system/recipes';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
 
-const positionerCls = css({
-  position: 'fixed',
-  inset: 0,
-  zIndex: 60,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'flex-end',
-});
-
-const backdropCls = css({
-  position: 'fixed',
-  inset: 0,
-  zIndex: 60,
-  background: 'overlay',
-  animation: 'toodayFadeIn {durations.base} {easings.standard}',
-});
-
-const sheetCls = css({
-  position: 'relative',
-  width: '100%',
-  bg: 'surface',
-  borderTopLeftRadius: '3xl',
-  borderTopRightRadius: '3xl',
-  paddingTop: 'sheetHandleTop',
-  paddingX: 'sheetPadX',
-  paddingBottom: 'sheetPadBottom',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'sheetGap',
-  boxShadow: 'sheet',
-  animation: 'toodaySlideUp {durations.slow} {easings.standard}',
-  maxHeight: '85%',
-  overflowY: 'auto',
-});
-
-const handleCls = css({
-  width: 'handle',
-  height: 'xs',
-  borderRadius: 'pill',
-  bg: 'borderStrong',
-  alignSelf: 'center',
-  marginBottom: 'xs',
-  flex: '0 0 auto',
-});
+// 스타일은 config recipe(recipes/*의 `sheet*`). 근거: docs/conventions/ui-styling.md.
 
 type BottomSheetProps = {
   open: boolean;
@@ -73,10 +30,10 @@ function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProp
       unmountOnExit
     >
       <Portal>
-        <Dialog.Backdrop className={backdropCls} />
-        <Dialog.Positioner className={positionerCls}>
-          <Dialog.Content className={sheetCls} aria-label={ariaLabel}>
-            <div className={handleCls} aria-hidden="true" />
+        <Dialog.Backdrop className={sheetBackdrop()} />
+        <Dialog.Positioner className={sheetPositioner()}>
+          <Dialog.Content className={sheetSurface()} aria-label={ariaLabel}>
+            <div className={sheetHandle()} aria-hidden="true" />
             {children}
           </Dialog.Content>
         </Dialog.Positioner>
