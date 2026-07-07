@@ -2,7 +2,6 @@ import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
 import { css, cva, cx } from 'styled-system/css';
 import { useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { Card, Dot, HStack, Text } from '@/shared/ui';
 
 // 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
@@ -68,7 +67,6 @@ type TaskCardProps = {
 
 export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
   const t = useT();
-  const accent = project ? PROJECT_COLOR[project.color] : PROJECT_COLOR.gray;
   const isDone = task.status === 'done';
 
   return (
@@ -78,7 +76,7 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
           {task.title}
         </Text>
         <HStack gap="sm">
-          <Dot size="sm" color={accent} />
+          <Dot size="sm" tone={project?.color ?? 'gray'} />
           <Text variant="caption" tone="tertiary">
             {project?.name ?? '—'}
           </Text>

@@ -14,7 +14,6 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { toIsoDate } from '@/shared/time';
 import { AppBar, Button, Pressable, Screen, Stack, Text } from '@/shared/ui';
 
@@ -113,12 +112,7 @@ export function NewTaskScreen({ now }: NewTaskScreenProps) {
         <MetaList>
           <MetaRow
             label={t.taskNew.project}
-            value={
-              <ProjectValue
-                name={selectedProject?.name ?? null}
-                color={selectedProject ? PROJECT_COLOR[selectedProject.color] : undefined}
-              />
-            }
+            value={<ProjectValue name={selectedProject?.name ?? null} color={selectedProject?.color} />}
             onClick={() => setProjectSheetOpen(true)}
           />
           <MetaRow

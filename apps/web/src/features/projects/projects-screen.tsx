@@ -110,7 +110,7 @@ export function ProjectsScreen() {
                 onClick={() => navigate({ to: '/projects/$projectId', params: { projectId: project.id } })}
               >
                 <HStack gap="sm">
-                  <Dot size="sm" color={accent} />
+                  <Dot size="sm" tone={project.color} />
                   <Text variant="subtitle" truncate>
                     {project.name}
                   </Text>

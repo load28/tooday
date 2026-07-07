@@ -1,10 +1,9 @@
-import type { Project } from '@tooday/shared';
+import type { Project, ProjectColor } from '@tooday/shared';
 import { Check, ChevronRight } from 'lucide-react';
 import { Children, Fragment, type ReactNode, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
 import { useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { endTime, formatDuration } from '@/shared/time';
 import { BottomSheet, Button, Card, Divider, Dot, HStack, Input, Pressable, Row, Stack, Text } from '@/shared/ui';
 
@@ -19,7 +18,7 @@ export function useProjectOptions(projects: Project[]): SheetOption<string>[] {
     ...projects.map((project) => ({
       key: project.id,
       label: project.name,
-      leading: <Dot size="sm" color={PROJECT_COLOR[project.color]} />,
+      leading: <Dot size="sm" tone={project.color} />,
     })),
   ];
 }
@@ -190,11 +189,11 @@ export function ScheduleValue({ startAt, durationMin }: { startAt: string; durat
 }
 
 /** 메타 행의 '프로젝트' 값 — 색 점 + 이름, 없으면 '프로젝트 없음' */
-export function ProjectValue({ name, color }: { name: string | null; color?: string }) {
+export function ProjectValue({ name, color }: { name: string | null; color?: ProjectColor }) {
   const t = useT();
   return (
     <HStack gap="sm">
-      {color !== undefined ? <Dot size="sm" color={color} /> : null}
+      {color !== undefined ? <Dot size="sm" tone={color} /> : null}
       <Text variant="bodyStrong" tone={name === null ? 'tertiary' : 'default'} truncate>
         {name ?? t.common.noProject}
       </Text>

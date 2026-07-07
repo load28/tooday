@@ -57,13 +57,8 @@ export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
   );
 }
 
-export function Spacer({ size = 'auto' }: { size?: number | 'auto' }) {
-  const isAuto = size === 'auto';
-  return (
-    <span
-      aria-hidden="true"
-      className={spacer({ grow: isAuto })}
-      style={isAuto ? undefined : { flexBasis: size, flexShrink: 0 }}
-    />
-  );
+type SpacerSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | 'auto';
+
+export function Spacer({ size = 'auto' }: { size?: SpacerSize }) {
+  return <span aria-hidden="true" className={spacer({ size })} />;
 }
