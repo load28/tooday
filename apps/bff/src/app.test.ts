@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '@bff/app';
-import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
-import { serializeSessionCookie, serializeSessionCookieRemoval } from '@bff/modules/auth/session-cookie';
+import { createAccessTokenService } from '@bff/modules/auth/access-token';
+import { InMemoryRefreshTokenStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
+import { serializeAccessCookie, serializeAuthCookieRemovals, serializeRefreshCookie } from '@bff/modules/auth/cookies';
 import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
 import { InMemorySyncBroker } from '@bff/platform/sync-broker';
@@ -15,6 +16,7 @@ import {
   TRPC_ENDPOINT,
   taskRangeResponseSchema,
   taskSchema,
+  tokenPairSchema,
 } from '@tooday/shared';
 import * as v from 'valibot';
 
@@ -22,9 +24,13 @@ function setup(overrides: Partial<BffConfig> = {}) {
   const config: BffConfig = {
     port: 0,
     allowedOrigins: ['http://localhost:3000'],
-    cookieName: 'tooday_session',
+    accessCookieName: 'tooday_access',
+    refreshCookieName: 'tooday_refresh',
     cookieSecure: false,
-    sessionTtlMs: 60_000,
+    jwtSecret: 'test-secret',
+    accessTtlMs: 60_000,
+    refreshIdleTtlMs: 60_000,
+    refreshAbsoluteTtlMs: 120_000,
     databaseUrl: null,
     pgliteDataDir: 'memory://',
     pgPoolSize: 1,
@@ -38,7 +44,11 @@ function setup(overrides: Partial<BffConfig> = {}) {
   const app = createApp({
     config,
     users,
-    sessions: new InMemorySessionStore({ ttlMs: config.sessionTtlMs, users }),
+    refreshTokens: new InMemoryRefreshTokenStore({
+      idleTtlMs: config.refreshIdleTtlMs,
+      absoluteTtlMs: config.refreshAbsoluteTtlMs,
+    }),
+    accessTokens: createAccessTokenService({ secret: config.jwtSecret, ttlMs: config.accessTtlMs }),
     tasks: new InMemoryTaskStore(counter),
     projects: new InMemoryProjectStore(counter),
     sync,
@@ -62,8 +72,12 @@ function postJson({ input, headers = {} }: { input?: unknown; headers?: Record<s
   };
 }
 
-function sessionCookieHeader({ config, token }: { config: BffConfig; token: string }): string {
-  return `${config.cookieName}=${token}`;
+function accessCookieHeader({ config, token }: { config: BffConfig; token: string }): string {
+  return `${config.accessCookieName}=${token}`;
+}
+
+function refreshCookieHeader({ config, token }: { config: BffConfig; token: string }): string {
+  return `${config.refreshCookieName}=${token}`;
 }
 
 const trpcSuccessEnvelopeSchema = v.object({ result: v.object({ data: v.unknown() }) });
@@ -81,8 +95,9 @@ async function unwrapTrpcData<TSchema extends v.BaseSchema<unknown, unknown, v.B
 
 async function signup(app: TestApp) {
   const res = await app.request(trpcPath('auth.signup'), postJson({ input: SIGNUP_BODY }));
-  const { user, token } = await unwrapTrpcData({ res, schema: authResponseSchema });
-  return { res, user, token, cookie: res.headers.get('set-cookie') };
+  const { user, accessToken, refreshToken } = await unwrapTrpcData({ res, schema: authResponseSchema });
+  // token = 액세스 JWT(Bearer 인증용). refreshToken = 회전용 불투명 토큰.
+  return { res, user, token: accessToken, refreshToken, setCookies: res.headers.getSetCookie() };
 }
 
 describe('health', () => {
@@ -95,14 +110,16 @@ describe('health', () => {
 });
 
 describe('auth.signup', () => {
-  it('유저를 생성하고 세션 쿠키와 토큰을 함께 내려준다', async () => {
+  it('유저를 생성하고 액세스·리프레시 쿠키와 토큰 쌍을 함께 내려준다', async () => {
     const { app, config } = setup();
-    const { res, user, token, cookie } = await signup(app);
+    const { res, user, token, refreshToken, setCookies } = await signup(app);
 
     expect(res.status).toBe(200);
     expect(user).toMatchObject({ email: 'test@tooday.app', name: '테스터' });
-    expect(token).toHaveLength(64);
-    expect(cookie).toBe(serializeSessionCookie({ config, token }));
+    expect(token.split('.')).toHaveLength(3); // 액세스는 JWT
+    expect(refreshToken).toHaveLength(64); // 리프레시는 불투명 토큰
+    expect(setCookies).toContain(serializeAccessCookie({ config, token }));
+    expect(setCookies).toContain(serializeRefreshCookie({ config, token: refreshToken }));
     expect(res.headers.get('cache-control')).toBe(PRIVATE_CACHE_CONTROL);
   });
 
@@ -121,7 +138,7 @@ describe('auth.signup', () => {
 });
 
 describe('auth.login', () => {
-  it('올바른 자격증명이면 쿠키와 토큰을 내려준다', async () => {
+  it('올바른 자격증명이면 쿠키와 토큰 쌍을 내려준다', async () => {
     const { app, config } = setup();
     await signup(app);
 
@@ -130,8 +147,10 @@ describe('auth.login', () => {
       postJson({ input: { email: SIGNUP_BODY.email, password: SIGNUP_BODY.password } }),
     );
     expect(res.status).toBe(200);
-    const { token } = await unwrapTrpcData({ res, schema: authResponseSchema });
-    expect(res.headers.get('set-cookie')).toBe(serializeSessionCookie({ config, token }));
+    const { accessToken, refreshToken } = await unwrapTrpcData({ res, schema: authResponseSchema });
+    const setCookies = res.headers.getSetCookie();
+    expect(setCookies).toContain(serializeAccessCookie({ config, token: accessToken }));
+    expect(setCookies).toContain(serializeRefreshCookie({ config, token: refreshToken }));
   });
 
   it('비밀번호가 틀리면 401을 반환한다', async () => {
@@ -152,7 +171,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { token } = await signup(app);
 
     const res = await app.request(trpcPath('user.me'), {
-      headers: { Cookie: sessionCookieHeader({ config, token }) },
+      headers: { Cookie: accessCookieHeader({ config, token }) },
     });
     expect(res.status).toBe(200);
     const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
@@ -178,7 +197,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const res = await app.request(trpcPath('user.me'), {
       headers: {
         Authorization: 'Bearer invalid-token',
-        Cookie: sessionCookieHeader({ config, token }),
+        Cookie: accessCookieHeader({ config, token }),
       },
     });
     expect(res.status).toBe(401);
@@ -190,8 +209,8 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     expect(res.status).toBe(401);
   });
 
-  it('만료된 세션은 401을 반환한다', async () => {
-    const { app } = setup({ sessionTtlMs: -1 });
+  it('만료된 액세스 토큰은 401을 반환한다', async () => {
+    const { app } = setup({ accessTtlMs: -60_000 });
     const { token } = await signup(app);
 
     const res = await app.request(trpcPath('user.me'), {
@@ -276,7 +295,8 @@ describe('task — 메인(오늘) 화면 데이터', () => {
       trpcPath('auth.signup'),
       postJson({ input: { email: 'other@tooday.app', password: 'password123', name: '아더' } }),
     );
-    return unwrapTrpcData({ res, schema: authResponseSchema });
+    const data = await unwrapTrpcData({ res, schema: authResponseSchema });
+    return { ...data, token: data.accessToken };
   }
 
   it('인증 없이는 401을 반환한다', async () => {
@@ -453,26 +473,72 @@ describe('task — 메인(오늘) 화면 데이터', () => {
   });
 });
 
-describe('auth.logout', () => {
-  it('세션을 무효화하고 쿠키를 삭제한다 (쿠키/헤더 어느 쪽으로도 재사용 불가)', async () => {
+describe('auth.refresh', () => {
+  it('리프레시 쿠키를 회전한다 — 새 토큰 쌍을 주고, 옛 리프레시는 무효화된다', async () => {
     const { app, config } = setup();
-    const { token } = await signup(app);
+    const { refreshToken } = await signup(app);
+
+    const res = await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
+    );
+    expect(res.status).toBe(200);
+    const { accessToken, refreshToken: rotated } = await unwrapTrpcData({ res, schema: tokenPairSchema });
+    expect(rotated).not.toBe(refreshToken); // 리프레시는 회전됨
+    // (액세스 JWT는 같은 초에 서명되면 byte-identical일 수 있으므로 값 비교하지 않는다)
+
+    // 새 액세스로 인증된다
+    const me = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    expect(me.status).toBe(200);
+
+    // 옛 리프레시는 재사용 불가(회전으로 폐기)
+    const reused = await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
+    );
+    expect(reused.status).toBe(401);
+  });
+
+  it('리프레시 토큰이 없으면 401을 반환한다', async () => {
+    const { app } = setup();
+    const res = await app.request(trpcPath('auth.refresh'), postJson({ input: {} }));
+    expect(res.status).toBe(401);
+  });
+
+  it('body의 refreshToken도 받는다 (네이티브 브릿지)', async () => {
+    const { app } = setup();
+    const { refreshToken } = await signup(app);
+
+    const res = await app.request(trpcPath('auth.refresh'), postJson({ input: { refreshToken } }));
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('auth.logout', () => {
+  it('리프레시를 폐기하고 쿠키를 삭제한다 — 회전 경로가 막힌다', async () => {
+    const { app, config } = setup();
+    const { token, refreshToken } = await signup(app);
 
     const logoutRes = await app.request(
       trpcPath('auth.logout'),
-      postJson({ headers: { Cookie: sessionCookieHeader({ config, token }) } }),
+      postJson({
+        headers: {
+          Cookie: [accessCookieHeader({ config, token }), refreshCookieHeader({ config, token: refreshToken })].join('; '),
+        },
+      }),
     );
     expect(logoutRes.status).toBe(200);
-    expect(logoutRes.headers.get('set-cookie')).toBe(serializeSessionCookieRemoval(config));
+    const removals = serializeAuthCookieRemovals(config);
+    for (const removal of removals) {
+      expect(logoutRes.headers.getSetCookie()).toContain(removal);
+    }
 
-    const viaCookie = await app.request(trpcPath('user.me'), {
-      headers: { Cookie: sessionCookieHeader({ config, token }) },
-    });
-    expect(viaCookie.status).toBe(401);
-
-    const viaHeader = await app.request(trpcPath('user.me'), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(viaHeader.status).toBe(401);
+    // 리프레시가 폐기되어 재발급(회전) 경로가 막힌다.
+    // (액세스 JWT는 무상태라 TTL까지 유효한 건 이 모델의 알려진 트레이드오프.)
+    const refreshRes = await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
+    );
+    expect(refreshRes.status).toBe(401);
   });
 });

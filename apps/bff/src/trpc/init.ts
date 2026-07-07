@@ -33,8 +33,8 @@ export const router = t.router;
 export const publicProcedure = t.procedure.use(domainErrorMapper);
 
 export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
-  if (!ctx.user || !ctx.sessionToken) {
+  if (!ctx.userId) {
     throw new DomainError(DOMAIN_ERROR_CODES.UNAUTHENTICATED);
   }
-  return next({ ctx: { user: ctx.user, sessionToken: ctx.sessionToken } });
+  return next({ ctx: { userId: ctx.userId } });
 });

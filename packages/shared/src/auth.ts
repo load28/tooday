@@ -16,12 +16,36 @@ export const loginRequestSchema = v.object({
   password: v.pipe(v.string(), v.minLength(1)),
 });
 
-/** token은 Set-Cookie(웹)와 body(헤더 방식 클라이언트) 양쪽으로 전달된다 */
+/**
+ * 토큰 쌍. 웹은 이 값을 무시하고 httpOnly 쿠키(Set-Cookie)로 인증하지만,
+ * 네이티브/웹뷰 브릿지는 쿠키를 못 쓰므로 body로 받아 Authorization 헤더에 싣는다.
+ * - accessToken: 무상태 JWT(짧음). 매 요청 서명 검증만으로 인증.
+ * - refreshToken: 불투명 문자열(김). 액세스 만료 시 재발급받는 용도.
+ */
+export const tokenPairSchema = v.object({
+  accessToken: v.string(),
+  refreshToken: v.string(),
+});
+
 export const authResponseSchema = v.object({
   user: userSchema,
-  token: v.string(),
+  ...tokenPairSchema.entries,
 });
+
+/**
+ * 리프레시 회전 요청. 웹은 body 없이 리프레시 쿠키로 인증하고, 네이티브/웹뷰
+ * 브릿지는 쿠키를 못 쓰므로 refreshToken을 body로 넘긴다 — 둘 다 지원하도록 optional.
+ */
+export const refreshRequestSchema = v.object({
+  refreshToken: v.optional(v.string()),
+});
+
+/** 리프레시 회전 결과 — 새 토큰 쌍만 돌려준다(웹은 쿠키로도 함께 받음) */
+export const refreshResponseSchema = tokenPairSchema;
 
 export type SignupRequest = v.InferOutput<typeof signupRequestSchema>;
 export type LoginRequest = v.InferOutput<typeof loginRequestSchema>;
+export type RefreshRequest = v.InferOutput<typeof refreshRequestSchema>;
+export type TokenPair = v.InferOutput<typeof tokenPairSchema>;
 export type AuthResponse = v.InferOutput<typeof authResponseSchema>;
+export type RefreshResponse = v.InferOutput<typeof refreshResponseSchema>;
