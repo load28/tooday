@@ -4,28 +4,11 @@ import { PROJECT_COLORS, type Project, type ProjectColor } from '@tooday/shared'
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { css } from 'styled-system/css';
-import { token } from 'styled-system/tokens';
 import { useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
-import { BottomSheet, Button, Stack, Text, TextField } from '@/shared/ui';
+import { BottomSheet, Button, ColorSwatch, Stack, Text, TextField } from '@/shared/ui';
 
 const fullWidthCls = css({ width: '100%' });
 const colorRowCls = css({ display: 'flex', gap: 'md', paddingBlock: '2xs', paddingInline: '2xs' });
-
-// 색상 칩 — 배경·선택 링 색은 프로젝트 색이라 인라인 style로, 나머지는 정적 클래스로 둔다
-const colorChipCls = css({
-  width: '40px',
-  height: '40px',
-  borderRadius: 'pill',
-  border: 'none',
-  padding: 0,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'textInverse',
-  transition: 'transform {durations.fast} {easings.standard}, box-shadow {durations.fast} {easings.standard}',
-});
 
 type NewProjectSheetProps = {
   open: boolean;
@@ -89,24 +72,17 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
         </Text>
         <div className={colorRowCls}>
           {PROJECT_COLORS.map((option) => {
-            const accent = PROJECT_COLOR[option];
             const active = option === color;
             return (
-              <button
+              <ColorSwatch
                 key={option}
-                type="button"
+                tone={option}
+                selected={active}
                 aria-label={t.projectNew.color[option]}
-                aria-pressed={active}
-                className={colorChipCls}
-                style={{
-                  background: accent,
-                  boxShadow: active ? `0 0 0 2px ${token('colors.surface')}, 0 0 0 4px ${accent}` : undefined,
-                  transform: active ? 'scale(1.04)' : undefined,
-                }}
                 onClick={() => setColor(option)}
               >
                 {active ? <Check size={18} strokeWidth={3} /> : null}
-              </button>
+              </ColorSwatch>
             );
           })}
         </div>

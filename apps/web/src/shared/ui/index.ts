@@ -3,6 +3,7 @@ export { BottomSheet } from '@/shared/ui/bottom-sheet';
 export { Button } from '@/shared/ui/button';
 export { Card } from '@/shared/ui/card';
 export { Chip } from '@/shared/ui/chip';
+export { ColorSwatch } from '@/shared/ui/color-swatch';
 export { Divider } from '@/shared/ui/divider';
 export { Dot } from '@/shared/ui/dot';
 export { Field } from '@/shared/ui/field';
