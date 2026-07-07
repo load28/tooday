@@ -1,5 +1,6 @@
 import { type CSSProperties, useState } from 'react';
-import { PROJECTS, type Project, tasksByProject } from '@/lib/data';
+import { IconPlus } from '@/components/icons';
+import { type Project, tasksByProject } from '@/lib/data';
 import { PROJECT_COLOR_HEX, type ProjectColor, TOKENS } from '@/lib/tokens';
 
 export const projStyles: Record<string, CSSProperties> = {
@@ -55,6 +56,23 @@ export const projStyles: Record<string, CSSProperties> = {
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 999 },
+  addCard: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    padding: '18px 20px',
+    borderRadius: 18,
+    border: `1.5px dashed ${TOKENS.color.borderStrong}`,
+    background: 'transparent',
+    color: TOKENS.color.textTertiary,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    transition: 'border-color 120ms ease, color 120ms ease',
+  },
 
   detailHero: {
     margin: '4px 16px 16px',
@@ -147,9 +165,13 @@ export const projStyles: Record<string, CSSProperties> = {
   },
 };
 
-type ProjectsListProps = { onOpenProject: (id: string) => void };
+type ProjectsListProps = {
+  projects: Project[];
+  onOpenProject: (id: string) => void;
+  onAddProject: () => void;
+};
 
-export function ProjectsList({ onOpenProject }: ProjectsListProps) {
+export function ProjectsList({ projects, onOpenProject, onAddProject }: ProjectsListProps) {
   return (
     <div>
       <header style={projStyles.intro}>
@@ -157,7 +179,7 @@ export function ProjectsList({ onOpenProject }: ProjectsListProps) {
         <p style={projStyles.introSub}>한 곳에서 모아보기</p>
       </header>
       <ul style={projStyles.list}>
-        {PROJECTS.map((p) => {
+        {projects.map((p) => {
           const accent = PROJECT_COLOR_HEX[p.color as ProjectColor];
           const ratio = p.totalCount ? p.doneCount / p.totalCount : 0;
           const todayCount = tasksByProject(p.id).length;
@@ -181,6 +203,11 @@ export function ProjectsList({ onOpenProject }: ProjectsListProps) {
             </li>
           );
         })}
+        <li>
+          <button type="button" style={projStyles.addCard} onClick={onAddProject}>
+            <IconPlus size={18} strokeWidth={2.4} />새 프로젝트
+          </button>
+        </li>
       </ul>
     </div>
   );
