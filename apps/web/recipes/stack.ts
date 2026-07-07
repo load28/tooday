@@ -54,10 +54,19 @@ export const spacer = defineRecipe({
   className: 'spacer',
   base: { flexShrink: 0, alignSelf: 'stretch' },
   variants: {
-    // 고정 크기(size≠auto)는 컴포넌트가 style.flexBasis로 준다
-    grow: {
-      true: { flexGrow: 1, flexBasis: 0 },
-      false: { flexGrow: 0 },
+    // auto=남는 공간 채움, 나머지는 스페이싱 스케일 고정 크기(sizes 토큰 = 스페이싱 스케일 포함)
+    size: {
+      auto: { flexGrow: 1, flexBasis: 0 },
+      '2xs': { flexGrow: 0, flexBasis: '2xs' },
+      xs: { flexGrow: 0, flexBasis: 'xs' },
+      sm: { flexGrow: 0, flexBasis: 'sm' },
+      md: { flexGrow: 0, flexBasis: 'md' },
+      lg: { flexGrow: 0, flexBasis: 'lg' },
+      xl: { flexGrow: 0, flexBasis: 'xl' },
+      '2xl': { flexGrow: 0, flexBasis: '2xl' },
+      '3xl': { flexGrow: 0, flexBasis: '3xl' },
+      '4xl': { flexGrow: 0, flexBasis: '4xl' },
     },
   },
+  defaultVariants: { size: 'auto' },
 });

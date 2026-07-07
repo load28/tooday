@@ -16,7 +16,6 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { AppBar, Button, Chip, Dot, Pressable, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
@@ -169,7 +168,7 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
         <MetaList>
           <MetaRow
             label={t.taskDetail.project}
-            value={<ProjectValue name={project?.name ?? null} color={project ? PROJECT_COLOR[project.color] : undefined} />}
+            value={<ProjectValue name={project?.name ?? null} color={project?.color} />}
             onClick={() => setProjectSheetOpen(true)}
           />
           <MetaRow label={t.taskDetail.date} value={<Text variant="bodyStrong">{dateLabel}</Text>} />

@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { css, cva } from 'styled-system/css';
 import { STATUS_ORDER } from '@/features/tasks/status';
 import { useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { AppBar, Card, Dot, Pressable, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
 
 const segmentCls = css({
@@ -72,7 +71,6 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
   } = useSuspenseQuery(trpc.task.project.queryOptions({ projectId }));
 
   const [tab, setTab] = useState<TaskStatus>('todo');
-  const accent = PROJECT_COLOR[project.color];
 
   const byStatus = useMemo(() => {
     const groups: Record<TaskStatus, Task[]> = { todo: [], doing: [], done: [] };
@@ -156,7 +154,7 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
                 onClick={() => navigate({ to: '/tasks/$taskId', params: { taskId: task.id } })}
               >
                 <Row
-                  leading={<Dot size="sm" color={isDone ? undefined : accent} tone={isDone ? 'muted' : undefined} />}
+                  leading={<Dot size="sm" tone={isDone ? 'muted' : project.color} />}
                   trailing={
                     <Text variant="numeric" tone="tertiary">
                       {task.startAt}
