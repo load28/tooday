@@ -1,6 +1,7 @@
 import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { serializeAccessCookie, serializeAuthCookieRemovals, serializeRefreshCookie } from '@bff/modules/auth/cookies';
-import type { UserStore } from '@bff/modules/auth/ports';
+import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
+import { verifyLiveSession } from '@bff/modules/auth/session-liveness';
 import { extractAccessToken } from '@bff/modules/auth/token';
 import type { BffConfig } from '@bff/platform/config';
 import type { TokenPair, User } from '@tooday/shared';
@@ -22,14 +23,15 @@ export type TrpcContext = {
 export interface TrpcContextDeps {
   config: BffConfig;
   accessTokens: AccessTokenService;
+  refreshTokens: RefreshTokenStore;
   users: UserStore;
 }
 
-export function createContextFactory({ config, accessTokens, users }: TrpcContextDeps) {
+export function createContextFactory({ config, accessTokens, refreshTokens, users }: TrpcContextDeps) {
   return async (opts: FetchCreateContextFnOptions, c: HonoContext): Promise<TrpcContext> => {
-    // 인증 핫패스 — 매 요청 서명 검증만. 저장소를 타지 않는다.
+    // 인증 핫패스 — 액세스 JWT 검증 + 세션 라이브니스 체크(즉시 무효화). 유저 조회는 안 탐.
     const accessToken = extractAccessToken({ c, cookieName: config.accessCookieName });
-    const userId = accessToken ? await accessTokens.verify(accessToken) : null;
+    const userId = await verifyLiveSession({ token: accessToken, accessTokens, refreshTokens });
 
     return {
       userId,

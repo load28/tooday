@@ -12,10 +12,13 @@ export interface AuthRouterDeps {
 }
 
 export function createAuthRouter({ users, refreshTokens, accessTokens }: AuthRouterDeps) {
-  // 로그인/회원가입 공통 — 리프레시 발급 + 액세스 서명으로 토큰 쌍을 만든다.
+  // 로그인/회원가입 공통 — 세션(리프레시) 발급 + 그 세션의 sid로 액세스 서명.
   const issueTokens = async (userId: string): Promise<TokenPair> => {
     const refresh = await refreshTokens.issue(userId);
-    return { accessToken: await accessTokens.sign(userId), refreshToken: refresh.token };
+    return {
+      accessToken: await accessTokens.sign({ userId, sessionId: refresh.sessionId }),
+      refreshToken: refresh.token,
+    };
   };
 
   return router({
@@ -45,7 +48,10 @@ export function createAuthRouter({ users, refreshTokens, accessTokens }: AuthRou
         ctx.clearAuthCookies();
         throw new DomainError(DOMAIN_ERROR_CODES.UNAUTHENTICATED);
       }
-      const tokens: TokenPair = { accessToken: await accessTokens.sign(rotated.userId), refreshToken: rotated.token };
+      const tokens: TokenPair = {
+        accessToken: await accessTokens.sign({ userId: rotated.userId, sessionId: rotated.sessionId }),
+        refreshToken: rotated.token,
+      };
       ctx.setAuthCookies(tokens);
       return tokens;
     }),

@@ -540,12 +540,39 @@ describe('auth.logout', () => {
       expect(logoutRes.headers.getSetCookie()).toContain(removal);
     }
 
-    // 리프레시가 폐기되어 재발급(회전) 경로가 막힌다.
-    // (액세스 JWT는 무상태라 TTL까지 유효한 건 이 모델의 알려진 트레이드오프.)
+    // 세션이 폐기되어 재발급(회전) 경로가 막힌다.
     const refreshRes = await app.request(
       trpcPath('auth.refresh'),
       postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
     );
     expect(refreshRes.status).toBe(401);
+
+    // 즉시 무효화: 아직 만료 안 된 액세스 토큰도 세션 라이브니스 체크에서 곧바로 거부된다.
+    const meRes = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${token}` } });
+    expect(meRes.status).toBe(401);
+  });
+
+  it('재사용 탐지가 세션을 죽이면 그 세션의 액세스도 즉시 무효화된다', async () => {
+    const { app, config } = setup();
+    const { refreshToken } = await signup(app);
+
+    // 1) 정상 회전 → 새 액세스/리프레시
+    const rotate1 = await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
+    );
+    const { accessToken } = await unwrapTrpcData({ res: rotate1, schema: tokenPairSchema });
+    const meOk = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    expect(meOk.status).toBe(200);
+
+    // 2) 옛 리프레시 재사용 = 탈취 신호 → 세션 전체 무효화
+    await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
+    );
+
+    // 3) 방금까지 멀쩡하던 액세스도 세션 라이브니스 체크로 즉시 401
+    const meRes = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    expect(meRes.status).toBe(401);
   });
 });
