@@ -1,42 +1,10 @@
 import type { ReactNode } from 'react';
-import { cva, cx } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+import { type ChipVariantProps, chip } from 'styled-system/recipes';
 
-const chipRecipe = cva({
-  base: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 'sm',
-    paddingInline: 'md',
-    paddingBlock: '2xs',
-    borderRadius: 'pill',
-    textStyle: 'caption',
-    whiteSpace: 'nowrap',
-    minWidth: 0,
-  },
-  variants: {
-    tone: {
-      neutral: { bg: 'surfaceSoft', color: 'textSecondary' },
-      brand: { bg: 'primarySoft', color: 'primary' },
-      success: { bg: 'successSoft', color: 'success' },
-      warning: { bg: 'warningSoft', color: 'warning' },
-      danger: { bg: 'dangerSoft', color: 'danger' },
-      outline: { bg: 'transparent', color: 'textSecondary', border: '1px solid {colors.border}' },
-    },
-    size: {
-      sm: { textStyle: 'micro', paddingBlock: '0' },
-      md: { textStyle: 'caption' },
-      lg: { textStyle: 'bodySm', paddingBlock: 'xs', paddingInline: 'xl' },
-    },
-  },
-  defaultVariants: {
-    tone: 'neutral',
-    size: 'md',
-  },
-});
+// 스타일은 config recipe(panda.recipes.ts의 `chip`). 근거: docs/conventions/ui-styling.md.
 
-type ChipVariants = NonNullable<Parameters<typeof chipRecipe>[0]>;
-
-type ChipProps = ChipVariants & {
+type ChipProps = ChipVariantProps & {
   leading?: ReactNode;
   trailing?: ReactNode;
   className?: string;
@@ -45,7 +13,7 @@ type ChipProps = ChipVariants & {
 
 export function Chip({ tone, size, leading, trailing, className, children }: ChipProps) {
   return (
-    <span className={cx(chipRecipe({ tone, size }), className)}>
+    <span className={cx(chip({ tone, size }), className)}>
       {leading}
       {children}
       {trailing}
