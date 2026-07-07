@@ -38,7 +38,6 @@ function ProjectsPage() {
       <ProjectsList
         projects={projects}
         onOpenProject={(id) => navigate({ to: '/projects/$projectId', params: { projectId: id } })}
-        onAddProject={() => setCreateOpen(true)}
       />
       <NewProjectSheet
         open={createOpen}
