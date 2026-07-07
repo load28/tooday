@@ -25,11 +25,12 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   접근은 Kysely(타입드 SQL + 다이얼렉트), 스키마 변경은 버전드 마이그레이션
   (`platform/db/migrations.ts`, 부팅 시 Kysely Migrator가 적용)로만 한다.
   스토어(포트) ↔ Kysely ↔ 다이얼렉트 계층 분리로 엔진 교체 시 코어 무변경.
-  인증은 무상태 액세스 JWT(`hono/jwt`) + 회전 리프레시 토큰 — 매 요청은 서명 검증만
-  하고(핫패스가 저장소를 안 탐), 리프레시만 `RefreshTokenStore` 포트에 저장한다.
-  회전 시 idle 슬라이딩 + absolute 하드캡 + 재사용 탐지(계보 무효화)를 건다.
-  `REDIS_URL` 설정 시 Redis(네이티브 TTL로 스윕 불필요), 미설정이면 DB 테이블(스윕 배치
-  동반) — `DATABASE_URL`과 같은 opt-in이라 개발·테스트는 외부 의존성 0.
+  인증은 무상태 액세스 JWT(`hono/jwt`, `sid` 클레임) + 회전 리프레시 토큰 — 매 요청은
+  서명·만료 검증 + 세션 라이브니스 체크 1회(유저 조회는 안 탐)로 즉시 무효화까지 얻는다.
+  리프레시는 `RefreshTokenStore` 포트에 저장하고, 회전 시 idle 슬라이딩 + absolute 하드캡 +
+  재사용 탐지(세션 무효화)를 건다. 로그아웃·재사용 탐지가 세션을 폐기하면 액세스도 즉시 무효.
+  `REDIS_URL` 설정 시 Redis(라이브니스=EXISTS, 네이티브 TTL로 스윕 불필요), 미설정이면 DB
+  테이블 — `DATABASE_URL`과 같은 opt-in이라 개발·테스트는 외부 의존성 0.
   자세한 설계는 [docs/authentication-architecture.md](docs/authentication-architecture.md).
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
