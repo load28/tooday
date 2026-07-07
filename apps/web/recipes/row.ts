@@ -30,6 +30,7 @@ export const row = defineRecipe({
         touchAction: 'manipulation',
         userSelect: 'none',
         _press: { bg: 'pressedStrong' },
+        _focusVisible: { outline: 'none', boxShadow: 'focus' },
       },
     },
     inset: {

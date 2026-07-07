@@ -36,6 +36,7 @@ export const card = defineRecipe({
         touchAction: 'manipulation',
         userSelect: 'none',
         _press: { transform: 'scale(0.99)' },
+        _focusVisible: { outline: 'none', boxShadow: 'focus' },
       },
     },
     selected: {
