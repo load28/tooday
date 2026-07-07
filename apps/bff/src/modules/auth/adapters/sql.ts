@@ -56,10 +56,11 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     const token: RefreshToken = {
       token: generateRefreshToken(),
       userId,
+      familyId: newId(),
       expiresAt: now + this.idleTtlMs,
       absoluteExpiresAt: now + this.absoluteTtlMs,
     };
-    await this.insert(token);
+    await this.db.insertInto('refresh_tokens').values(this.toRow(token)).execute();
     return token;
   }
 
@@ -67,35 +68,50 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     const now = Date.now();
     const row = await this.db
       .selectFrom('refresh_tokens')
-      .select(['user_id', 'expires_at', 'absolute_expires_at'])
+      .select(['user_id', 'family_id', 'expires_at', 'absolute_expires_at', 'superseded_at'])
       .where('token_hash', '=', hashRefreshToken(token))
       .executeTakeFirst();
     if (!row) return null;
 
-    const idleExpired = row.expires_at.getTime() <= now;
-    const absoluteExpired = row.absolute_expires_at.getTime() <= now;
-    if (idleExpired || absoluteExpired) {
-      await this.revoke(token);
+    // 이미 회전된(supersede된) 토큰의 재제시 = 탈취 신호 → 계보 전체 무효화.
+    if (row.superseded_at !== null) {
+      await this.revokeFamily(row.family_id);
       return null;
     }
 
-    // idle는 슬라이딩(now+idle)하되 absolute 캡을 넘지 못한다.
+    if (row.expires_at.getTime() <= now || row.absolute_expires_at.getTime() <= now) {
+      await this.db.deleteFrom('refresh_tokens').where('token_hash', '=', hashRefreshToken(token)).execute();
+      return null;
+    }
+
+    // idle는 슬라이딩(now+idle)하되 absolute 캡을 넘지 못한다. 계보(family)는 유지.
     const next: RefreshToken = {
       token: generateRefreshToken(),
       userId: row.user_id,
+      familyId: row.family_id,
       expiresAt: Math.min(now + this.idleTtlMs, row.absolute_expires_at.getTime()),
       absoluteExpiresAt: row.absolute_expires_at.getTime(),
     };
-    // 옛 토큰 폐기 + 새 토큰 발급을 한 트랜잭션으로 — 회전은 원자적이어야 한다.
+    // 옛 토큰 supersede 마킹 + 새 토큰 발급을 한 트랜잭션으로 — 회전은 원자적이어야 한다.
+    // (옛 토큰은 지우지 않고 남겨 재사용 탐지에 쓰고, 만료 시 스윕이 청소한다.)
     await this.db.transaction().execute(async (tx) => {
-      await tx.deleteFrom('refresh_tokens').where('token_hash', '=', hashRefreshToken(token)).execute();
+      await tx
+        .updateTable('refresh_tokens')
+        .set({ superseded_at: new Date(now) })
+        .where('token_hash', '=', hashRefreshToken(token))
+        .execute();
       await tx.insertInto('refresh_tokens').values(this.toRow(next)).execute();
     });
     return next;
   }
 
   async revoke(token: string): Promise<void> {
-    await this.db.deleteFrom('refresh_tokens').where('token_hash', '=', hashRefreshToken(token)).execute();
+    const row = await this.db
+      .selectFrom('refresh_tokens')
+      .select('family_id')
+      .where('token_hash', '=', hashRefreshToken(token))
+      .executeTakeFirst();
+    if (row) await this.revokeFamily(row.family_id);
   }
 
   async deleteExpired(): Promise<number> {
@@ -109,16 +125,18 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     return rows.length;
   }
 
-  private async insert(token: RefreshToken): Promise<void> {
-    await this.db.insertInto('refresh_tokens').values(this.toRow(token)).execute();
+  private async revokeFamily(familyId: string): Promise<void> {
+    await this.db.deleteFrom('refresh_tokens').where('family_id', '=', familyId).execute();
   }
 
   private toRow(token: RefreshToken) {
     return {
       token_hash: hashRefreshToken(token.token),
       user_id: token.userId,
+      family_id: token.familyId,
       expires_at: new Date(token.expiresAt),
       absolute_expires_at: new Date(token.absoluteExpiresAt),
+      superseded_at: null,
     };
   }
 }
