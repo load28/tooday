@@ -10,31 +10,6 @@ export const tabBarInner = defineRecipe({
   base: { display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', height: 'tabBar', paddingTop: 'md' },
 });
 
-export const tabBarItem = defineRecipe({
-  className: 'tabBarItem',
-  base: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2xs',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    textStyle: 'micro',
-    padding: 0,
-    transition: 'color {durations.base} {easings.standard}',
-    _focusVisible: { outline: 'none', boxShadow: 'focus' },
-  },
-  variants: {
-    active: {
-      true: { color: 'primary', fontWeight: 700 },
-      false: { color: 'textTertiary' },
-    },
-  },
-});
-
 export const tabBarIconWrap = defineRecipe({
   className: 'tabBarIconWrap',
   base: {

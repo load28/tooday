@@ -1,7 +1,38 @@
 import { type MouseEvent, type ReactNode, useId } from 'react';
-import { css, cx } from 'styled-system/css';
-import { Pressable, type PressableProps } from '@/shared/ui/pressable';
+import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
+import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
+
+// 버튼의 시각적 정체성(tone/shape/size)은 베이스가 아니라 여기 산다.
+// cva(utilities 층)라 baseButton(recipes 층)을 항상 결정적으로 덮는다 (docs/conventions/ui-styling.md).
+const buttonStyle = cva({
+  base: { gap: 'md' },
+  variants: {
+    tone: {
+      ghost: { color: 'text', _press: { bg: 'pressedStrong' } },
+      subtle: { bg: 'surfaceMuted', color: 'textSecondary', _press: { bg: 'surfaceSoft' } },
+      brand: { bg: 'primary', color: 'onPrimary', _press: { bg: 'primaryPressed' } },
+      brandSoft: { bg: 'primarySoft', color: 'primary', _press: { bg: 'primarySofter' } },
+      danger: { bg: 'danger', color: 'textInverse', _press: { bg: 'dangerPressed' } },
+      dangerSoft: { bg: 'dangerSoft', color: 'danger', _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' } },
+    },
+    shape: {
+      square: { borderRadius: 'md' },
+      rounded: { borderRadius: 'lg' },
+      pill: { borderRadius: 'pill' },
+      circle: { borderRadius: 'full', aspectRatio: '1 / 1' },
+    },
+    size: {
+      sm: { height: 'controlSm', paddingX: 'xl', textStyle: 'bodySm' },
+      md: { height: 'tap', paddingX: '2xl', textStyle: 'body' },
+      lg: { height: 'tapLg', paddingX: '3xl', textStyle: 'bodyLg' },
+      xl: { height: 'tapXl', paddingX: '3xl', textStyle: 'bodyLgStrong' },
+      icon: { height: 'tap', width: 'tap', paddingX: '0' },
+      iconLg: { height: 'tapLg', width: 'tapLg', paddingX: '0' },
+    },
+  },
+  defaultVariants: { tone: 'ghost', shape: 'rounded', size: 'md' },
+});
 
 // 라벨과 스피너를 같은 grid 셀에 겹쳐 어느 쪽이 크든 버튼 너비가 변하지 않는다.
 const loadingStackCls = css({ display: 'inline-grid', placeItems: 'center', minWidth: 0 });
@@ -18,16 +49,18 @@ const loadingHiddenCls = css({ opacity: 0 });
 const loadingCursorCls = css({ cursor: 'wait' });
 const srOnlyCls = css({ srOnly: true });
 
-type ButtonProps = PressableProps & {
-  /** 로딩 상태. 클릭·제출이 차단되고 라벨 자리에 스피너가 표시된다. 포커스는 유지된다. */
-  loading?: boolean;
-  /** 로딩 중 스피너 옆에 보여줄 텍스트. 없으면 스피너만 라벨 자리를 덮는다. */
-  loadingText?: ReactNode;
-  /** 기본 스피너를 교체한다. */
-  spinner?: ReactNode;
-};
+type ButtonProps = BaseButtonProps &
+  RecipeVariantProps<typeof buttonStyle> & {
+    /** 로딩 상태. 클릭·제출이 차단되고 라벨 자리에 스피너가 표시된다. 포커스는 유지된다. */
+    loading?: boolean;
+    /** 로딩 중 스피너 옆에 보여줄 텍스트. 없으면 스피너만 라벨 자리를 덮는다. */
+    loadingText?: ReactNode;
+    /** 기본 스피너를 교체한다. */
+    spinner?: ReactNode;
+  };
 
 export function Button({ loading, loadingText, spinner, className, children, onClick, ...rest }: ButtonProps) {
+  const [variantProps, baseProps] = buttonStyle.splitVariantProps(rest);
   const labelId = useId();
   const loadingLabelId = useId();
   const isLoading = Boolean(loading);
@@ -42,13 +75,13 @@ export function Button({ loading, loadingText, spinner, className, children, onC
   };
 
   return (
-    <Pressable
+    <BaseButton
       data-loading={isLoading || undefined}
       aria-disabled={isLoading || undefined}
       aria-labelledby={isLoading ? `${labelId} ${loadingLabelId}` : undefined}
-      {...rest}
+      {...baseProps}
       onClick={handleClick}
-      className={cx(isLoading && loadingCursorCls, className)}
+      className={cx(buttonStyle(variantProps), isLoading && loadingCursorCls, className)}
     >
       {isLoading ? (
         <span className={loadingStackCls}>
@@ -66,6 +99,8 @@ export function Button({ loading, loadingText, spinner, className, children, onC
       ) : (
         children
       )}
-    </Pressable>
+    </BaseButton>
   );
 }
+
+export type { ButtonProps };

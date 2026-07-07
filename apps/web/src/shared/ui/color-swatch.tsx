@@ -1,18 +1,22 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import type { ReactNode } from 'react';
 import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
-import { Pressable, type PressableProps } from '@/shared/ui/pressable';
+import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 
 // 팔레트 색 단일 선택 그룹 — 구성은 디자인 시스템 관례(Park UI 등)를 따른다:
 //   상태·접근성(aria-pressed, 방향키 roving focus)은 Ark ToggleGroup이 맡고,
-//   클릭 엘리먼트는 베이스 버튼(Pressable)을 asChild로 재사용하며,
-//   슬롯 오버레이는 cva(utilities)로 얹는다 — pressable이 config recipe(@layer recipes)인
-//   이유가 바로 이 슬롯 override를 결정적으로 만들기 위해서다 (docs/conventions/ui-styling.md).
+//   클릭 엘리먼트는 베이스 버튼(BaseButton)을 asChild로 재사용하며,
+//   치수·색 등 스와치 고유 스타일은 cva(utilities)로 얹는다 — baseButton이
+//   config recipe(@layer recipes)인 이유가 바로 이 슬롯 override를 결정적으로
+//   만들기 위해서다 (docs/conventions/ui-styling.md).
 
 const rootCls = css({ display: 'flex', flexWrap: 'wrap', gap: 'md' });
 
 const swatchItem = cva({
   base: {
+    width: 'tap',
+    height: 'tap',
+    borderRadius: 'full',
     // 배경·선택 링이 같은 색을 공유하도록 tone은 CSS 변수 하나만 바꾼다
     background: 'var(--swatch-color)',
     color: 'textInverse',
@@ -80,14 +84,14 @@ function ColorSwatchGroupRoot<V extends string>({
 type ColorSwatchItemProps = {
   value: string;
   tone?: SwatchTone;
-} & Omit<PressableProps, 'tone' | 'shape' | 'size' | 'asChild' | 'value'>;
+} & Omit<BaseButtonProps, 'asChild' | 'value'>;
 
 function ColorSwatchItem({ value, tone, className, children, ...rest }: ColorSwatchItemProps) {
   return (
     <ToggleGroup.Item value={value} asChild>
-      <Pressable shape="circle" size="icon" {...rest} className={cx(swatchItem({ tone }), className)}>
+      <BaseButton {...rest} className={cx(swatchItem({ tone }), className)}>
         {children}
-      </Pressable>
+      </BaseButton>
     </ToggleGroup.Item>
   );
 }

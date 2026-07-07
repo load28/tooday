@@ -2,6 +2,7 @@ import { defineConfig } from '@pandacss/dev';
 // shared/ui 스타일은 config recipe로 둬 사용처 override가 결정적으로 이긴다(docs/conventions/ui-styling.md).
 // 정의는 ./recipes/*(빌드 전용)에 두고 여기서 등록 — 런타임 컴포넌트는 styled-system/recipes를 쓴다.
 import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from './recipes/app-bar';
+import { baseButton } from './recipes/base-button';
 import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from './recipes/bottom-sheet';
 import { card } from './recipes/card';
 import { chip } from './recipes/chip';
@@ -9,18 +10,17 @@ import { divider } from './recipes/divider';
 import { dot } from './recipes/dot';
 import { fieldRoot } from './recipes/field';
 import { input } from './recipes/input';
-import { pressable } from './recipes/pressable';
 import { row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from './recipes/row';
 import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from './recipes/screen';
 import { sectionHeader, sectionHeaderTrailing } from './recipes/section';
 import { spinner } from './recipes/spinner';
 import { spacer, stack } from './recipes/stack';
 import { surface } from './recipes/surface';
-import { tabBarIconWrap, tabBarInner, tabBarItem, tabBarNav } from './recipes/tab-bar';
+import { tabBarIconWrap, tabBarInner, tabBarNav } from './recipes/tab-bar';
 import { text } from './recipes/text';
 
 const uiRecipes = {
-  pressable,
+  baseButton,
   card,
   chip,
   text,
@@ -53,7 +53,6 @@ const uiRecipes = {
   fieldRoot,
   tabBarNav,
   tabBarInner,
-  tabBarItem,
   tabBarIconWrap,
 };
 
@@ -113,7 +112,7 @@ export default defineConfig({
       fontFamily: 'inherit',
       letterSpacing: 'inherit',
     },
-    'button, a, [role="button"], [data-pressable]': {
+    'button, a, [role="button"], [data-base-button]': {
       WebkitTapHighlightColor: 'transparent',
       touchAction: 'manipulation',
       userSelect: 'none',

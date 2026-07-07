@@ -1,5 +1,6 @@
 import { css, cva } from 'styled-system/css';
 import type { DayCell } from '@/features/today/week';
+import { BaseButton } from '@/shared/ui';
 
 const stripCls = css({
   display: 'grid',
@@ -10,20 +11,14 @@ const stripCls = css({
   paddingX: 'xl',
 });
 
+// 리셋·포커스 링은 BaseButton이 제공 — 여기는 셀 고유 레이아웃·상태 색만 얹는다.
 const cellRecipe = cva({
   base: {
-    display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
     paddingTop: 'md',
     paddingBottom: 'sm',
     borderRadius: 'lg',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
     transition: 'background {durations.base} {easings.standard}, color {durations.base} {easings.standard}',
-    _focusVisible: { outline: 'none', boxShadow: 'focus' },
   },
   variants: {
     state: {
@@ -67,9 +62,8 @@ export function WeekStrip({ days, activeOffset, hasTasks, onSelect }: WeekStripP
         const isActive = d.offset === activeOffset;
         const marked = hasTasks(d);
         return (
-          <button
+          <BaseButton
             key={d.key}
-            type="button"
             aria-label={d.label}
             aria-pressed={isActive}
             onClick={() => onSelect(d.offset)}
@@ -78,7 +72,7 @@ export function WeekStrip({ days, activeOffset, hasTasks, onSelect }: WeekStripP
             <span className={dowCls}>{d.dow}</span>
             <span className={dayCls}>{d.day}</span>
             <span className={dotRecipe({ mark: marked ? (isActive ? 'activeTasks' : 'tasks') : 'none' })} />
-          </button>
+          </BaseButton>
         );
       })}
     </div>

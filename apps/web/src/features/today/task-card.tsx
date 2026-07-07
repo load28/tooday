@@ -2,7 +2,7 @@ import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
 import { css, cva, cx } from 'styled-system/css';
 import { useT } from '@/shared/i18n';
-import { Card, Dot, HStack, Text } from '@/shared/ui';
+import { BaseButton, Card, Dot, HStack, Text } from '@/shared/ui';
 
 // 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
 const cardCls = css({
@@ -11,20 +11,14 @@ const cardCls = css({
   gap: 'xl',
 });
 
+// 리셋·포커스 링은 BaseButton이 제공 — 여기는 본문 레이아웃만 얹는다.
 const bodyCls = css({
   flex: 1,
   minWidth: 0,
-  display: 'flex',
   flexDirection: 'column',
+  alignItems: 'stretch',
   gap: 'sm',
-  padding: 0,
-  background: 'transparent',
-  border: 'none',
-  textAlign: 'left',
-  fontFamily: 'inherit',
-  cursor: 'pointer',
-  color: 'inherit',
-  _focusVisible: { outline: 'none', boxShadow: 'focus', borderRadius: 'xs' },
+  _focusVisible: { borderRadius: 'xs' },
 });
 
 // 색은 Text의 tone prop으로 바꾼다 — 여기서 color를 덮으면 recipe의 tone 클래스와 충돌한다
@@ -40,14 +34,8 @@ const checkRecipe = cva({
     borderRadius: 'sm',
     border: '1.5px solid {colors.borderStrong}',
     background: 'surface',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: '0 0 auto',
-    cursor: 'pointer',
-    padding: 0,
     transition: 'all {durations.base} {easings.standard}',
-    _focusVisible: { outline: 'none', boxShadow: 'focus' },
   },
   variants: {
     status: {
@@ -71,7 +59,7 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
 
   return (
     <Card padding="md" selected={task.status === 'doing'} className={cardCls}>
-      <button type="button" onClick={onClick} className={bodyCls}>
+      <BaseButton onClick={onClick} className={bodyCls}>
         <Text as="h3" variant="subtitle" tone={isDone ? 'tertiary' : 'default'} truncate className={cx(isDone && titleDoneCls)}>
           {task.title}
         </Text>
@@ -81,9 +69,8 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
             {project?.name ?? '—'}
           </Text>
         </HStack>
-      </button>
-      <button
-        type="button"
+      </BaseButton>
+      <BaseButton
         aria-label={t.today.toggleDone}
         aria-pressed={isDone}
         onClick={() => onToggle?.(task)}
@@ -94,7 +81,7 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
         ) : task.status === 'doing' ? (
           <LoaderCircle size={14} strokeWidth={2.4} />
         ) : null}
-      </button>
+      </BaseButton>
     </Card>
   );
 }

@@ -11,7 +11,7 @@ import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
 import { format, useLocale, useT } from '@/shared/i18n';
 import { formatDuration, timeToMin } from '@/shared/time';
-import { AppBar, Card, Pressable, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
+import { AppBar, Button, Card, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
 
 const pageCls = css({ paddingBottom: '4xl' });
 
@@ -139,12 +139,12 @@ export function TodayScreen({ now }: TodayScreenProps) {
         <AppBar>
           <AppBar.Title>{t.today.title}</AppBar.Title>
           <AppBar.Trailing>
-            <Pressable size="icon" shape="square" aria-label={t.today.notifications}>
+            <Button size="icon" shape="square" aria-label={t.today.notifications}>
               <Bell size={20} />
-            </Pressable>
-            <Pressable size="icon" shape="square" aria-label={t.today.addTask} onClick={() => navigate({ to: '/tasks/new' })}>
+            </Button>
+            <Button size="icon" shape="square" aria-label={t.today.addTask} onClick={() => navigate({ to: '/tasks/new' })}>
               <Plus size={22} strokeWidth={2.4} />
-            </Pressable>
+            </Button>
           </AppBar.Trailing>
         </AppBar>
       }

@@ -1,4 +1,5 @@
 export { AppBar } from '@/shared/ui/app-bar';
+export { BaseButton } from '@/shared/ui/base-button';
 export { BottomSheet } from '@/shared/ui/bottom-sheet';
 export { Button } from '@/shared/ui/button';
 export { Card } from '@/shared/ui/card';
@@ -9,7 +10,6 @@ export { Dot } from '@/shared/ui/dot';
 export { Field } from '@/shared/ui/field';
 export { Input } from '@/shared/ui/input';
 export { NumberInput } from '@/shared/ui/number-input';
-export { Pressable } from '@/shared/ui/pressable';
 export { Row } from '@/shared/ui/row';
 export { Screen } from '@/shared/ui/screen';
 export { Section } from '@/shared/ui/section';
