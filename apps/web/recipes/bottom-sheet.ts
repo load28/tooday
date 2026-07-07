@@ -1,6 +1,5 @@
 import { defineRecipe } from '@pandacss/dev';
 
-// config recipe(빌드 전용). 근거: docs/conventions/ui-styling.md.
 export const sheetPositioner = defineRecipe({
   className: 'sheetPositioner',
   base: { position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },

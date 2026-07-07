@@ -3,8 +3,6 @@ import { sectionHeader, sectionHeaderTrailing } from 'styled-system/recipes';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
 
-// 스타일은 config recipe(recipes/*의 `section*`). 근거: docs/conventions/ui-styling.md.
-
 type SectionProps = {
   title?: ReactNode;
   trailing?: ReactNode;

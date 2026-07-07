@@ -1,9 +1,7 @@
 import { defineRecipe } from '@pandacss/dev';
 
-// config recipe(빌드 전용). 근거: docs/conventions/ui-styling.md.
-// Stack/HStack: 원래 동적 css()였으나 gap 사용값이 전부 스케일 토큰이라 variant로 열었다.
-// alignItems가 두 variant에서 겹치지 않도록 direction은 flexDirection만, alignItems는
-// align variant만 담당한다(정렬 기본값은 컴포넌트가 align에 넣어 넘긴다).
+// alignItems 충돌을 피하려 direction은 flexDirection만, alignItems는 align variant만 맡는다
+// (정렬 기본값은 컴포넌트가 align에 넣어 넘긴다).
 export const stack = defineRecipe({
   className: 'stack',
   base: { display: 'flex', minWidth: 0 },

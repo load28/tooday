@@ -1,6 +1,5 @@
 import { defineRecipe } from '@pandacss/dev';
 
-// config recipe(빌드 전용). 근거: docs/conventions/ui-styling.md.
 export const text = defineRecipe({
   className: 'text',
   base: { margin: 0, minWidth: 0 },

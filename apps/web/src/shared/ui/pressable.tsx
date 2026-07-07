@@ -3,11 +3,6 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { cx } from 'styled-system/css';
 import { type PressableVariantProps, pressable } from 'styled-system/recipes';
 
-// 스타일 recipe는 panda.config.ts의 config recipe(`pressable`)로 옮겼다 — cva(atomic)가 아니다.
-// config recipe는 `@layer recipe`에 깔려 css() override(@layer utilities)에 항상 지므로,
-// asChild 자식이나 사용처 className의 override가 예측 가능하게 이긴다(비결정적 순서 승부 제거).
-// 자세한 근거: docs/conventions/ui-styling.md.
-
 type PressableProps = PressableVariantProps &
   Omit<ComponentPropsWithoutRef<'button'>, keyof PressableVariantProps> & {
     children?: ReactNode;

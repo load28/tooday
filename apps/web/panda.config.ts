@@ -1,8 +1,6 @@
 import { defineConfig } from '@pandacss/dev';
-// shared/ui 프리미티브 스타일은 cva(atomic)가 아니라 config recipe로 둔다 — 근거는
-// docs/conventions/ui-styling.md 참고(요지: recipe 레이어가 utilities override에 항상 져서,
-// 사용처/asChild override가 예측 가능하게 이긴다). 정의는 ./recipes/*에 파일별로 두고
-// 여기서 하나씩 import해 등록한다(런타임 컴포넌트는 styled-system/recipes의 생성 함수를 씀).
+// shared/ui 스타일은 config recipe로 둬 사용처 override가 결정적으로 이긴다(docs/conventions/ui-styling.md).
+// 정의는 ./recipes/*(빌드 전용)에 두고 여기서 등록 — 런타임 컴포넌트는 styled-system/recipes를 쓴다.
 import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from './recipes/app-bar';
 import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from './recipes/bottom-sheet';
 import { card } from './recipes/card';

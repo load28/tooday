@@ -1,9 +1,5 @@
 import { defineRecipe } from '@pandacss/dev';
 
-// config recipe(빌드 전용) — panda.config.ts가 import해 등록한다. 런타임 컴포넌트는
-// styled-system/recipes의 생성된 함수를 쓴다. 왜 cva가 아니라 config recipe인지는
-// docs/conventions/ui-styling.md 참고(요지: recipe 레이어가 utilities override에 항상 져서
-// 사용처/asChild override가 예측 가능하게 이긴다).
 export const pressable = defineRecipe({
   className: 'pressable',
   base: {

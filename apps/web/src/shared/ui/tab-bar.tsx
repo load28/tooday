@@ -2,8 +2,6 @@ import type { ReactNode } from 'react';
 import { cx } from 'styled-system/css';
 import { tabBarIconWrap, tabBarInner, tabBarItem, tabBarNav } from 'styled-system/recipes';
 
-// 스타일은 config recipe(recipes/*의 `tabBar*`). 근거: docs/conventions/ui-styling.md.
-
 type TabBarItem<K extends string> = {
   key: K;
   label: string;
