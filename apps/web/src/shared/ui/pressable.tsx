@@ -1,107 +1,37 @@
+import { ark } from '@ark-ui/react/factory';
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
-import { cva, cx } from 'styled-system/css';
+import { cx } from 'styled-system/css';
+import { type PressableVariantProps, pressable } from 'styled-system/recipes';
 
-const pressableRecipe = cva({
-  base: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 'md',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    color: 'text',
-    fontFamily: 'inherit',
-    letterSpacing: 'inherit',
-    textAlign: 'left',
-    minWidth: 0,
-    transition:
-      'background-color {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
-    _press: { transitionDuration: '0ms' },
-    // _disabled는 aria-disabled까지 매칭하므로 네이티브 disabled에만 한정한다
-    '&:disabled': {
-      cursor: 'not-allowed',
-      opacity: 0.5,
-    },
-    _focusVisible: {
-      outline: 'none',
-      boxShadow: 'focus',
-    },
-  },
-  variants: {
-    tone: {
-      ghost: {
-        color: 'text',
-        _press: { bg: 'pressedStrong' },
-      },
-      subtle: {
-        bg: 'surfaceMuted',
-        color: 'textSecondary',
-        _press: { bg: 'surfaceSoft' },
-      },
-      brand: {
-        bg: 'primary',
-        color: 'onPrimary',
-        _press: { bg: 'primaryPressed' },
-      },
-      brandSoft: {
-        bg: 'primarySoft',
-        color: 'primary',
-        _press: { bg: 'primarySofter' },
-      },
-      danger: {
-        bg: 'danger',
-        color: 'textInverse',
-        _press: { bg: 'dangerPressed' },
-      },
-      dangerSoft: {
-        bg: 'dangerSoft',
-        color: 'danger',
-        _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
-      },
-    },
-    shape: {
-      square: { borderRadius: 'md' },
-      rounded: { borderRadius: 'lg' },
-      pill: { borderRadius: 'pill' },
-      circle: { borderRadius: 'full', aspectRatio: '1 / 1' },
-    },
-    size: {
-      sm: { height: 'controlSm', paddingX: 'xl', textStyle: 'bodySm' },
-      md: { height: 'tap', paddingX: '2xl', textStyle: 'body' },
-      lg: { height: 'tapLg', paddingX: '3xl', textStyle: 'bodyLg' },
-      xl: { height: 'tapXl', paddingX: '3xl', textStyle: 'bodyLgStrong' },
-      icon: { height: 'tap', width: 'tap', paddingX: '0' },
-      iconLg: { height: 'tapLg', width: 'tapLg', paddingX: '0' },
-    },
-    pressed: {
-      true: { transform: 'scale(0.96)' },
-    },
-  },
-  defaultVariants: {
-    tone: 'ghost',
-    shape: 'rounded',
-    size: 'md',
-  },
-});
+// 스타일 recipe는 panda.config.ts의 config recipe(`pressable`)로 옮겼다 — cva(atomic)가 아니다.
+// config recipe는 `@layer recipe`에 깔려 css() override(@layer utilities)에 항상 지므로,
+// asChild 자식이나 사용처 className의 override가 예측 가능하게 이긴다(비결정적 순서 승부 제거).
+// 자세한 근거: docs/conventions/ui-styling.md.
 
-type PressableVariants = NonNullable<Parameters<typeof pressableRecipe>[0]>;
-
-type PressableProps = PressableVariants &
-  Omit<ComponentPropsWithoutRef<'button'>, keyof PressableVariants> & {
+type PressableProps = PressableVariantProps &
+  Omit<ComponentPropsWithoutRef<'button'>, keyof PressableVariantProps> & {
     children?: ReactNode;
+    /**
+     * children 엘리먼트에 버튼 스타일·props를 병합해 렌더한다(예: <Link>). Ark factory가 처리.
+     * ⚠️ asChild 자식 className에는 배치(margin/flex 등)만 — tone/size/shape/색은 이 컴포넌트의
+     * variant prop으로 지정한다. 자식이 recipe 관리 속성을 덮으면(=footgun) 규칙 위반이다.
+     */
+    asChild?: boolean;
   };
 
-export function Pressable({ tone, shape, size, pressed, className, children, type, ...rest }: PressableProps) {
+export function Pressable({ asChild, className, children, type, ...rest }: PressableProps) {
+  const [variantProps, htmlProps] = pressable.splitVariantProps(rest);
   return (
-    <button
-      type={type ?? 'button'}
+    <ark.button
+      asChild={asChild}
+      // asChild로 <a>/<Link>가 되면 type="button"은 부적절하므로 네이티브 button일 때만 준다
+      type={asChild ? undefined : (type ?? 'button')}
       data-pressable=""
-      {...rest}
-      className={cx(pressableRecipe({ tone, shape, size, pressed }), className)}
+      {...htmlProps}
+      className={cx(pressable(variantProps), className)}
     >
       {children}
-    </button>
+    </ark.button>
   );
 }
 

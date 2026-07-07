@@ -1,4 +1,96 @@
-import { defineConfig } from '@pandacss/dev';
+import { defineConfig, defineRecipe } from '@pandacss/dev';
+
+// Pressable(모든 버튼의 토대)을 cva(atomic)가 아니라 config recipe로 둔다.
+// 이유: config recipe는 `@layer recipe`에 깔리고 css() atomic 유틸은 `@layer utilities`라
+// utilities가 항상 이긴다. 즉 사용처/자식(asChild)의 override가 "조용히 밀리거나 컴파일
+// 순서에 좌우"되지 않고 항상 예측 가능하게 이긴다. (cva면 recipe·override가 같은 utilities
+// 층이라 승자가 비결정적 — shared/ui/pressable.tsx, docs/conventions/ui-styling.md 참고)
+// staticCss '*': Button이 {...rest}로 variant를 동적 전달해 정적 추출이 안 되는 경우에도
+// 모든 variant CSS가 생성되도록 강제한다(cva의 "정의된 variant 전부 생성" 동작과 동일하게).
+const pressableRecipe = defineRecipe({
+  className: 'pressable',
+  base: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'md',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    color: 'text',
+    fontFamily: 'inherit',
+    letterSpacing: 'inherit',
+    textAlign: 'left',
+    minWidth: 0,
+    transition:
+      'background-color {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
+    _press: { transitionDuration: '0ms' },
+    // _disabled는 aria-disabled까지 매칭하므로 네이티브 disabled에만 한정한다
+    '&:disabled': {
+      cursor: 'not-allowed',
+      opacity: 0.5,
+    },
+    _focusVisible: {
+      outline: 'none',
+      boxShadow: 'focus',
+    },
+  },
+  variants: {
+    tone: {
+      ghost: {
+        color: 'text',
+        _press: { bg: 'pressedStrong' },
+      },
+      subtle: {
+        bg: 'surfaceMuted',
+        color: 'textSecondary',
+        _press: { bg: 'surfaceSoft' },
+      },
+      brand: {
+        bg: 'primary',
+        color: 'onPrimary',
+        _press: { bg: 'primaryPressed' },
+      },
+      brandSoft: {
+        bg: 'primarySoft',
+        color: 'primary',
+        _press: { bg: 'primarySofter' },
+      },
+      danger: {
+        bg: 'danger',
+        color: 'textInverse',
+        _press: { bg: 'dangerPressed' },
+      },
+      dangerSoft: {
+        bg: 'dangerSoft',
+        color: 'danger',
+        _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
+      },
+    },
+    shape: {
+      square: { borderRadius: 'md' },
+      rounded: { borderRadius: 'lg' },
+      pill: { borderRadius: 'pill' },
+      circle: { borderRadius: 'full', aspectRatio: '1 / 1' },
+    },
+    size: {
+      sm: { height: 'controlSm', paddingX: 'xl', textStyle: 'bodySm' },
+      md: { height: 'tap', paddingX: '2xl', textStyle: 'body' },
+      lg: { height: 'tapLg', paddingX: '3xl', textStyle: 'bodyLg' },
+      xl: { height: 'tapXl', paddingX: '3xl', textStyle: 'bodyLgStrong' },
+      icon: { height: 'tap', width: 'tap', paddingX: '0' },
+      iconLg: { height: 'tapLg', width: 'tapLg', paddingX: '0' },
+    },
+    pressed: {
+      true: { transform: 'scale(0.96)' },
+    },
+  },
+  defaultVariants: {
+    tone: 'ghost',
+    shape: 'rounded',
+    size: 'md',
+  },
+});
 
 const spacingScale = {
   '0': { value: '0' },
@@ -19,6 +111,13 @@ export default defineConfig({
   exclude: [],
   outdir: 'styled-system',
   jsxFramework: 'react',
+
+  // pressable recipe의 모든 variant CSS를 항상 생성 — 동적(Button {...rest}) 전달 대비
+  staticCss: {
+    recipes: {
+      pressable: ['*'],
+    },
+  },
 
   conditions: {
     extend: {
@@ -68,6 +167,9 @@ export default defineConfig({
 
   theme: {
     extend: {
+      recipes: {
+        pressable: pressableRecipe,
+      },
       tokens: {
         fonts: {
           sans: {
