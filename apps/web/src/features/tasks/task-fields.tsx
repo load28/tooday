@@ -1,3 +1,4 @@
+import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import type { Project, ProjectColor } from '@tooday/shared';
 import { Check, ChevronRight, Plus } from 'lucide-react';
 import { Children, Fragment, type ReactNode, useState } from 'react';
@@ -182,19 +183,24 @@ export function ScheduleSheet({ open, onClose, startAt, durationMin, onApply }: 
           <Text variant="label" tone="secondary">
             {t.schedule.durationLabel}
           </Text>
-          <div className={durationRowCls}>
+          <ToggleGroup.Root
+            value={[String(draftDuration)]}
+            onValueChange={(details) => {
+              // 단일 선택 — 선택된 알약을 다시 눌러 빈 상태가 되는 것은 무시한다
+              const next = details.value[0];
+              if (next !== undefined) setDraftDuration(Number(next));
+            }}
+            aria-label={t.schedule.durationLabel}
+            className={durationRowCls}
+          >
             {DURATION_OPTIONS.map((option) => (
-              <Button
-                key={option}
-                tone={option === draftDuration ? 'brand' : 'subtle'}
-                shape="pill"
-                size="sm"
-                onClick={() => setDraftDuration(option)}
-              >
-                {formatDuration(t, option)}
-              </Button>
+              <ToggleGroup.Item key={option} value={String(option)} asChild>
+                <Button tone="subtle" shape="pill" size="sm">
+                  {formatDuration(t, option)}
+                </Button>
+              </ToggleGroup.Item>
             ))}
-          </div>
+          </ToggleGroup.Root>
         </Stack>
         <Button tone="brand" size="lg" className={fullWidthCls} onClick={() => onApply(draftStart, draftDuration)}>
           {t.schedule.apply}

@@ -1,9 +1,10 @@
+import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import type { Task, TaskStatus } from '@tooday/shared';
 import { CalendarDays, ChevronLeft, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { css, cva } from 'styled-system/css';
+import { css } from 'styled-system/css';
 import { STATUS_ORDER } from '@/features/tasks/status';
 import { useT } from '@/shared/i18n';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
@@ -20,22 +21,15 @@ const segmentCls = css({
   marginBottom: 'lg',
 });
 
-// 리셋·포커스 링은 BaseButton이 제공 — 여기는 세그먼트 고유 스타일만 얹는다.
-const segmentButtonRecipe = cva({
-  base: {
-    gap: 'sm',
-    height: '36px',
-    borderRadius: 'md',
-    color: 'textTertiary',
-    textStyle: 'bodySm',
-    transition: 'color {durations.base} {easings.standard}, background {durations.base} {easings.standard}',
-  },
-  variants: {
-    active: {
-      true: { bg: 'surface', color: 'text', boxShadow: 'sm', fontWeight: '700' },
-      false: {},
-    },
-  },
+// 세그먼트 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
+const segmentButtonCls = css({
+  gap: 'sm',
+  height: '36px',
+  borderRadius: 'md',
+  color: 'textTertiary',
+  textStyle: 'bodySm',
+  transition: 'color {durations.base} {easings.standard}, background {durations.base} {easings.standard}',
+  _on: { bg: 'surface', color: 'text', boxShadow: 'sm', fontWeight: '700' },
 });
 
 const listCls = css({
@@ -110,21 +104,26 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
         />
       }
     >
-      <div className={segmentCls}>
+      <ToggleGroup.Root
+        value={[tab]}
+        onValueChange={(details) => {
+          // 단일 선택 — 선택된 세그먼트를 다시 눌러 빈 상태가 되는 것은 무시한다
+          const next = details.value[0] as TaskStatus | undefined;
+          if (next !== undefined) setTab(next);
+        }}
+        className={segmentCls}
+      >
         {STATUS_ORDER.map((status) => (
-          <BaseButton
-            key={status}
-            aria-pressed={tab === status}
-            className={segmentButtonRecipe({ active: tab === status })}
-            onClick={() => setTab(status)}
-          >
-            <span>{t.common.status[status]}</span>
-            <Text variant="micro" tone={tab === status ? 'tertiary' : 'placeholder'}>
-              {byStatus[status].length}
-            </Text>
-          </BaseButton>
+          <ToggleGroup.Item key={status} value={status} asChild>
+            <BaseButton className={segmentButtonCls}>
+              <span>{t.common.status[status]}</span>
+              <Text variant="micro" tone={tab === status ? 'tertiary' : 'placeholder'}>
+                {byStatus[status].length}
+              </Text>
+            </BaseButton>
+          </ToggleGroup.Item>
         ))}
-      </div>
+      </ToggleGroup.Root>
 
       {items.length === 0 ? (
         <Stack align="center" className={emptyCls}>

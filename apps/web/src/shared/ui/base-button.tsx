@@ -14,10 +14,7 @@ type BaseButtonProps = BaseButtonVariantProps &
     asChild?: boolean;
   };
 
-/**
- * 모든 클릭 가능한 엘리먼트의 토대 — 리셋 + 인터랙션(프레스·포커스 링·disabled)만 제공한다.
- * 버튼처럼 "보여야" 하면 이걸 직접 쓰지 말고 Button(tone/shape/size)을 쓴다.
- */
+/** 모든 클릭 가능한 엘리먼트의 토대 — 리셋 + 인터랙션만. 버튼처럼 보여야 하면 Button을 쓴다. */
 export function BaseButton({ asChild, className, children, type, ...rest }: BaseButtonProps) {
   const [variantProps, htmlProps] = baseButton.splitVariantProps(rest);
   return (
