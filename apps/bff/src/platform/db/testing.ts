@@ -17,6 +17,6 @@ export async function testDatabase(): Promise<Kysely<DatabaseSchema>> {
     return db;
   })();
   const db = await shared;
-  await sql`truncate table tasks, projects, sessions, users cascade`.execute(db);
+  await sql`truncate table tasks, projects, refresh_tokens, users cascade`.execute(db);
   return db;
 }

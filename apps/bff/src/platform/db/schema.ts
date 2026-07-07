@@ -10,11 +10,14 @@ export interface UsersTable {
   updated_at: Generated<Date>;
 }
 
-export interface SessionsTable {
+export interface RefreshTokensTable {
   /** 토큰 원문은 저장하지 않는다 — DB 유출이 곧 세션 탈취가 되지 않도록 SHA-256 해시만 */
   token_hash: string;
   user_id: string;
+  /** idle 만료(슬라이딩) — 회전할 때마다 갱신된다 */
   expires_at: Date;
+  /** 절대 만료(하드캡) — 로그인 시 박히고 회전해도 안 늘어난다 */
+  absolute_expires_at: Date;
   created_at: Generated<Date>;
 }
 
@@ -66,7 +69,7 @@ export interface SyncCountersTable {
 /** Kysely가 컴파일 타임에 쿼리를 검증하는 기준 스키마 */
 export interface DatabaseSchema {
   users: UsersTable;
-  sessions: SessionsTable;
+  refresh_tokens: RefreshTokensTable;
   projects: ProjectsTable;
   tasks: TasksTable;
   sync_counters: SyncCountersTable;

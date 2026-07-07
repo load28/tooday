@@ -1,21 +1,29 @@
-import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { AccessTokenService } from '@bff/modules/auth/access-token';
+import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { protectedProcedure, publicProcedure, router } from '@bff/trpc/init';
-import type { AuthResponse } from '@tooday/shared';
-import { loginRequestSchema, signupRequestSchema } from '@tooday/shared';
+import type { AuthResponse, RefreshResponse, TokenPair } from '@tooday/shared';
+import { loginRequestSchema, refreshRequestSchema, signupRequestSchema } from '@tooday/shared';
 
 export interface AuthRouterDeps {
   users: UserStore;
-  sessions: SessionStore;
+  refreshTokens: RefreshTokenStore;
+  accessTokens: AccessTokenService;
 }
 
-export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
+export function createAuthRouter({ users, refreshTokens, accessTokens }: AuthRouterDeps) {
+  // 로그인/회원가입 공통 — 리프레시 발급 + 액세스 서명으로 토큰 쌍을 만든다.
+  const issueTokens = async (userId: string): Promise<TokenPair> => {
+    const refresh = await refreshTokens.issue(userId);
+    return { accessToken: await accessTokens.sign(userId), refreshToken: refresh.token };
+  };
+
   return router({
     signup: publicProcedure.input(signupRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
       const user = await users.create(input);
-      const session = await sessions.create(user.id);
-      ctx.setSessionCookie(session.token);
-      return { user, token: session.token };
+      const tokens = await issueTokens(user.id);
+      ctx.setAuthCookies(tokens);
+      return { user, ...tokens };
     }),
 
     login: publicProcedure.input(loginRequestSchema).mutation(async ({ ctx, input }): Promise<AuthResponse> => {
@@ -23,14 +31,30 @@ export function createAuthRouter({ users, sessions }: AuthRouterDeps) {
       if (!user) {
         throw new DomainError(DOMAIN_ERROR_CODES.INVALID_CREDENTIALS);
       }
-      const session = await sessions.create(user.id);
-      ctx.setSessionCookie(session.token);
-      return { user, token: session.token };
+      const tokens = await issueTokens(user.id);
+      ctx.setAuthCookies(tokens);
+      return { user, ...tokens };
+    }),
+
+    // 액세스 만료 시 재발급 경로 — 리프레시를 회전(idle 슬라이딩 + absolute 캡)한다.
+    // 웹은 리프레시 쿠키로, 네이티브 브릿지는 body로 토큰을 넘긴다.
+    refresh: publicProcedure.input(refreshRequestSchema).mutation(async ({ ctx, input }): Promise<RefreshResponse> => {
+      const presented = input.refreshToken ?? ctx.refreshToken;
+      const rotated = presented ? await refreshTokens.rotate(presented) : null;
+      if (!rotated) {
+        ctx.clearAuthCookies();
+        throw new DomainError(DOMAIN_ERROR_CODES.UNAUTHENTICATED);
+      }
+      const tokens: TokenPair = { accessToken: await accessTokens.sign(rotated.userId), refreshToken: rotated.token };
+      ctx.setAuthCookies(tokens);
+      return tokens;
     }),
 
     logout: protectedProcedure.mutation(async ({ ctx }) => {
-      await sessions.revoke(ctx.sessionToken);
-      ctx.clearSessionCookie();
+      if (ctx.refreshToken) {
+        await refreshTokens.revoke(ctx.refreshToken);
+      }
+      ctx.clearAuthCookies();
       return { ok: true };
     }),
   });

@@ -1,5 +1,6 @@
+import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { requireAuth } from '@bff/modules/auth/middleware';
-import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
@@ -18,7 +19,8 @@ import { streamSSE } from 'hono/streaming';
 export interface AppDeps {
   config: BffConfig;
   users: UserStore;
-  sessions: SessionStore;
+  refreshTokens: RefreshTokenStore;
+  accessTokens: AccessTokenService;
   tasks: TaskStore;
   projects: ProjectStore;
   sync: SyncBroker;
@@ -65,8 +67,8 @@ export function createApp(deps: AppDeps) {
 
   // 동기화 신호 채널 — "네 데이터 바뀜"만 흘린다. 클라이언트는 신호를 받으면
   // 자기 커서로 task.changes를 당긴다 (신호 유실·중복은 커서가 흡수).
-  app.get(SYNC_EVENTS_PATH, requireAuth({ sessions: deps.sessions, cookieName: deps.config.cookieName }), (c) => {
-    const userId = c.get('auth').user.id;
+  app.get(SYNC_EVENTS_PATH, requireAuth({ accessTokens: deps.accessTokens, cookieName: deps.config.accessCookieName }), (c) => {
+    const userId = c.get('auth').userId;
     return streamSSE(c, async (stream) => {
       const unsubscribe = deps.sync.subscribe(userId, () => {
         void stream.writeSSE({ event: 'change', data: '' });

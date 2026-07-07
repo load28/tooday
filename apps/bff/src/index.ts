@@ -1,7 +1,8 @@
 import { createApp } from '@bff/app';
+import { createAccessTokenService } from '@bff/modules/auth/access-token';
 import { SqlUserStore } from '@bff/modules/auth/adapters/sql';
-import { createSessionStore } from '@bff/modules/auth/session-store';
-import { startSessionSweep } from '@bff/modules/auth/session-sweeper';
+import { createRefreshTokenStore } from '@bff/modules/auth/refresh-token-store';
+import { startRefreshTokenSweep } from '@bff/modules/auth/refresh-token-sweeper';
 import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
 import { loadConfig } from '@bff/platform/config';
 import { migrateToLatest } from '@bff/platform/db/migrate';
@@ -23,21 +24,27 @@ logger.info('database_ready', {
 });
 
 const users = new SqlUserStore(db);
-const { sessions, backend, needsExpirySweep } = createSessionStore({
+const accessTokens = createAccessTokenService({ secret: config.jwtSecret, ttlMs: config.accessTtlMs });
+const {
+  store: refreshTokens,
+  backend,
+  needsExpirySweep,
+} = createRefreshTokenStore({
   redisUrl: config.redisUrl,
   db,
-  users,
-  ttlMs: config.sessionTtlMs,
+  idleTtlMs: config.refreshIdleTtlMs,
+  absoluteTtlMs: config.refreshAbsoluteTtlMs,
 });
-logger.info('session_store_ready', { backend });
+logger.info('refresh_token_store_ready', { backend });
 if (needsExpirySweep) {
-  await startSessionSweep({ sessions, logger });
+  await startRefreshTokenSweep({ store: refreshTokens, logger });
 }
 
 const app = createApp({
   config,
   users,
-  sessions,
+  refreshTokens,
+  accessTokens,
   tasks: new SqlTaskStore(db),
   projects: new SqlProjectStore(db),
   sync: new InMemorySyncBroker(),

@@ -24,16 +24,16 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
     /** 메인(오늘) 화면 주간 창 데이터 + 동기화 커서 */
     range: protectedProcedure.input(taskRangeRequestSchema).query(async ({ ctx, input }): Promise<TaskRangeResponse> => {
       const [taskList, projectList, cursor] = await Promise.all([
-        tasks.listRange({ userId: ctx.user.id, ...input }),
-        projects.listByUser(ctx.user.id),
-        tasks.syncCursor(ctx.user.id),
+        tasks.listRange({ userId: ctx.userId, ...input }),
+        projects.listByUser(ctx.userId),
+        tasks.syncCursor(ctx.userId),
       ]);
       return { tasks: taskList, projects: projectList, cursor };
     }),
 
     /** 태스크 상세 화면 — 단건 조회 */
     byId: protectedProcedure.input(taskIdRequestSchema).query(async ({ ctx, input }): Promise<{ task: Task }> => {
-      const task = await tasks.findById({ userId: ctx.user.id, id: input.id });
+      const task = await tasks.findById({ userId: ctx.userId, id: input.id });
       if (!task) {
         throw new DomainError(DOMAIN_ERROR_CODES.TASK_NOT_FOUND);
       }
@@ -42,13 +42,13 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
 
     create: protectedProcedure.input(createTaskRequestSchema).mutation(async ({ ctx, input }) => {
       if (input.projectId !== null) {
-        const project = await projects.findById({ userId: ctx.user.id, id: input.projectId });
+        const project = await projects.findById({ userId: ctx.userId, id: input.projectId });
         if (!project) {
           throw new DomainError(DOMAIN_ERROR_CODES.PROJECT_NOT_FOUND);
         }
       }
-      const task = await tasks.create({ userId: ctx.user.id, ...input });
-      sync.notify(ctx.user.id);
+      const task = await tasks.create({ userId: ctx.userId, ...input });
+      sync.notify(ctx.userId);
       return { task };
     }),
 
@@ -58,48 +58,48 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
      */
     update: protectedProcedure.input(updateTaskRequestSchema).mutation(async ({ ctx, input }) => {
       if (typeof input.patch.projectId === 'string') {
-        const project = await projects.findById({ userId: ctx.user.id, id: input.patch.projectId });
+        const project = await projects.findById({ userId: ctx.userId, id: input.patch.projectId });
         if (!project) {
           throw new DomainError(DOMAIN_ERROR_CODES.PROJECT_NOT_FOUND);
         }
       }
-      const task = await tasks.update({ userId: ctx.user.id, ...input });
+      const task = await tasks.update({ userId: ctx.userId, ...input });
       if (!task) {
         throw new DomainError(DOMAIN_ERROR_CODES.TASK_NOT_FOUND);
       }
-      sync.notify(ctx.user.id);
+      sync.notify(ctx.userId);
       return { task };
     }),
 
     /** 소프트 삭제 — tombstone이 델타로 다른 기기에 전파된다 */
     delete: protectedProcedure.input(taskIdRequestSchema).mutation(async ({ ctx, input }) => {
-      const removed = await tasks.remove({ userId: ctx.user.id, id: input.id });
+      const removed = await tasks.remove({ userId: ctx.userId, id: input.id });
       if (!removed) {
         throw new DomainError(DOMAIN_ERROR_CODES.TASK_NOT_FOUND);
       }
-      sync.notify(ctx.user.id);
+      sync.notify(ctx.userId);
       return { id: input.id };
     }),
 
     /** 델타 동기화 — 커서 이후의 변경 전부 (tombstone 포함) */
     changes: protectedProcedure.input(syncChangesRequestSchema).query(async ({ ctx, input }): Promise<SyncChangesResponse> => {
       const [taskChanges, projectChanges] = await Promise.all([
-        tasks.changesSince({ userId: ctx.user.id, cursor: input.cursor }),
-        projects.changesSince({ userId: ctx.user.id, cursor: input.cursor }),
+        tasks.changesSince({ userId: ctx.userId, cursor: input.cursor }),
+        projects.changesSince({ userId: ctx.userId, cursor: input.cursor }),
       ]);
       const maxSeq = Math.max(input.cursor, ...taskChanges.map((c) => c.syncSeq), ...projectChanges.map((c) => c.syncSeq));
       return { tasks: taskChanges, projects: projectChanges, cursor: maxSeq };
     }),
 
     createProject: protectedProcedure.input(createProjectRequestSchema).mutation(async ({ ctx, input }) => {
-      const project = await projects.create({ userId: ctx.user.id, ...input });
-      sync.notify(ctx.user.id);
+      const project = await projects.create({ userId: ctx.userId, ...input });
+      sync.notify(ctx.userId);
       return { project };
     }),
 
     /** 프로젝트 목록 화면 — 프로젝트 라벨에 진행률(완료/전체)을 붙여 내려준다 */
     projects: protectedProcedure.query(async ({ ctx }): Promise<ProjectListResponse> => {
-      const [projectList, counts] = await Promise.all([projects.listByUser(ctx.user.id), tasks.countsByProject(ctx.user.id)]);
+      const [projectList, counts] = await Promise.all([projects.listByUser(ctx.userId), tasks.countsByProject(ctx.userId)]);
       const countById = new Map(counts.map((count) => [count.projectId, count]));
       return {
         projects: projectList.map((project) => {
@@ -113,11 +113,11 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
     project: protectedProcedure
       .input(projectDetailRequestSchema)
       .query(async ({ ctx, input }): Promise<ProjectDetailResponse> => {
-        const project = await projects.findById({ userId: ctx.user.id, id: input.projectId });
+        const project = await projects.findById({ userId: ctx.userId, id: input.projectId });
         if (!project) {
           throw new DomainError(DOMAIN_ERROR_CODES.PROJECT_NOT_FOUND);
         }
-        const taskList = await tasks.listByProject({ userId: ctx.user.id, projectId: input.projectId });
+        const taskList = await tasks.listByProject({ userId: ctx.userId, projectId: input.projectId });
         return { project, tasks: taskList };
       }),
   });

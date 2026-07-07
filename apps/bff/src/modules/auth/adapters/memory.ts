@@ -1,5 +1,5 @@
-import type { CreateUserInput, Session, SessionStore, SessionWithUser, UserStore } from '@bff/modules/auth/ports';
-import { generateSessionToken } from '@bff/modules/auth/session-token';
+import type { CreateUserInput, RefreshToken, RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
+import { generateRefreshToken } from '@bff/modules/auth/refresh-token';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import { newId } from '@bff/platform/ids';
 import type { User } from '@tooday/shared';
@@ -46,53 +46,57 @@ export class InMemoryUserStore implements UserStore {
   }
 }
 
-export class InMemorySessionStore implements SessionStore {
-  private readonly sessions = new Map<string, Session>();
-  private readonly ttlMs: number;
-  private readonly users: UserStore;
+export class InMemoryRefreshTokenStore implements RefreshTokenStore {
+  private readonly tokens = new Map<string, RefreshToken>();
+  private readonly idleTtlMs: number;
+  private readonly absoluteTtlMs: number;
 
-  constructor({ ttlMs, users }: { ttlMs: number; users: UserStore }) {
-    this.ttlMs = ttlMs;
-    this.users = users;
+  constructor({ idleTtlMs, absoluteTtlMs }: { idleTtlMs: number; absoluteTtlMs: number }) {
+    this.idleTtlMs = idleTtlMs;
+    this.absoluteTtlMs = absoluteTtlMs;
   }
 
-  async create(userId: string): Promise<Session> {
-    const session: Session = {
-      token: generateSessionToken(),
+  async issue(userId: string): Promise<RefreshToken> {
+    const now = Date.now();
+    const token: RefreshToken = {
+      token: generateRefreshToken(),
       userId,
-      expiresAt: Date.now() + this.ttlMs,
+      expiresAt: now + this.idleTtlMs,
+      absoluteExpiresAt: now + this.absoluteTtlMs,
     };
-    this.sessions.set(session.token, session);
-    return session;
+    this.tokens.set(token.token, token);
+    return token;
   }
 
-  async get(token: string): Promise<Session | null> {
-    const session = this.sessions.get(token);
-    if (!session) return null;
-    if (session.expiresAt <= Date.now()) {
-      this.sessions.delete(token);
+  async rotate(token: string): Promise<RefreshToken | null> {
+    const now = Date.now();
+    const current = this.tokens.get(token);
+    if (!current) return null;
+    if (current.expiresAt <= now || current.absoluteExpiresAt <= now) {
+      this.tokens.delete(token);
       return null;
     }
-    return session;
-  }
-
-  async getWithUser(token: string): Promise<SessionWithUser | null> {
-    const session = await this.get(token);
-    if (!session) return null;
-    const user = await this.users.findById(session.userId);
-    return user ? { session, user } : null;
+    this.tokens.delete(token);
+    const next: RefreshToken = {
+      token: generateRefreshToken(),
+      userId: current.userId,
+      expiresAt: Math.min(now + this.idleTtlMs, current.absoluteExpiresAt),
+      absoluteExpiresAt: current.absoluteExpiresAt,
+    };
+    this.tokens.set(next.token, next);
+    return next;
   }
 
   async revoke(token: string): Promise<void> {
-    this.sessions.delete(token);
+    this.tokens.delete(token);
   }
 
   async deleteExpired(): Promise<number> {
     const now = Date.now();
     let deleted = 0;
-    for (const [token, session] of this.sessions) {
-      if (session.expiresAt <= now) {
-        this.sessions.delete(token);
+    for (const [token, record] of this.tokens) {
+      if (record.expiresAt <= now || record.absoluteExpiresAt <= now) {
+        this.tokens.delete(token);
         deleted += 1;
       }
     }

@@ -1,43 +1,44 @@
 import { describe, expect, it } from 'bun:test';
-import { InMemorySessionStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
-import { SqlSessionStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
-import type { SessionStore, UserStore } from '@bff/modules/auth/ports';
+import { InMemoryRefreshTokenStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
+import { SqlRefreshTokenStore, SqlUserStore } from '@bff/modules/auth/adapters/sql';
+import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
 import { testDatabase } from '@bff/platform/db/testing';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 
 interface Stores {
   users: UserStore;
-  sessions: SessionStore;
+  refreshTokens: RefreshTokenStore;
 }
 
 interface Implementation {
   name: string;
-  make: (options: { ttlMs: number }) => Promise<Stores>;
+  make: (options: { idleTtlMs: number; absoluteTtlMs: number }) => Promise<Stores>;
 }
 
 const IMPLEMENTATIONS: Implementation[] = [
   {
     name: 'memory',
-    make: async ({ ttlMs }) => {
-      const users = new InMemoryUserStore();
-      return { users, sessions: new InMemorySessionStore({ ttlMs, users }) };
-    },
+    make: async ({ idleTtlMs, absoluteTtlMs }) => ({
+      users: new InMemoryUserStore(),
+      refreshTokens: new InMemoryRefreshTokenStore({ idleTtlMs, absoluteTtlMs }),
+    }),
   },
   {
     name: 'sql(pglite)',
-    make: async ({ ttlMs }) => {
+    make: async ({ idleTtlMs, absoluteTtlMs }) => {
       const db = await testDatabase();
-      return { users: new SqlUserStore(db), sessions: new SqlSessionStore({ db, ttlMs }) };
+      return { users: new SqlUserStore(db), refreshTokens: new SqlRefreshTokenStore({ db, idleTtlMs, absoluteTtlMs }) };
     },
   },
 ];
 
 const INPUT = { email: 'store@tooday.app', password: 'password123', name: '스토어' };
+const LONG = { idleTtlMs: 60_000, absoluteTtlMs: 120_000 };
 
 for (const { name, make } of IMPLEMENTATIONS) {
   describe(`스토어 포트 계약 — ${name}`, () => {
     it('유저를 생성하고 id로 조회한다 (이메일은 정규화)', async () => {
-      const { users } = await make({ ttlMs: 60_000 });
+      const { users } = await make(LONG);
       const created = await users.create({ ...INPUT, email: ' Store@Tooday.App ' });
       expect(created.email).toBe('store@tooday.app');
 
@@ -47,13 +48,13 @@ for (const { name, make } of IMPLEMENTATIONS) {
     });
 
     it('중복 이메일이면 DomainError(EMAIL_TAKEN)를 던진다', async () => {
-      const { users } = await make({ ttlMs: 60_000 });
+      const { users } = await make(LONG);
       await users.create(INPUT);
       await expect(users.create(INPUT)).rejects.toMatchObject(new DomainError(DOMAIN_ERROR_CODES.EMAIL_TAKEN));
     });
 
     it('자격 증명을 검증한다', async () => {
-      const { users } = await make({ ttlMs: 60_000 });
+      const { users } = await make(LONG);
       const created = await users.create(INPUT);
 
       expect(await users.verifyCredentials({ email: INPUT.email, password: INPUT.password })).toEqual(created);
@@ -61,36 +62,58 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await users.verifyCredentials({ email: 'nobody@tooday.app', password: INPUT.password })).toBeNull();
     });
 
-    it('세션을 생성/조회/무효화한다', async () => {
-      const { users, sessions } = await make({ ttlMs: 60_000 });
+    it('리프레시를 발급하고, 회전은 새 토큰을 주며 옛 토큰을 폐기한다', async () => {
+      const { users, refreshTokens } = await make(LONG);
       const user = await users.create(INPUT);
 
-      const session = await sessions.create(user.id);
-      expect(await sessions.get(session.token)).toEqual(session);
+      const issued = await refreshTokens.issue(user.id);
+      expect(issued.userId).toBe(user.id);
 
-      await sessions.revoke(session.token);
-      expect(await sessions.get(session.token)).toBeNull();
+      const rotated = await refreshTokens.rotate(issued.token);
+      expect(rotated?.userId).toBe(user.id);
+      expect(rotated?.token).not.toBe(issued.token);
+      // 옛 토큰은 회전으로 폐기 → 재사용 불가
+      expect(await refreshTokens.rotate(issued.token)).toBeNull();
     });
 
-    it('getWithUser는 세션과 유저를 함께 반환한다', async () => {
-      const { users, sessions } = await make({ ttlMs: 60_000 });
+    it('revoke하면 회전할 수 없다', async () => {
+      const { users, refreshTokens } = await make(LONG);
       const user = await users.create(INPUT);
-      const session = await sessions.create(user.id);
+      const issued = await refreshTokens.issue(user.id);
 
-      expect(await sessions.getWithUser(session.token)).toEqual({ session, user });
-      expect(await sessions.getWithUser('unknown-token')).toBeNull();
+      await refreshTokens.revoke(issued.token);
+      expect(await refreshTokens.rotate(issued.token)).toBeNull();
     });
 
-    it('만료된 세션은 조회되지 않고, deleteExpired가 청소한다', async () => {
-      const { users, sessions } = await make({ ttlMs: -1 });
+    it('회전은 idle을 슬라이딩하되 absolute 하드캡을 넘지 않는다', async () => {
+      const { users, refreshTokens } = await make({ idleTtlMs: 60_000, absoluteTtlMs: 30_000 });
+      const user = await users.create(INPUT);
+      const issued = await refreshTokens.issue(user.id);
+
+      const rotated = await refreshTokens.rotate(issued.token);
+      // idle(60s)이 아니라 absolute 상한(≈issue+30s)에 캡된다
+      expect(rotated?.expiresAt).toBe(issued.absoluteExpiresAt);
+      expect(rotated?.absoluteExpiresAt).toBe(issued.absoluteExpiresAt);
+    });
+
+    it('idle 만료 토큰은 회전되지 않고, deleteExpired가 청소한다', async () => {
+      const { users, refreshTokens } = await make({ idleTtlMs: -1, absoluteTtlMs: 120_000 });
       const user = await users.create(INPUT);
 
-      await sessions.create(user.id);
-      const expired = await sessions.create(user.id);
-      expect(await sessions.get(expired.token)).toBeNull(); // 조회가 만료 행 하나를 지운다
+      await refreshTokens.issue(user.id);
+      const expired = await refreshTokens.issue(user.id);
+      expect(await refreshTokens.rotate(expired.token)).toBeNull(); // 회전이 만료 행 하나를 지운다
 
-      expect(await sessions.deleteExpired()).toBe(1);
-      expect(await sessions.deleteExpired()).toBe(0);
+      expect(await refreshTokens.deleteExpired()).toBe(1);
+      expect(await refreshTokens.deleteExpired()).toBe(0);
+    });
+
+    it('absolute 만료 토큰은 회전되지 않는다', async () => {
+      const { users, refreshTokens } = await make({ idleTtlMs: 60_000, absoluteTtlMs: -1 });
+      const user = await users.create(INPUT);
+      const issued = await refreshTokens.issue(user.id);
+
+      expect(await refreshTokens.rotate(issued.token)).toBeNull();
     });
   });
 }

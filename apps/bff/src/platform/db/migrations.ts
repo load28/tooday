@@ -178,11 +178,38 @@ const migration0003Sync: Migration = {
   },
 };
 
+/**
+ * 0004 — 세션 테이블을 리프레시 토큰 저장소로 전환.
+ *
+ * 액세스(JWT, 무상태) + 리프레시(회전) 모델로 바뀌며 저장소는 리프레시 토큰만 관리한다.
+ * - sessions → refresh_tokens 로 이름 변경(인덱스는 테이블에 종속돼 함께 따라온다).
+ * - absolute_expires_at 추가: idle 만료(expires_at, 슬라이딩)와 별개인 하드캡. 기존 행은
+ *   expires_at을 그대로 백필해 하위 호환(어차피 전환 시점에 재로그인이 필요하다).
+ */
+const migration0004RefreshTokens: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await db.schema.alterTable('sessions').renameTo('refresh_tokens').execute();
+    await db.schema.alterTable('refresh_tokens').addColumn('absolute_expires_at', 'timestamptz').execute();
+    // 기존 행의 하드캡은 idle 만료값으로 백필한 뒤 NOT NULL을 건다.
+    await sql`update refresh_tokens set absolute_expires_at = expires_at where absolute_expires_at is null`.execute(db);
+    await db.schema
+      .alterTable('refresh_tokens')
+      .alterColumn('absolute_expires_at', (col) => col.setNotNull())
+      .execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    await db.schema.alterTable('refresh_tokens').dropColumn('absolute_expires_at').execute();
+    await db.schema.alterTable('refresh_tokens').renameTo('sessions').execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
   '0002_fractional_position': migration0002FractionalPosition,
   '0003_sync': migration0003Sync,
+  '0004_refresh_tokens': migration0004RefreshTokens,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {

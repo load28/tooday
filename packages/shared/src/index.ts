@@ -1,7 +1,15 @@
 export type { ApiError } from './api';
 export { TRPC_ENDPOINT } from './api';
-export type { AuthResponse, LoginRequest, SignupRequest } from './auth';
-export { authResponseSchema, loginRequestSchema, MIN_PASSWORD_LENGTH, signupRequestSchema } from './auth';
+export type { AuthResponse, LoginRequest, RefreshRequest, RefreshResponse, SignupRequest, TokenPair } from './auth';
+export {
+  authResponseSchema,
+  loginRequestSchema,
+  MIN_PASSWORD_LENGTH,
+  refreshRequestSchema,
+  refreshResponseSchema,
+  signupRequestSchema,
+  tokenPairSchema,
+} from './auth';
 export type {
   CreateProjectRequest,
   CreateTaskRequest,
