@@ -56,7 +56,7 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     const token: RefreshToken = {
       token: generateRefreshToken(),
       userId,
-      familyId: newId(),
+      sessionId: newId(),
       expiresAt: now + this.idleTtlMs,
       absoluteExpiresAt: now + this.absoluteTtlMs,
     };
@@ -68,14 +68,14 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     const now = Date.now();
     const row = await this.db
       .selectFrom('refresh_tokens')
-      .select(['user_id', 'family_id', 'expires_at', 'absolute_expires_at', 'superseded_at'])
+      .select(['user_id', 'session_id', 'expires_at', 'absolute_expires_at', 'superseded_at'])
       .where('token_hash', '=', hashRefreshToken(token))
       .executeTakeFirst();
     if (!row) return null;
 
-    // 이미 회전된(supersede된) 토큰의 재제시 = 탈취 신호 → 계보 전체 무효화.
+    // 이미 회전된(supersede된) 토큰의 재제시 = 탈취 신호 → 세션 전체 무효화.
     if (row.superseded_at !== null) {
-      await this.revokeFamily(row.family_id);
+      await this.revokeSession(row.session_id);
       return null;
     }
 
@@ -84,11 +84,11 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
       return null;
     }
 
-    // idle는 슬라이딩(now+idle)하되 absolute 캡을 넘지 못한다. 계보(family)는 유지.
+    // idle는 슬라이딩(now+idle)하되 absolute 캡을 넘지 못한다. 세션은 유지.
     const next: RefreshToken = {
       token: generateRefreshToken(),
       userId: row.user_id,
-      familyId: row.family_id,
+      sessionId: row.session_id,
       expiresAt: Math.min(now + this.idleTtlMs, row.absolute_expires_at.getTime()),
       absoluteExpiresAt: row.absolute_expires_at.getTime(),
     };
@@ -108,10 +108,21 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
   async revoke(token: string): Promise<void> {
     const row = await this.db
       .selectFrom('refresh_tokens')
-      .select('family_id')
+      .select('session_id')
       .where('token_hash', '=', hashRefreshToken(token))
       .executeTakeFirst();
-    if (row) await this.revokeFamily(row.family_id);
+    if (row) await this.revokeSession(row.session_id);
+  }
+
+  async isSessionLive(sessionId: string): Promise<boolean> {
+    // 세션은 자기 리프레시 토큰으로 존재한다 — 폐기되면 행이 사라지고, absolute면 만료된다.
+    const row = await this.db
+      .selectFrom('refresh_tokens')
+      .select('token_hash')
+      .where('session_id', '=', sessionId)
+      .where('absolute_expires_at', '>', new Date())
+      .executeTakeFirst();
+    return row !== undefined;
   }
 
   async deleteExpired(): Promise<number> {
@@ -125,15 +136,15 @@ export class SqlRefreshTokenStore implements RefreshTokenStore {
     return rows.length;
   }
 
-  private async revokeFamily(familyId: string): Promise<void> {
-    await this.db.deleteFrom('refresh_tokens').where('family_id', '=', familyId).execute();
+  private async revokeSession(sessionId: string): Promise<void> {
+    await this.db.deleteFrom('refresh_tokens').where('session_id', '=', sessionId).execute();
   }
 
   private toRow(token: RefreshToken) {
     return {
       token_hash: hashRefreshToken(token.token),
       user_id: token.userId,
-      family_id: token.familyId,
+      session_id: token.sessionId,
       expires_at: new Date(token.expiresAt),
       absolute_expires_at: new Date(token.absoluteExpiresAt),
       superseded_at: null,

@@ -26,7 +26,7 @@ describe.skipIf(!redisTestUrl)('RedisRefreshTokenStore (통합 — Redis 필요)
     expect(await store.rotate(issued.token)).toBeNull(); // 옛 토큰 재사용 불가
   });
 
-  it('revoke는 계보 전체를 무효화한다 (로그아웃)', async () => {
+  it('revoke는 세션 전체를 무효화한다 (로그아웃)', async () => {
     const store = make({ idleTtlMs: 60_000, absoluteTtlMs: 120_000 });
     const t1 = await store.issue(USER_ID);
     const t2 = await store.rotate(t1.token);
@@ -36,12 +36,12 @@ describe.skipIf(!redisTestUrl)('RedisRefreshTokenStore (통합 — Redis 필요)
     expect(await store.rotate(t2.token)).toBeNull();
   });
 
-  it('회전된 옛 토큰을 재사용하면 계보 전체가 무효화된다 (재사용 탐지)', async () => {
+  it('회전된 옛 토큰을 재사용하면 세션 전체가 무효화된다 (재사용 탐지)', async () => {
     const store = make({ idleTtlMs: 60_000, absoluteTtlMs: 120_000 });
     const t1 = await store.issue(USER_ID);
     const t2 = await store.rotate(t1.token);
     if (!t2) throw new Error('회전이 실패했다');
-    expect(t2.familyId).toBe(t1.familyId);
+    expect(t2.sessionId).toBe(t1.sessionId);
 
     expect(await store.rotate(t1.token)).toBeNull(); // 옛 토큰 재사용 → 탈취 신호
     expect(await store.rotate(t2.token)).toBeNull(); // 활성이던 t2도 함께 죽음
@@ -60,5 +60,16 @@ describe.skipIf(!redisTestUrl)('RedisRefreshTokenStore (통합 — Redis 필요)
     const store = make({ idleTtlMs: 60_000, absoluteTtlMs: -1 });
     const issued = await store.issue(USER_ID);
     expect(await store.rotate(issued.token)).toBeNull();
+  });
+
+  it('isSessionLive: 발급 시 live, 폐기하면 dead (즉시 무효화 근거)', async () => {
+    const store = make({ idleTtlMs: 60_000, absoluteTtlMs: 120_000 });
+    const issued = await store.issue(USER_ID);
+
+    expect(await store.isSessionLive(issued.sessionId)).toBe(true);
+    expect(await store.isSessionLive(crypto.randomUUID())).toBe(false);
+
+    await store.revoke(issued.token);
+    expect(await store.isSessionLive(issued.sessionId)).toBe(false);
   });
 });

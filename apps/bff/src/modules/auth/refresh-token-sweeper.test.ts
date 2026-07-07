@@ -26,6 +26,7 @@ function fakeStore(deleteExpired: RefreshTokenStore['deleteExpired']): RefreshTo
     },
     rotate: async () => null,
     revoke: async () => {},
+    isSessionLive: async () => false,
     deleteExpired,
   };
 }
