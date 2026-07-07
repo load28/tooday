@@ -14,10 +14,14 @@ export interface RefreshTokensTable {
   /** 토큰 원문은 저장하지 않는다 — DB 유출이 곧 세션 탈취가 되지 않도록 SHA-256 해시만 */
   token_hash: string;
   user_id: string;
+  /** 회전 계보 식별자 — 재사용 탐지 시 이 단위로 일괄 무효화한다 */
+  family_id: string;
   /** idle 만료(슬라이딩) — 회전할 때마다 갱신된다 */
   expires_at: Date;
   /** 절대 만료(하드캡) — 로그인 시 박히고 회전해도 안 늘어난다 */
   absolute_expires_at: Date;
+  /** 회전으로 폐기된 시각. NULL이면 활성 토큰. 재사용 탐지를 위해 만료까지 보존한다 */
+  superseded_at: Date | null;
   created_at: Generated<Date>;
 }
 

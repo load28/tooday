@@ -204,12 +204,40 @@ const migration0004RefreshTokens: Migration = {
   },
 };
 
+/**
+ * 0005 — 리프레시 토큰 회전 재사용 탐지(OAuth 2.0 BCP).
+ *
+ * - family_id: 회전 계보. 재사용이 탐지되면 이 단위로 일괄 무효화한다.
+ * - superseded_at: 회전으로 폐기된 시각. 이미 폐기된 토큰이 다시 제시되면 탈취 신호.
+ *
+ * 인증 모델 자체가 바뀌어(불투명 세션 → 액세스/리프레시) 기존 토큰은 어차피 무효다.
+ * 기존 행을 지우고 family_id를 NOT NULL로 추가한다 — 전환 시 전원 재로그인.
+ */
+const migration0005ReuseDetection: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await sql`delete from refresh_tokens`.execute(db);
+    await db.schema
+      .alterTable('refresh_tokens')
+      .addColumn('family_id', 'uuid', (col) => col.notNull())
+      .execute();
+    await db.schema.alterTable('refresh_tokens').addColumn('superseded_at', 'timestamptz').execute();
+    // 재사용 탐지 시 계보 전체를 지우는 경로
+    await db.schema.createIndex('refresh_tokens_family_id').on('refresh_tokens').column('family_id').execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    await db.schema.alterTable('refresh_tokens').dropColumn('superseded_at').execute();
+    await db.schema.alterTable('refresh_tokens').dropColumn('family_id').execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
   '0002_fractional_position': migration0002FractionalPosition,
   '0003_sync': migration0003Sync,
   '0004_refresh_tokens': migration0004RefreshTokens,
+  '0005_reuse_detection': migration0005ReuseDetection,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {

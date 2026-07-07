@@ -491,12 +491,19 @@ describe('auth.refresh', () => {
     const me = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
     expect(me.status).toBe(200);
 
-    // 옛 리프레시는 재사용 불가(회전으로 폐기)
+    // 옛 리프레시 재사용 = 탈취 신호 → 401 + 계보 전체 무효화(재사용 탐지)
     const reused = await app.request(
       trpcPath('auth.refresh'),
       postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
     );
     expect(reused.status).toBe(401);
+
+    // 재사용 탐지로 방금 회전된 새 리프레시(rotated)까지 함께 죽는다
+    const afterReuse = await app.request(
+      trpcPath('auth.refresh'),
+      postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: rotated }) } }),
+    );
+    expect(afterReuse.status).toBe(401);
   });
 
   it('리프레시 토큰이 없으면 401을 반환한다', async () => {

@@ -46,8 +46,12 @@ export class InMemoryUserStore implements UserStore {
   }
 }
 
+interface TokenRecord extends RefreshToken {
+  supersededAt: number | null;
+}
+
 export class InMemoryRefreshTokenStore implements RefreshTokenStore {
-  private readonly tokens = new Map<string, RefreshToken>();
+  private readonly tokens = new Map<string, TokenRecord>();
   private readonly idleTtlMs: number;
   private readonly absoluteTtlMs: number;
 
@@ -61,10 +65,11 @@ export class InMemoryRefreshTokenStore implements RefreshTokenStore {
     const token: RefreshToken = {
       token: generateRefreshToken(),
       userId,
+      familyId: newId(),
       expiresAt: now + this.idleTtlMs,
       absoluteExpiresAt: now + this.absoluteTtlMs,
     };
-    this.tokens.set(token.token, token);
+    this.tokens.set(token.token, { ...token, supersededAt: null });
     return token;
   }
 
@@ -72,23 +77,33 @@ export class InMemoryRefreshTokenStore implements RefreshTokenStore {
     const now = Date.now();
     const current = this.tokens.get(token);
     if (!current) return null;
+
+    // 이미 회전된(supersede된) 토큰의 재제시 = 탈취 신호 → 계보 전체 무효화.
+    if (current.supersededAt !== null) {
+      this.revokeFamily(current.familyId);
+      return null;
+    }
     if (current.expiresAt <= now || current.absoluteExpiresAt <= now) {
       this.tokens.delete(token);
       return null;
     }
-    this.tokens.delete(token);
+
+    // 옛 토큰은 supersede 마킹만(재사용 탐지용, 만료 시 스윕이 청소), 새 토큰은 같은 계보로.
+    current.supersededAt = now;
     const next: RefreshToken = {
       token: generateRefreshToken(),
       userId: current.userId,
+      familyId: current.familyId,
       expiresAt: Math.min(now + this.idleTtlMs, current.absoluteExpiresAt),
       absoluteExpiresAt: current.absoluteExpiresAt,
     };
-    this.tokens.set(next.token, next);
+    this.tokens.set(next.token, { ...next, supersededAt: null });
     return next;
   }
 
   async revoke(token: string): Promise<void> {
-    this.tokens.delete(token);
+    const current = this.tokens.get(token);
+    if (current) this.revokeFamily(current.familyId);
   }
 
   async deleteExpired(): Promise<number> {
@@ -101,5 +116,11 @@ export class InMemoryRefreshTokenStore implements RefreshTokenStore {
       }
     }
     return deleted;
+  }
+
+  private revokeFamily(familyId: string): void {
+    for (const [token, record] of this.tokens) {
+      if (record.familyId === familyId) this.tokens.delete(token);
+    }
   }
 }

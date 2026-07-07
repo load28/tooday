@@ -76,13 +76,37 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await refreshTokens.rotate(issued.token)).toBeNull();
     });
 
-    it('revoke하면 회전할 수 없다', async () => {
+    it('회전은 같은 계보(family)를 유지한다', async () => {
       const { users, refreshTokens } = await make(LONG);
       const user = await users.create(INPUT);
       const issued = await refreshTokens.issue(user.id);
+      const rotated = await refreshTokens.rotate(issued.token);
+      expect(rotated?.familyId).toBe(issued.familyId);
+    });
 
-      await refreshTokens.revoke(issued.token);
-      expect(await refreshTokens.rotate(issued.token)).toBeNull();
+    it('회전된 옛 토큰을 재사용하면 계보 전체가 무효화된다 (재사용 탐지)', async () => {
+      const { users, refreshTokens } = await make(LONG);
+      const user = await users.create(INPUT);
+      const t1 = await refreshTokens.issue(user.id);
+      const t2 = await refreshTokens.rotate(t1.token); // t1 supersede, t2 활성
+      if (!t2) throw new Error('회전이 실패했다');
+
+      // 옛 토큰(t1) 재제시 = 탈취 신호 → 계보 전체 무효화
+      expect(await refreshTokens.rotate(t1.token)).toBeNull();
+      // 활성이던 t2도 함께 죽는다
+      expect(await refreshTokens.rotate(t2.token)).toBeNull();
+    });
+
+    it('revoke는 토큰이 속한 계보 전체를 무효화한다 (로그아웃)', async () => {
+      const { users, refreshTokens } = await make(LONG);
+      const user = await users.create(INPUT);
+      const t1 = await refreshTokens.issue(user.id);
+      const t2 = await refreshTokens.rotate(t1.token);
+      if (!t2) throw new Error('회전이 실패했다');
+
+      // 현재 토큰으로 로그아웃하면 옛(t1)·현재(t2) 모두 폐기된다
+      await refreshTokens.revoke(t2.token);
+      expect(await refreshTokens.rotate(t2.token)).toBeNull();
     });
 
     it('회전은 idle을 슬라이딩하되 absolute 하드캡을 넘지 않는다', async () => {
