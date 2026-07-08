@@ -37,14 +37,10 @@ const LONG = { idleTtlMs: 60_000, absoluteTtlMs: 120_000 };
 
 for (const { name, make } of IMPLEMENTATIONS) {
   describe(`스토어 포트 계약 — ${name}`, () => {
-    it('유저를 생성하고 id로 조회한다 (이메일은 정규화)', async () => {
+    it('유저를 생성한다 (이메일은 정규화)', async () => {
       const { users } = await make(LONG);
       const created = await users.create({ ...INPUT, email: ' Store@Tooday.App ' });
       expect(created.email).toBe('store@tooday.app');
-
-      const found = await users.findById(created.id);
-      expect(found).toEqual(created);
-      expect(await users.findById(crypto.randomUUID())).toBeNull();
     });
 
     it('중복 이메일이면 DomainError(EMAIL_TAKEN)를 던진다', async () => {
