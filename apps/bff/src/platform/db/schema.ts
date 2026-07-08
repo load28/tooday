@@ -53,7 +53,7 @@ export interface TasksTable {
   status: TaskStatus;
   /** 수동 정렬 — fractional index 키 (collate "C", platform/ordering.ts로만 생성) */
   position: string;
-  /** 행 변경 카운터 — 쓰기마다 +1 (캐시 검증·디버깅용) */
+  /** 행 변경 카운터 — 쓰기마다 +1 (캐시 검증·디버깅용). 낙관적 잠금 아님 — 비교 없이 증가만 (shared taskSchema.version 주석 참고) */
   version: Generated<number>;
   /** 이 행의 마지막 변경 seq — 델타 동기화 커서 기준. platform/db/sync.ts로만 발급 */
   sync_seq: Generated<number>;

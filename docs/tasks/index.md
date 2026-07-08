@@ -26,7 +26,7 @@
 | T001 | [feature 간 직접 import 제거 + web-no-cross-feature 규칙](T001-web-cross-feature-boundary.md) | 높음 | ✅ 완료 |
 | T002 | [FSD entities 레이어 부분 도입](T002-fsd-entities-layer.md) | 높음 | ✅ 완료 |
 | T003 | [태스크 문서 관리 체계 구축](T003-task-docs-system.md) | 높음 | ✅ 완료 |
-| T004 | [version 필드의 삼자 모순 정리](T004-version-field-contradiction.md) | 높음 | ⬜ 대기 |
+| T004 | [version 필드의 삼자 모순 정리](T004-version-field-contradiction.md) | 높음 | ✅ 완료 |
 | T005 | [BFF user 모듈 수직 슬라이스 정상화](T005-bff-user-module-slice.md) | 높음 | ⬜ 대기 |
 | T006 | [폼 인프라 통일](T006-unify-form-infra.md) | 높음 | ⬜ 대기 |
 | T007 | [낙관적 업데이트 중복 제거 + 캐시 정책 컨벤션](T007-optimistic-update-dedup.md) | 중간 | ⬜ 대기 |
