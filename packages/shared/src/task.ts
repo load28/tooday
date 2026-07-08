@@ -25,7 +25,11 @@ export const taskSchema = v.object({
   startAt: isoTimeSchema,
   durationMin: v.pipe(v.number(), v.integer(), v.minValue(1)),
   status: taskStatusSchema,
-  /** 낙관적 잠금 버전 — 쓰기 요청은 읽은 시점의 version을 함께 보내고, 서버는 일치할 때만 반영한다 */
+  /**
+   * 행 변경 카운터 — 쓰기마다 서버가 +1 (캐시 검증·디버깅용).
+   * 낙관적 잠금이 아니다: 쓰기 요청은 version을 보내지 않고 서버도 비교하지 않는다.
+   * 동시 쓰기 수렴은 필드 단위 LWW(taskPatchSchema 참고)로 한다 — 409 없음.
+   */
   version: v.pipe(v.number(), v.integer(), v.minValue(1)),
 });
 
