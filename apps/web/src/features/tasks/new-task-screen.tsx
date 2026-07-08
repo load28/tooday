@@ -1,9 +1,11 @@
+import { revalidateLogic, useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
-import type { Project } from '@tooday/shared';
+import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
+import * as v from 'valibot';
 import {
   MetaList,
   MetaRow,
@@ -14,9 +16,20 @@ import {
   ScheduleValue,
   useProjectOptions,
 } from '@/features/tasks/task-fields';
+import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { toIsoDate } from '@/shared/time';
 import { AppBar, Button, Screen, Stack, Text } from '@/shared/ui';
+
+const taskFormSchema = v.object({
+  ...createTaskRequestSchema.entries,
+});
+
+type TaskFormValues = v.InferInput<typeof taskFormSchema>;
+
+function toCreateTaskRequest({ title, projectId, date, startAt, durationMin }: TaskFormValues): CreateTaskRequest {
+  return { title: title.trim(), projectId: projectId ?? null, date, startAt, durationMin };
+}
 
 const pageCls = css({
   display: 'flex',
@@ -68,18 +81,13 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
   const { data } = useSuspenseQuery(trpc.task.projects.queryOptions());
   const projectOptions = useProjectOptions(data.projects);
 
-  const [title, setTitle] = useState('');
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [startAt, setStartAt] = useState(DEFAULT_START);
-  const [durationMin, setDurationMin] = useState(DEFAULT_DURATION);
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [newProjectSheetOpen, setNewProjectSheetOpen] = useState(false);
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false);
 
-  const selectedProject = useMemo(
-    () => (projectId !== null ? (data.projects.find((project) => project.id === projectId) ?? null) : null),
-    [data.projects, projectId],
-  );
+  const messages = useFormMessages(taskFormSchema, (t) => ({
+    title: { min_length: t.taskNew.titleRequired },
+  }));
 
   const create = useMutation(
     trpc.task.create.mutationOptions({
@@ -89,12 +97,35 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
     }),
   );
 
-  const canCreate = title.trim().length > 0;
+  const form = useForm({
+    defaultValues: {
+      title: '',
+      projectId: null,
+      date: toIsoDate(new Date(now)),
+      startAt: DEFAULT_START,
+      durationMin: DEFAULT_DURATION,
+    } as TaskFormValues,
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: taskFormSchema,
+      onSubmitAsync: async ({ value }) => {
+        try {
+          await create.mutateAsync(toCreateTaskRequest(value));
+        } catch {
+          return formError(t.common.error.unexpected);
+        }
+      },
+    },
+  });
 
-  const handleCreate = () => {
-    if (!canCreate) return;
-    create.mutate({ title: title.trim(), projectId, date: toIsoDate(new Date(now)), startAt, durationMin });
-  };
+  const projectId = useStore(form.store, (state) => state.values.projectId) ?? null;
+  const startAt = useStore(form.store, (state) => state.values.startAt);
+  const durationMin = useStore(form.store, (state) => state.values.durationMin);
+
+  const selectedProject = useMemo(
+    () => (projectId !== null ? (data.projects.find((project) => project.id === projectId) ?? null) : null),
+    [data.projects, projectId],
+  );
 
   return (
     <Screen
@@ -109,16 +140,39 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         </AppBar>
       }
     >
-      <div className={pageCls}>
-        <input
-          // biome-ignore lint/a11y/noAutofocus: 새 태스크 진입 시 바로 제목을 입력하게 한다
-          autoFocus
-          value={title}
-          onChange={(event) => setTitle(event.currentTarget.value)}
-          placeholder={t.taskNew.titlePlaceholder}
-          aria-label={t.taskNew.titlePlaceholder}
-          className={titleInputCls}
-        />
+      <form
+        className={pageCls}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void form.handleSubmit();
+        }}
+      >
+        <form.Field name="title">
+          {(field) => {
+            const error = fieldErrorMessage(field.state.meta.errors, messages.title);
+            return (
+              <Stack gap="sm">
+                <input
+                  // biome-ignore lint/a11y/noAutofocus: 새 태스크 진입 시 바로 제목을 입력하게 한다
+                  autoFocus
+                  name="title"
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(event) => field.handleChange(event.currentTarget.value)}
+                  placeholder={t.taskNew.titlePlaceholder}
+                  aria-label={t.taskNew.titlePlaceholder}
+                  className={titleInputCls}
+                />
+                {error !== undefined ? (
+                  <Text variant="bodySm" tone="danger">
+                    {error}
+                  </Text>
+                ) : null}
+              </Stack>
+            );
+          }}
+        </form.Field>
 
         <MetaList>
           <MetaRow
@@ -134,23 +188,31 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         </MetaList>
 
         <Stack gap="md">
-          <Button
-            tone="brand"
-            size="xl"
-            className={fullWidthCls}
-            disabled={!canCreate}
-            loading={create.isPending}
-            onClick={handleCreate}
-          >
-            {t.taskNew.create}
-          </Button>
-          {create.isError ? (
-            <Text variant="bodySm" tone="danger" align="center">
-              {t.common.error.unexpected}
-            </Text>
-          ) : null}
+          <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
+            {([values, isSubmitting]) => (
+              <Button
+                type="submit"
+                tone="brand"
+                size="xl"
+                className={fullWidthCls}
+                disabled={!values.title.trim()}
+                loading={isSubmitting}
+              >
+                {t.taskNew.create}
+              </Button>
+            )}
+          </form.Subscribe>
+          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+            {(formError) =>
+              typeof formError === 'string' ? (
+                <Text variant="bodySm" tone="danger" align="center">
+                  {formError}
+                </Text>
+              ) : null
+            }
+          </form.Subscribe>
         </Stack>
-      </div>
+      </form>
 
       <OptionSheet
         open={projectSheetOpen}
@@ -159,7 +221,7 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         options={projectOptions}
         selectedKey={projectId ?? NO_PROJECT_KEY}
         onSelect={(key) => {
-          setProjectId(key === NO_PROJECT_KEY ? null : key);
+          form.setFieldValue('projectId', key === NO_PROJECT_KEY ? null : key);
           setProjectSheetOpen(false);
         }}
         action={{
@@ -175,7 +237,7 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         open: newProjectSheetOpen,
         onClose: () => setNewProjectSheetOpen(false),
         onCreated: (project) => {
-          setProjectId(project.id);
+          form.setFieldValue('projectId', project.id);
           setNewProjectSheetOpen(false);
         },
       })}
@@ -186,8 +248,8 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         startAt={startAt}
         durationMin={durationMin}
         onApply={(nextStart, nextDuration) => {
-          setStartAt(nextStart);
-          setDurationMin(nextDuration);
+          form.setFieldValue('startAt', nextStart);
+          form.setFieldValue('durationMin', nextDuration);
           setScheduleSheetOpen(false);
         }}
       />

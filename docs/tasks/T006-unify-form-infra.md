@@ -1,9 +1,9 @@
 # T006 — 폼 인프라 통일
 
-- 상태: 대기
+- 상태: 완료
 - 생성: 2026-07-08
-- 완료: -
-- 커밋: -
+- 완료: 2026-07-08
+- 커밋: (기입 예정)
 
 ## 배경
 
@@ -28,9 +28,9 @@
 
 ## 완료 기준
 
-- [ ] 모든 폼이 같은 인프라(TanStack Form + valibot + shared/form.ts)를 사용
-- [ ] 생성 요청이 valibot 스키마 검증을 통과해서 나감
-- [ ] typecheck / web 테스트 통과, 수동 동작 확인(/verify 스킬)
+- [x] 모든 폼이 같은 인프라(TanStack Form + valibot + shared/form.ts)를 사용
+- [x] 생성 요청이 valibot 스키마 검증을 통과해서 나감
+- [x] typecheck / web 테스트 통과, 수동 동작 확인(/verify 스킬)
 
 ## 대화 기록
 
@@ -57,6 +57,45 @@
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 
+### 2026-07-08 착수
+
+> **사용자**: 남은 태스크 중 하나를 진행하고자한다 뭔지보여줘
+>
+> **Claude**: 남은 태스크는 총 11개입니다 (T006–T016, 모두 대기 상태). 우선순위별로 정리하면:
+>
+> **높음**
+> - **T006 — 폼 인프라 통일**: 폼 4개 중 auth 2개만 TanStack Form + valibot + `shared/form.ts`를 쓰고, `new-project-sheet`와 `new-task-screen`은 `useState` 수동 배선. 이 2개를 auth와 같은 패턴으로 이관.
+>
+> [중략 — T007~T016 요약]
+>
+> 우선순위 순서대로라면 다음 차례는 **T006 (폼 인프라 통일)** 입니다 — 유일하게 남은 "높음"이고, 태스크 문서에 "프론트 최대 비일관성"으로 기록돼 있습니다. 어느 것을 진행할지 알려주시면 시작하겠습니다.
+>
+> **사용자**: 6번진행하자
+
 ## 작업 로그
 
-- (없음)
+- **이관 방식** — auth 화면과 동일한 패턴으로 통일:
+  - 폼 스키마는 `packages/shared` 요청 스키마의 entries 스프레드로 파생
+    (`v.object({ ...createProjectRequestSchema.entries })`,
+    `v.object({ ...createTaskRequestSchema.entries })`) — auth의
+    `loginFormSchema`/`signupFormSchema`와 같은 방식.
+  - `useForm` + `revalidateLogic()` + `validators.onDynamic`(스키마 검증) +
+    `validators.onSubmitAsync`(mutateAsync → 실패 시 `formError(t.common.error.unexpected)`).
+  - 수동 `isError → unexpected` 블록을 `form.Subscribe`(errorMap.onSubmit)로 교체,
+    제출 버튼은 `type="submit"` + `form.Subscribe`([values, isSubmitting])로 disabled/loading.
+  - 필드 문구는 `useFormMessages` — i18n에 `projectNew.nameRequired`,
+    `taskNew.titleRequired` 키 추가 (schema.ts + ko.ts).
+- **new-project-sheet.tsx** — name은 `form.Field` + TextField(error 배선),
+  color는 `form.Field` + ColorSwatchGroup(`onValueChange={field.handleChange}`).
+  `useState` 2개 제거, `<form noValidate>` 래핑.
+- **new-task-screen.tsx** — title/projectId/date/startAt/durationMin 전부 폼 값으로
+  (date는 `toIsoDate(new Date(now))` 기본값). 시트 open/close 플래그만 `useState`로
+  남김(UI 상태). 시트 콜백은 `form.setFieldValue`, MetaRow 표시는
+  `useStore(form.store, …)`. title 필드 에러는 인라인 Text로 표면화.
+- **검증** — `bun run typecheck`(4 패키지), `bun run check`(Biome), web `vitest run`
+  5개 통과, `bun run lint:deps` 위반 없음. design-guide 테스트는 이 컨테이너의
+  Vite 종료 타임아웃으로 exit 1이나 테스트 자체는 통과(변경 무관 워크스페이스).
+  /verify 스킬로 E2E 수동 확인: 회원가입 → 새 태스크 화면에서 빈/공백 제목 시
+  버튼 disabled, 새 프로젝트 시트에서 빈 이름 disabled → 이름 입력·색상(보라) 선택
+  → 생성 → 시트 닫힘·선택 반영(서버 응답 `color: "violet"` 확인) → 태스크 생성 →
+  /today에 09:00/30분/프로젝트 라벨로 표시.

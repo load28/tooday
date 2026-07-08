@@ -1,11 +1,23 @@
+import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { PROJECT_COLORS, type Project, type ProjectColor } from '@tooday/shared';
+import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
 import { css } from 'styled-system/css';
+import * as v from 'valibot';
+import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { BottomSheet, Button, ColorSwatchGroup, Stack, Text, TextField } from '@/shared/ui';
+
+const projectFormSchema = v.object({
+  ...createProjectRequestSchema.entries,
+});
+
+type ProjectFormValues = v.InferInput<typeof projectFormSchema>;
+
+function toCreateProjectRequest({ name, color }: ProjectFormValues): CreateProjectRequest {
+  return { name: name.trim(), color };
+}
 
 const fullWidthCls = css({ width: '100%' });
 const colorRowCls = css({ paddingBlock: '2xs', paddingInline: '2xs' });
@@ -37,8 +49,9 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
 
-  const [name, setName] = useState('');
-  const [color, setColor] = useState<ProjectColor>('blue');
+  const messages = useFormMessages(projectFormSchema, (t) => ({
+    name: { min_length: t.projectNew.nameRequired },
+  }));
 
   const create = useMutation(
     trpc.task.createProject.mutationOptions({
@@ -49,55 +62,95 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
     }),
   );
 
-  const canCreate = name.trim().length > 0;
-
-  const handleCreate = () => {
-    if (!canCreate) return;
-    create.mutate({ name: name.trim(), color });
-  };
+  const form = useForm({
+    defaultValues: { name: '', color: 'blue' } as ProjectFormValues,
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: projectFormSchema,
+      onSubmitAsync: async ({ value }) => {
+        try {
+          await create.mutateAsync(toCreateProjectRequest(value));
+        } catch {
+          return formError(t.common.error.unexpected);
+        }
+      },
+    },
+  });
 
   return (
-    <Stack gap="2xl">
-      <TextField
-        autoFocus
-        label={t.projectNew.nameLabel}
-        placeholder={t.projectNew.namePlaceholder}
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <Stack gap="2xl">
+        <form.Field name="name">
+          {(field) => (
+            <TextField
+              autoFocus
+              label={t.projectNew.nameLabel}
+              name="name"
+              placeholder={t.projectNew.namePlaceholder}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.currentTarget.value)}
+              error={fieldErrorMessage(field.state.meta.errors, messages.name)}
+            />
+          )}
+        </form.Field>
 
-      <Stack gap="md">
-        <Text variant="label" tone="secondary">
-          {t.projectNew.colorLabel}
-        </Text>
-        <ColorSwatchGroup value={color} onValueChange={setColor} aria-label={t.projectNew.colorLabel} className={colorRowCls}>
-          {PROJECT_COLORS.map((option) => (
-            <ColorSwatchGroup.Item key={option} value={option} tone={option} aria-label={t.projectNew.color[option]}>
-              <ColorSwatchGroup.Indicator>
-                <Check size={18} strokeWidth={3} />
-              </ColorSwatchGroup.Indicator>
-            </ColorSwatchGroup.Item>
-          ))}
-        </ColorSwatchGroup>
-      </Stack>
-
-      <Stack gap="md">
-        <Button
-          tone="brand"
-          size="lg"
-          className={fullWidthCls}
-          disabled={!canCreate}
-          loading={create.isPending}
-          onClick={handleCreate}
-        >
-          {t.projectNew.create}
-        </Button>
-        {create.isError ? (
-          <Text variant="bodySm" tone="danger" align="center">
-            {t.common.error.unexpected}
+        <Stack gap="md">
+          <Text variant="label" tone="secondary">
+            {t.projectNew.colorLabel}
           </Text>
-        ) : null}
+          <form.Field name="color">
+            {(field) => (
+              <ColorSwatchGroup
+                value={field.state.value}
+                onValueChange={field.handleChange}
+                aria-label={t.projectNew.colorLabel}
+                className={colorRowCls}
+              >
+                {PROJECT_COLORS.map((option) => (
+                  <ColorSwatchGroup.Item key={option} value={option} tone={option} aria-label={t.projectNew.color[option]}>
+                    <ColorSwatchGroup.Indicator>
+                      <Check size={18} strokeWidth={3} />
+                    </ColorSwatchGroup.Indicator>
+                  </ColorSwatchGroup.Item>
+                ))}
+              </ColorSwatchGroup>
+            )}
+          </form.Field>
+        </Stack>
+
+        <Stack gap="md">
+          <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
+            {([values, isSubmitting]) => (
+              <Button
+                type="submit"
+                tone="brand"
+                size="lg"
+                className={fullWidthCls}
+                disabled={!values.name.trim()}
+                loading={isSubmitting}
+              >
+                {t.projectNew.create}
+              </Button>
+            )}
+          </form.Subscribe>
+          <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+            {(formError) =>
+              typeof formError === 'string' ? (
+                <Text variant="bodySm" tone="danger" align="center">
+                  {formError}
+                </Text>
+              ) : null
+            }
+          </form.Subscribe>
+        </Stack>
       </Stack>
-    </Stack>
+    </form>
   );
 }
