@@ -40,6 +40,11 @@ export class InMemoryUserStore implements UserStore {
     return valid ? toUser(record) : null;
   }
 
+  /**
+   * UserStore 포트 밖 메서드 — 인메모리 세계의 users 테이블 읽기.
+   * 테스트 조립 루트가 이 인스턴스를 user 모듈의 UserReader로도 물린다(구조적 타이핑,
+   * SQL 세계에서 두 모듈의 어댑터가 같은 테이블을 보는 것과 동형).
+   */
   async findById(id: string): Promise<User | null> {
     const record = this.byId.get(id);
     return record ? toUser(record) : null;

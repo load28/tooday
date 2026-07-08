@@ -6,10 +6,13 @@ export interface CreateUserInput {
   name: string;
 }
 
+/**
+ * 계정 생성·자격 증명 검증 — users 테이블의 단일 작성자(소유 모듈).
+ * 프로필 조회는 user 모듈이 자기 포트(UserReader)로 소유한다.
+ */
 export interface UserStore {
   create(input: CreateUserInput): Promise<User>;
   verifyCredentials(input: { email: string; password: string }): Promise<User | null>;
-  findById(id: string): Promise<User | null>;
 }
 
 export interface RefreshToken {

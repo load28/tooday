@@ -2,6 +2,7 @@ import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { requireAuth } from '@bff/modules/auth/middleware';
 import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import type { UserReader } from '@bff/modules/user/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
 import type { Logger } from '@bff/platform/logging';
@@ -19,6 +20,7 @@ import { streamSSE } from 'hono/streaming';
 export interface AppDeps {
   config: BffConfig;
   users: UserStore;
+  userReader: UserReader;
   refreshTokens: RefreshTokenStore;
   accessTokens: AccessTokenService;
   tasks: TaskStore;

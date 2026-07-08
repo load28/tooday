@@ -33,11 +33,6 @@ export class SqlUserStore implements UserStore {
     const valid = await Bun.password.verify(password, row.password_hash);
     return valid ? { id: row.id, email: row.email, name: row.name } : null;
   }
-
-  async findById(id: string): Promise<User | null> {
-    const row = await this.db.selectFrom('users').select(['id', 'email', 'name']).where('id', '=', id).executeTakeFirst();
-    return row ?? null;
-  }
 }
 
 export class SqlRefreshTokenStore implements RefreshTokenStore {

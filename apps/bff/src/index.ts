@@ -4,6 +4,7 @@ import { SqlUserStore } from '@bff/modules/auth/adapters/sql';
 import { createRefreshTokenStore } from '@bff/modules/auth/refresh-token-store';
 import { startRefreshTokenSweep } from '@bff/modules/auth/refresh-token-sweeper';
 import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
+import { SqlUserReader } from '@bff/modules/user/adapters/sql';
 import { loadConfig } from '@bff/platform/config';
 import { migrateToLatest } from '@bff/platform/db/migrate';
 import { createPgliteDatabase } from '@bff/platform/db/pglite';
@@ -43,6 +44,7 @@ if (needsExpirySweep) {
 const app = createApp({
   config,
   users,
+  userReader: new SqlUserReader(db),
   refreshTokens,
   accessTokens,
   tasks: new SqlTaskStore(db),

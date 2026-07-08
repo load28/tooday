@@ -44,6 +44,8 @@ function setup(overrides: Partial<BffConfig> = {}) {
   const app = createApp({
     config,
     users,
+    // InMemoryUserStore가 포트 밖 findById로 UserReader를 구조적으로 충족한다 — 같은 가짜 users 테이블
+    userReader: users,
     refreshTokens: new InMemoryRefreshTokenStore({
       idleTtlMs: config.refreshIdleTtlMs,
       absoluteTtlMs: config.refreshAbsoluteTtlMs,
