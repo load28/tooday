@@ -9,8 +9,14 @@
 - [docs/authentication-architecture.md](docs/authentication-architecture.md) — 인증 구조.
 - [docs/task-sharing-architecture.md](docs/task-sharing-architecture.md) — 태스크 공유 설계 제안
   (미구현). 지금 동기화 원리(스냅샷+seq+tombstone+커서)를 재사용해 채팅 공유·변경 반영을 얹는 방법.
-- [docs/refactoring-backlog.md](docs/refactoring-backlog.md) — 예외적/비체계적 코드 정리
-  백로그. 항목을 처리하면 체크하고, 새 예외를 발견하면 여기에 등록한다.
+
+## 태스크 관리 (docs/tasks/)
+
+**모든 작업은 태스크 문서로 시작한다.** 새 지시를 받으면 코드를 만지기 전에
+[docs/tasks/index.md](docs/tasks/index.md)의 규칙대로
+[\_template.md](docs/tasks/_template.md)를 복사해 태스크 파일부터 만든다 —
+하나의 태스크 = 하나의 파일, 해당 대화를 원문으로 기록, 완료 시 상태·커밋을
+기입하고 인덱스 표를 갱신한다.
 
 ## 컨벤션 (docs/conventions/)
 
