@@ -4,9 +4,9 @@ import { CalendarDays, LayoutGrid, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
+import { PROJECT_COLOR } from '@/entities/project/color';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { format, useT } from '@/shared/i18n';
-import { PROJECT_COLOR } from '@/shared/project-color';
 import { AppBar, Button, Card, Dot, HStack, Screen, Stack, TabBar, Text } from '@/shared/ui';
 
 const heroCls = css({

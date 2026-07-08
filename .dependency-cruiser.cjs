@@ -46,16 +46,31 @@ module.exports = {
       name: 'web-no-cross-feature',
       severity: 'error',
       comment:
-        'web feature 슬라이스끼리 직접 import 금지 — 공용 코드는 shared/로 승격하고, 조립은 routes(배선 층)에서만.',
+        'web feature 슬라이스끼리 직접 import 금지 — 도메인 공용은 entities/, 도메인 무관은 shared/로 승격하고, 조립은 routes(배선 층)에서만.',
       from: { path: '^apps/web/src/features/([^/]+)/' },
       to: { path: '^apps/web/src/features/([^/]+)/', pathNot: ['^apps/web/src/features/$1/'] },
     },
     {
       name: 'web-layer-direction',
       severity: 'error',
-      comment: 'web 레이어는 routes → features → app/shared 단방향 — shared/app은 상위 레이어를 import 할 수 없습니다.',
+      comment:
+        'web 레이어는 routes → features → entities → shared 단방향 (app은 shared와 같은 최하층) — 하위 레이어는 상위 레이어를 import 할 수 없습니다.',
       from: { path: '^apps/web/src/(shared|app)/' },
-      to: { path: '^apps/web/src/(features|routes)/' },
+      to: { path: '^apps/web/src/(features|routes|entities)/' },
+    },
+    {
+      name: 'web-entities-direction',
+      severity: 'error',
+      comment: 'web entities(도메인 공용 모델·표시 상수)는 shared만 import 할 수 있습니다 — FSD 부분 채택 (docs/conventions/web-entities.md).',
+      from: { path: '^apps/web/src/entities/' },
+      to: { path: '^apps/web/src/(features|routes|app)/' },
+    },
+    {
+      name: 'web-no-cross-entity',
+      severity: 'error',
+      comment: 'web entities 슬라이스끼리 직접 import 금지 — 슬라이스는 서로 독립이다.',
+      from: { path: '^apps/web/src/entities/([^/]+)/' },
+      to: { path: '^apps/web/src/entities/([^/]+)/', pathNot: ['^apps/web/src/entities/$1/'] },
     },
     {
       name: 'web-features-no-routes',
