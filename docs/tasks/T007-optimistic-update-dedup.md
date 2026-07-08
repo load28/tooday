@@ -1,8 +1,8 @@
 # T007 — 낙관적 업데이트 중복 제거 + 캐시 정책 컨벤션
 
-- 상태: 대기
+- 상태: 완료
 - 생성: 2026-07-08
-- 완료: -
+- 완료: 2026-07-08
 - 커밋: -
 
 ## 배경
@@ -29,10 +29,10 @@
 
 ## 완료 기준
 
-- [ ] 낙관적 업데이트 로직의 복붙 0건
-- [ ] 캐시 정책 컨벤션 문서 + CLAUDE.md 인덱스 등록
-- [ ] task.delete 실패 시 사용자에게 보임
-- [ ] typecheck / web 테스트 통과
+- [x] 낙관적 업데이트 로직의 복붙 0건
+- [x] 캐시 정책 컨벤션 문서 + CLAUDE.md 인덱스 등록
+- [x] task.delete 실패 시 사용자에게 보임
+- [x] typecheck / web 테스트 통과
 
 ## 대화 기록
 
@@ -50,6 +50,34 @@
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 
+---
+
+> **사용자**: 7번테스크를 진행하자
+>
+> **Claude**: T007을 진행. 착수 시 결정 사항 — `definedFields`+version 증가는
+> 태스크 도메인 매핑이라 `entities/task/patch.ts`(`applyTaskPatch`)로, onMutate/
+> onError/onSettled 삼단 배선은 도메인 무관 React Query 유틸이라
+> `shared/query.ts`(`optimisticPatch`)로 분리 추출 (web-entities.md의
+> "entities에는 순수 모델·매핑만" 경계 유지). queryKey 파생은
+> `trpc.<proc>.queryKey(input)`로 통일 — 키 파생 용도로 `queryOptions()`를
+> 만들지 않는다. 캐시 갱신 전략 4가지의 선택 기준을
+> docs/conventions/web-cache-policy.md로 문서화하고 CLAUDE.md 인덱스에 등록.
+> task.delete는 `remove.isError → t.common.error.unexpected` danger Text로
+> 에러 표면화.
+
 ## 작업 로그
 
-- (없음)
+- 낙관적 업데이트 중복 제거 + 캐시 정책 컨벤션 + delete 에러 표면화:
+  - `apps/web/src/entities/task/patch.ts` 신설 — `applyTaskPatch(task, patch)`
+    (내부 `definedFields`, version+1). 두 화면의 byte 단위 복붙 제거.
+  - `apps/web/src/shared/query.ts` 신설 — `optimisticPatch(queryClient, queryKey, apply)`
+    가 cancel→snapshot→패치 / 롤백 / invalidate 삼단을 배선. 캐시 shape는 콜백이 결정.
+  - `today-screen.tsx`·`task-detail-screen.tsx`의 update 뮤테이션을 두 헬퍼 조합으로 교체.
+  - `task-detail-screen.tsx` remove 뮤테이션에 `isError → t.common.error.unexpected` 표시 추가.
+  - queryKey 파생 통일: `use-task-sync.ts`의 `queryOptions(range).queryKey` →
+    `trpc.task.range.queryKey(range)`, 두 화면 뮤테이션도 `queryKey(input)` 파생.
+  - `docs/conventions/web-cache-policy.md` 신설(전략 4가지 선택 기준·헬퍼 배선·
+    에러 표면화·queryKey 파생) + CLAUDE.md 컨벤션 인덱스 등록.
+  - 테스트 추가: `entities/task/patch.test.ts`(3), `shared/query.test.ts`(4).
+  - 검증: `bun run typecheck` 통과(4 패키지), `apps/web bun run test` 12/12 통과,
+    `bun run check`(Biome) 통과, `bun run lint:deps` 위반 0.

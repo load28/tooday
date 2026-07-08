@@ -16,7 +16,7 @@ export function useTaskSync(range: { from: string; to: string }): void {
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
 
   useEffect(() => {
-    const queryKey = trpc.task.range.queryOptions(range).queryKey;
+    const queryKey = trpc.task.range.queryKey(range);
     let closed = false;
     let pulling = false;
     let pending = false;
