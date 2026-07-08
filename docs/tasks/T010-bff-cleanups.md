@@ -43,9 +43,17 @@ BFF 조사에서 나온 중간 임팩트 예외들:
 > **사용자**: 전체 디저인시스템의 아키텍처나 bff 설계 등등을 보고 체계적으로 잡힌게
 > 아니라 예외적으로 만들어쟈있는부분을 찾아 개선하고싶음 먼저 찾아봐
 >
-> **Claude** (조사 보고 중): "pub 라우터만 shared valibot 계약 없이 인라인 리터럴 반환,
-> app.ts의 process.env 직접 접근, SSE 401 에러 메시지 중복, task 전용 sync 인프라가
-> platform에 주차됨."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **8. BFF 잔여 예외들**
+> - `pub` 라우터만 shared valibot 계약 없이 인라인 리터럴 반환(`version: '0.0.0'`
+>   하드코딩), `trpc/cache.ts`가 `pubRouter` 타입에 결합.
+> - `app.ts:34`가 `platform/config.ts`를 우회해 `process.env.NODE_ENV` 직접 읽음
+>   (프로덕션 경로에서 유일한 누수).
+> - SSE 401이 `platform/errors.ts`의 `UNAUTHENTICATED` 코드·메시지를 `middleware.ts:29`에
+>   하드코딩으로 중복.
+> - `platform/db/sync.ts`·`sync-broker.ts`는 task 전용인데 platform에 주차됨 (경계는
+>   통과하지만 "도메인 무관" 명분이 약함).
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 

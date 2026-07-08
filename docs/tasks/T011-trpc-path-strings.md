@@ -32,8 +32,26 @@ refresh 단일 비행은 app/의 몫. 문자열 결합만 문제.)
 
 > **사용자**: 그가뿐 아니라 프론트 코드도 예외적으로 된부분 포함
 >
-> **Claude** (조사 보고 중): "tRPC 프로시저 경로가 문자열로 하드코딩 — 리네임 시
-> 컴파일 타임에 안 잡힘. use-task-sync.ts의 SYNC_EVENTS_PATH가 올바른 대비 패턴."
+> **Claude** (조사 중간 보고 원문): "그 외 i18n 우회(404 화면, Button/Spinner의 sr-only
+> 한국어), tRPC 프로시저 경로 문자열 하드코딩(`auth.refresh`), 낙관적 업데이트 로직
+> 복붙 등이 나왔습니다."
+>
+> (레이어링·타입 안전성 조사 에이전트 보고 원문):
+>
+> **4. Hardcoded tRPC procedure paths as strings (type-safety / contract coupling)**
+> In the app shell, endpoint names are coupled to the tRPC router by raw string rather
+> than derived:
+> - `apps/web/src/app/trpc.ts:21` — `const REFRESH_URL =
+>   \`${BFF_URL}${TRPC_ENDPOINT}/auth.refresh\`` hardcodes the procedure segment `auth.refresh`.
+> - `apps/web/src/app/trpc.ts:24-27` — `isAuthEndpoint` matches
+>   `/auth\.(refresh|login|signup)/` against the URL.
+>
+> If those procedures are renamed on the BFF, nothing fails at compile time — exactly
+> the "문자열 하드코딩" shortcut the type-safety doc warns against. Contrast with the
+> clean pattern in `features/today/use-task-sync.ts:46`, which builds its URL from the
+> shared `SYNC_EVENTS_PATH` contract constant. The raw `fetch` calls themselves are
+> legitimate (SSR cookie forwarding + refresh single-flight belong in `app/`), so this
+> is a string-coupling issue, not a "bypass the tRPC client" issue.
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 

@@ -36,9 +36,27 @@ raw rgba가 남아 있다(T008에서 처리).
 > **사용자**: 전체 디저인시스템의 아키텍처나 bff 설계 등등을 보고 체계적으로 잡힌게
 > 아니라 예외적으로 만들어쟈있는부분을 찾아 개선하고싶음 먼저 찾아봐
 >
-> **Claude** (조사 보고 중): "design-guide는 토큰 전체를 raw hex로 재선언한 병렬
-> 사본인데 successSoft·primaryHover 등이 web과 이미 다른 값 — 프로토타입이 시각
-> 원본이라면 어긋난 상태."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **design-guide 토큰 드리프트**: `successSoft`, `primaryHover` 등이 web panda.config와
+> 이미 다른 값. 프로토타입이 시각적 원본이라면 어긋난 상태.
+>
+> (디자인 시스템 조사 에이전트 보고 원문):
+>
+> **7. design-guide is a parallel token/primitive copy that has drifted** —
+> `apps/design-guide` does not consume `shared/ui` or panda at all — it re-declares
+> the entire token set as raw hex in `apps/design-guide/src/lib/tokens.ts` and
+> rebuilds every primitive with raw `<button>`, inline `style={{...}}`,
+> JS-conditional style objects, and hand-written resets. As a static prototype that's
+> arguably its purpose, but the token values have measurably drifted from
+> `apps/web/panda.config.ts`:
+> - `successSoft: '#e8f8f4'` (tokens.ts:24) vs web `mint.100 = #dff7f2` — different.
+> - `primaryHover: '#2272eb'` (brand.600) (tokens.ts:19) vs web's press color
+>   `primaryPressed = brand.700 = #1e63cf` — different.
+> - `PROJECT_COLOR_SOFT.gray: '#eef0f3'` (tokens.ts:68) has no web equivalent.
+>
+> If design-guide is still treated as the visual source of truth, this drift means the
+> reference and the shipped app disagree on success/press/soft colors.
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 
