@@ -5,8 +5,8 @@ import type { Task, TaskStatus } from '@tooday/shared';
 import { CalendarDays, ChevronLeft, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
+import { STATUS_ORDER } from '@/entities/task/status';
 import { useT } from '@/shared/i18n';
-import { STATUS_ORDER } from '@/shared/task-status';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
 
 const segmentCls = css({

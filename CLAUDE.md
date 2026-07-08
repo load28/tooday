@@ -19,5 +19,7 @@
   (utilities 층)로 조립한다.
 - [type-safety.md](docs/conventions/type-safety.md) — 계약을 한 곳에 선언하고 타입이
   정확히 추론되게 설계해 어긋남을 컴파일 타임에 잡는다 (예: i18n 스키마, satisfies 라우트 경로).
+- [web-entities.md](docs/conventions/web-entities.md) — FSD는 전면 도입이 아니라 단위별
+  점진 채택. 현재는 entities만 — 도메인 지식 + 여러 feature 공용 코드의 자리.
 
 새 컨벤션이 생기면 docs/conventions/에 문서를 추가하고 여기 인덱스에 한 줄로 등록한다.
