@@ -1,9 +1,9 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
+import type { Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
-import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import {
   MetaList,
   MetaRow,
@@ -45,12 +45,21 @@ const fullWidthCls = css({ width: '100%' });
 const DEFAULT_START = '09:00';
 const DEFAULT_DURATION = 30;
 
+/** 프로젝트 생성 시트 슬롯 계약 — projects feature의 NewProjectSheet props와 일치한다 */
+type NewProjectSheetSlotProps = {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (project: Project) => void;
+};
+
 type NewTaskScreenProps = {
   /** 기준 시각(epoch ms) — 새 태스크의 기본 날짜(오늘)를 SSR·하이드레이션에서 같게 잡는다 */
   now: number;
+  /** 프로젝트 생성 시트 — feature 간 직접 import 대신 라우트(배선 층)가 projects feature를 주입한다 */
+  renderNewProjectSheet: (props: NewProjectSheetSlotProps) => ReactNode;
 };
 
-export function NewTaskScreen({ now }: NewTaskScreenProps) {
+export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
   const { trpc } = useRouteContext({ from: '__root__' });
@@ -162,14 +171,14 @@ export function NewTaskScreen({ now }: NewTaskScreenProps) {
         }}
       />
 
-      <NewProjectSheet
-        open={newProjectSheetOpen}
-        onClose={() => setNewProjectSheetOpen(false)}
-        onCreated={(project) => {
+      {renderNewProjectSheet({
+        open: newProjectSheetOpen,
+        onClose: () => setNewProjectSheetOpen(false),
+        onCreated: (project) => {
           setProjectId(project.id);
           setNewProjectSheetOpen(false);
-        }}
-      />
+        },
+      })}
 
       <ScheduleSheet
         open={scheduleSheetOpen}

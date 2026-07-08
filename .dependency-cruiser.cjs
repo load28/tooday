@@ -43,6 +43,14 @@ module.exports = {
       to: { path: '^apps/bff/src/modules/' },
     },
     {
+      name: 'web-no-cross-feature',
+      severity: 'error',
+      comment:
+        'web feature 슬라이스끼리 직접 import 금지 — 공용 코드는 shared/로 승격하고, 조립은 routes(배선 층)에서만.',
+      from: { path: '^apps/web/src/features/([^/]+)/' },
+      to: { path: '^apps/web/src/features/([^/]+)/', pathNot: ['^apps/web/src/features/$1/'] },
+    },
+    {
       name: 'web-layer-direction',
       severity: 'error',
       comment: 'web 레이어는 routes → features → app/shared 단방향 — shared/app은 상위 레이어를 import 할 수 없습니다.',
