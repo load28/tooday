@@ -9,6 +9,8 @@
 - [docs/authentication-architecture.md](docs/authentication-architecture.md) — 인증 구조.
 - [docs/task-sharing-architecture.md](docs/task-sharing-architecture.md) — 태스크 공유 설계 제안
   (미구현). 지금 동기화 원리(스냅샷+seq+tombstone+커서)를 재사용해 채팅 공유·변경 반영을 얹는 방법.
+- [docs/refactoring-backlog.md](docs/refactoring-backlog.md) — 예외적/비체계적 코드 정리
+  백로그. 항목을 처리하면 체크하고, 새 예외를 발견하면 여기에 등록한다.
 
 ## 컨벤션 (docs/conventions/)
 
