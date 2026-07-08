@@ -4,7 +4,6 @@ import type { Task, TaskPatch, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
-import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/features/tasks/status';
 import {
   MetaList,
   MetaRow,
@@ -16,6 +15,7 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
+import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/shared/task-status';
 import { AppBar, BaseButton, Button, Chip, Dot, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({

@@ -53,6 +53,7 @@ apps/bff/src/
 apps/web/src/
   routes/             # TanStack 파일 라우팅 — 배선만 (가드·리다이렉트·화면 연결)
   features/<feature>/ # 화면·폼·쿼리 등 기능 코드 (auth/, today/, tasks/, projects/)
+                      #   feature 간 직접 import 금지 — 공용은 shared/, 조립은 routes/
   app/                # 앱 셸 — tRPC 클라이언트, global.css
   shared/ui/          # 도메인 무관 디자인 시스템 프리미티브
                       # 의존 방향: routes → features → app/shared (역방향 금지)
