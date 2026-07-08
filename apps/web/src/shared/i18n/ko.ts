@@ -70,6 +70,7 @@ export const ko = defineMessages<MessageSchema>()({
       gray: '회색',
     },
     create: '만들기',
+    nameRequired: '이름을 입력해 주세요.',
   },
   projectDetail: {
     badge: '프로젝트',
@@ -84,6 +85,7 @@ export const ko = defineMessages<MessageSchema>()({
     create: '만들기',
     selectProject: '프로젝트 선택',
     createProject: '새 프로젝트 만들기',
+    titleRequired: '제목을 입력해 주세요.',
   },
   taskDetail: {
     title: '태스크',

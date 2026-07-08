@@ -73,6 +73,7 @@ export interface MessageSchema {
       gray: Msg;
     };
     create: Msg;
+    nameRequired: Msg;
   };
   projectDetail: {
     badge: Msg;
@@ -87,6 +88,7 @@ export interface MessageSchema {
     create: Msg;
     selectProject: Msg;
     createProject: Msg;
+    titleRequired: Msg;
   };
   taskDetail: {
     title: Msg;
