@@ -40,9 +40,15 @@ feature 코드에 복붙되었거나 shared/ui로 승격돼야 할 로컬 프리
 
 > **사용자**: 그가뿐 아니라 프론트 코드도 예외적으로 된부분 포함
 >
-> **Claude** (조사 보고 중): "태스크 화면 2곳에 복붙된 borderless input, TabBar 설정
-> 3곳 복붙(onSelect 분기 제각각), feature에 사는 진행률 바, 60px 빈 상태 패딩 3곳
-> 중복 등 매직 px 다수."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **7. 공유돼야 할 로컬 프리미티브·설정 중복**
+> - borderless 타이틀 `<input>` 스타일이 `new-task-screen.tsx:31`과
+>   `task-detail-screen.tsx:30`에 동일 복붙 — `Input`의 variant로 승격 대상.
+> - `TabBar` 설정이 3개 화면에 각각 복붙, `onSelect` 분기 로직도 화면마다 미묘하게
+>   다름 — `AppTabBar` 추출 대상.
+> - `60px` 빈 상태 패딩이 3개 화면 중복, `52px`(= `sizes.appBar` 토큰 존재) 등 매직 px 다수.
+> - 프로젝트 진행률 바(`projects-screen.tsx:31`)는 feature에 사는 재사용 프리미티브.
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 

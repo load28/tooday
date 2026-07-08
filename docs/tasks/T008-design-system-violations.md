@@ -40,9 +40,17 @@
 > **사용자**: 전체 디저인시스템의 아키텍처나 bff 설계 등등을 보고 체계적으로 잡힌게
 > 아니라 예외적으로 만들어쟈있는부분을 찾아 개선하고싶음 먼저 찾아봐
 >
-> **Claude** (조사 보고 중): "가장 논쟁의 여지가 없는 위반은 auth 링크(포커스 링
-> 재구현)와 WeekStrip(수동 선택 배선) — 둘 다 ui-composition.md의 명시적 안티패턴에
-> 정면으로 해당하고, 올바른 패턴이 같은 코드베이스에 이미 있음."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **6. 디자인 시스템 컨벤션 직접 위반 2건** (ui-composition.md의 명시적 안티패턴)
+> - **auth 링크**: `login-screen.tsx:36` / `signup-screen.tsx:36`이 `BaseButton`의
+>   포커스 링(`boxShadow: 'focus'`)을 css()로 그대로 재구현한 수제 링크.
+>   `<Button asChild>` 패턴으로 교체 대상.
+> - **WeekStrip**: `week-strip.tsx:58-79`가 수동 `aria-pressed` + JS 조건부 recipe로
+>   단일 선택을 배선. 같은 코드베이스의 `project-detail-screen.tsx:107`과
+>   `color-swatch.tsx`가 이미 올바른 패턴(Ark ToggleGroup + `_on`)을 쓰고 있어서
+>   따라가면 됩니다. 하드코딩 타이포(`fontSize: '16px'`, raw rgba — design-guide에서
+>   복사된 값)도 함께.
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 

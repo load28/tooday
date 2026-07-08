@@ -38,9 +38,15 @@
 
 > **사용자**: 그가뿐 아니라 프론트 코드도 예외적으로 된부분 포함
 >
-> **Claude** (조사 보고 중): "definedFields 헬퍼가 byte 단위 동일 복붙, 낙관적 업데이트
-> 삼단 배선 통째로 중복, 캐시 정책 4가지 혼재, task.delete는 에러 처리 없음,
-> queryKey 파생 두 방식 혼용."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **5. 낙관적 업데이트 블록 복붙 + 캐시 정책이 뮤테이션마다 제각각**
+> - `definedFields` 헬퍼가 doc 주석까지 byte 단위로 동일하게 `today-screen.tsx:61`과
+>   `task-detail-screen.tsx:51`에 중복 (조사 에이전트 2개가 독립적으로 발견).
+>   `onMutate`/`onError`/`onSettled` 삼단 배선도 통째로 복붙.
+> - 캐시 갱신 전략이 4가지 혼재: 낙관적+롤백 / `setQueryData` prime / invalidate만 /
+>   navigate 후 refetch. `task.delete`는 에러 처리가 아예 없음(`task-detail-screen.tsx:110`).
+> - queryKey 파생도 두 방식 혼용(`options.queryKey` vs `trpc.x.queryKey()`).
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 

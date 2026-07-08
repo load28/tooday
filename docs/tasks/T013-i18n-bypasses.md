@@ -31,9 +31,25 @@ Provider 범위를 확인하고 필요한 배선을 추가한다.
 
 > **사용자**: 그가뿐 아니라 프론트 코드도 예외적으로 된부분 포함
 >
-> **Claude** (조사 보고 중): "i18n 우회 — router.tsx 404 화면 한국어 하드코딩,
-> Button/Spinner의 sr-only '로딩 중'. 사전에 해당 키 자체가 없어 단순 번역 누락이
-> 아니라 단일 선언 계약의 우회."
+> **Claude** (종합 조사 보고 중, 이 태스크 해당 부분 원문):
+>
+> **i18n 우회**: `router.tsx:9`의 404 화면 한국어 하드코딩, `Button`/`Spinner`의
+> sr-only "로딩 중" — 사전에 키 없음.
+>
+> (레이어링·타입 안전성 조사 에이전트 보고 원문):
+>
+> **2. i18n bypass — hardcoded Korean in the NotFound bootstrap** —
+> `apps/web/src/router.tsx:9-10` — `<h1>404</h1>` and `<p>페이지를 찾을 수 없습니다.</p>`
+> are hardcoded user-facing strings. Every screen routes text through `useT()` / the
+> `MessageSchema` dictionary, but this component hardcodes Korean directly. There is
+> no `notFound` key in `schema.ts`, so this is a genuine bypass of the
+> single-declaration i18n contract (not just a missing translation).
+>
+> **3. i18n bypass — hardcoded Korean a11y strings in the design system** —
+> `shared/ui` is same-layer as `shared/i18n` and could consume it, but two primitives
+> hardcode Korean screen-reader text: `shared/ui/button.tsx:98` — `로딩 중` (sr-only
+> loading label); `shared/ui/spinner.tsx:9` — `label = '로딩 중'` default. No
+> `common.loading` key exists in `schema.ts`.
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 
