@@ -1,9 +1,10 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
-import type { Task, TaskPatch, TaskStatus } from '@tooday/shared';
+import type { Task, TaskPatch, TaskStatus, UpdateTaskRequest } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
+import { applyTaskPatch } from '@/entities/task/patch';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
 import {
   MetaList,
@@ -16,6 +17,7 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
+import { optimisticPatch } from '@/shared/query';
 import { AppBar, BaseButton, Button, Chip, Dot, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
@@ -47,11 +49,6 @@ const statusButtonCls = css({
 
 const fullWidthCls = css({ width: '100%' });
 
-/** 낙관적 캐시 패치용 — patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게) */
-function definedFields(patch: TaskPatch): Partial<Task> {
-  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as Partial<Task>;
-}
-
 type TaskDetailScreenProps = {
   taskId: string;
 };
@@ -63,10 +60,9 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
   const t = useT();
   const locale = useLocale();
 
-  const byIdOptions = trpc.task.byId.queryOptions({ id: taskId });
   const {
     data: { task },
-  } = useSuspenseQuery(byIdOptions);
+  } = useSuspenseQuery(trpc.task.byId.queryOptions({ id: taskId }));
   const {
     data: { projects },
   } = useSuspenseQuery(trpc.task.projects.queryOptions());
@@ -89,22 +85,15 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
   );
 
   const update = useMutation(
-    trpc.task.update.mutationOptions({
-      onMutate: async ({ patch }) => {
-        await queryClient.cancelQueries({ queryKey: byIdOptions.queryKey });
-        const previous = queryClient.getQueryData(byIdOptions.queryKey);
-        queryClient.setQueryData(
-          byIdOptions.queryKey,
-          (old: { task: Task } | undefined) =>
-            old && { task: { ...old.task, ...definedFields(patch), version: old.task.version + 1 } },
-        );
-        return { previous };
-      },
-      onError: (_error, _input, context) => {
-        if (context?.previous) queryClient.setQueryData(byIdOptions.queryKey, context.previous);
-      },
-      onSettled: () => queryClient.invalidateQueries({ queryKey: byIdOptions.queryKey }),
-    }),
+    trpc.task.update.mutationOptions(
+      optimisticPatch(
+        queryClient,
+        trpc.task.byId.queryKey({ id: taskId }),
+        (old: { task: Task }, { patch }: UpdateTaskRequest) => ({
+          task: applyTaskPatch(old.task, patch),
+        }),
+      ),
+    ),
   );
 
   const remove = useMutation(
@@ -174,16 +163,23 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
           />
         </MetaList>
 
-        <Button
-          tone="dangerSoft"
-          size="lg"
-          className={fullWidthCls}
-          loading={remove.isPending}
-          onClick={() => remove.mutate({ id: taskId })}
-        >
-          <Trash2 size={16} />
-          {t.taskDetail.delete}
-        </Button>
+        <Stack gap="md">
+          <Button
+            tone="dangerSoft"
+            size="lg"
+            className={fullWidthCls}
+            loading={remove.isPending}
+            onClick={() => remove.mutate({ id: taskId })}
+          >
+            <Trash2 size={16} />
+            {t.taskDetail.delete}
+          </Button>
+          {remove.isError ? (
+            <Text variant="bodySm" tone="danger" align="center">
+              {t.common.error.unexpected}
+            </Text>
+          ) : null}
+        </Stack>
       </div>
 
       <OptionSheet<TaskStatus>

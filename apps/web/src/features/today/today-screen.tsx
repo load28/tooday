@@ -1,15 +1,17 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
-import type { Task, TaskPatch, TaskRangeResponse } from '@tooday/shared';
+import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
 import { Bell, CalendarDays, CalendarX2, LayoutGrid, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
+import { applyTaskPatch } from '@/entities/task/patch';
 import { TaskCard } from '@/features/today/task-card';
 import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
 import { format, useLocale, useT } from '@/shared/i18n';
+import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
 
@@ -57,11 +59,6 @@ function sectionOf(startAt: string): DaySection {
   return 'evening';
 }
 
-/** 낙관적 캐시 패치용 — patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게) */
-function definedFields(patch: TaskPatch): Partial<Task> {
-  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as Partial<Task>;
-}
-
 type TodayScreenProps = {
   /** 기준 시각(epoch ms). SSR과 하이드레이션이 같은 값을 쓰도록 라우트 loader에서 내려온다. */
   now: number;
@@ -78,8 +75,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
 
   // loader가 같은 범위를 ensureQueryData로 채워 두므로 첫 렌더에서 suspend 하지 않는다
   const range = useMemo(() => weekRange(new Date(now)), [now]);
-  const rangeQuery = trpc.task.range.queryOptions(range);
-  const { data } = useSuspenseQuery(rangeQuery);
+  const { data } = useSuspenseQuery(trpc.task.range.queryOptions(range));
 
   // 다른 기기의 변경이 SSE 신호 → 델타 → 캐시 패치로 이 화면에 실시간 반영된다
   useTaskSync(range);
@@ -100,27 +96,16 @@ export function TodayScreen({ now }: TodayScreenProps) {
   }, [data.tasks]);
 
   const updateTask = useMutation(
-    trpc.task.update.mutationOptions({
-      onMutate: async ({ id, patch }) => {
-        await queryClient.cancelQueries({ queryKey: rangeQuery.queryKey });
-        const previous = queryClient.getQueryData(rangeQuery.queryKey);
-        queryClient.setQueryData(
-          rangeQuery.queryKey,
-          (old: TaskRangeResponse | undefined) =>
-            old && {
-              ...old,
-              tasks: old.tasks.map((task) =>
-                task.id === id ? { ...task, ...definedFields(patch), version: task.version + 1 } : task,
-              ),
-            },
-        );
-        return { previous };
-      },
-      onError: (_error, _input, context) => {
-        if (context?.previous) queryClient.setQueryData(rangeQuery.queryKey, context.previous);
-      },
-      onSettled: () => queryClient.invalidateQueries({ queryKey: rangeQuery.queryKey }),
-    }),
+    trpc.task.update.mutationOptions(
+      optimisticPatch(
+        queryClient,
+        trpc.task.range.queryKey(range),
+        (old: TaskRangeResponse, { id, patch }: UpdateTaskRequest) => ({
+          ...old,
+          tasks: old.tasks.map((task) => (task.id === id ? applyTaskPatch(task, patch) : task)),
+        }),
+      ),
+    ),
   );
 
   const day = days.find((d) => d.offset === activeOffset) ?? days[0];
