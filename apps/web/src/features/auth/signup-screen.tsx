@@ -1,6 +1,6 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
+import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import { css } from 'styled-system/css';
 import * as v from 'valibot';
@@ -32,7 +32,7 @@ const formCls = css({
 });
 
 export function SignupScreen() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
 
@@ -46,7 +46,7 @@ export function SignupScreen() {
     trpc.auth.signup.mutationOptions({
       onSuccess: async ({ user }) => {
         queryClient.setQueryData(trpc.user.me.queryKey(), { user });
-        await router.navigate({ to: '/today' });
+        await navigate({ to: '/today' });
       },
     }),
   );
