@@ -28,3 +28,5 @@ todos.json
 # [epiq]: local hydrated state is never committed
 .epiq/events/
 .epiq/log/
+
+.claude/settings.local.json
