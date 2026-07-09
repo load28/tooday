@@ -10,6 +10,7 @@ export { Dot } from '@/shared/ui/dot';
 export { Field } from '@/shared/ui/field';
 export { Input } from '@/shared/ui/input';
 export { NumberInput } from '@/shared/ui/number-input';
+export { ProgressBar } from '@/shared/ui/progress-bar';
 export { Row } from '@/shared/ui/row';
 export { Screen } from '@/shared/ui/screen';
 export { Section } from '@/shared/ui/section';

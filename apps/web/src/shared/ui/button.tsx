@@ -37,6 +37,9 @@ const buttonStyle = cva({
       icon: { height: 'tap', width: 'tap', paddingX: '0' },
       iconLg: { height: 'tapLg', width: 'tapLg', paddingX: '0' },
     },
+    fullWidth: {
+      true: { width: '100%' },
+    },
   },
   defaultVariants: { tone: 'ghost', shape: 'rounded', size: 'md' },
 });

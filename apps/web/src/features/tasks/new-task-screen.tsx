@@ -19,7 +19,7 @@ import {
 import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { toIsoDate } from '@/shared/time';
-import { AppBar, Button, Screen, Stack, Text } from '@/shared/ui';
+import { AppBar, Button, Input, Screen, Stack, Text } from '@/shared/ui';
 
 const taskFormSchema = v.object({
   ...createTaskRequestSchema.entries,
@@ -39,21 +39,6 @@ const pageCls = css({
   paddingTop: 'lg',
   paddingBottom: '4xl',
 });
-
-// 큰 제목 입력 — display 타이포를 그대로 쓰되 테두리 없는 인라인 입력으로 둔다
-const titleInputCls = css({
-  width: '100%',
-  border: 'none',
-  background: 'transparent',
-  paddingInline: '2xs',
-  outline: 'none',
-  textStyle: 'display',
-  color: 'text',
-  fontFamily: 'inherit',
-  _placeholder: { color: 'textPlaceholder' },
-});
-
-const fullWidthCls = css({ width: '100%' });
 
 const DEFAULT_START = '09:00';
 const DEFAULT_DURATION = 30;
@@ -153,8 +138,9 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
             const error = fieldErrorMessage(field.state.meta.errors, messages.title);
             return (
               <Stack gap="sm">
-                <input
-                  // biome-ignore lint/a11y/noAutofocus: 새 태스크 진입 시 바로 제목을 입력하게 한다
+                <Input
+                  variant="inline"
+                  // 새 태스크 진입 시 바로 제목을 입력하게 한다
                   autoFocus
                   name="title"
                   value={field.state.value}
@@ -162,7 +148,6 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
                   onChange={(event) => field.handleChange(event.currentTarget.value)}
                   placeholder={t.taskNew.titlePlaceholder}
                   aria-label={t.taskNew.titlePlaceholder}
-                  className={titleInputCls}
                 />
                 {error !== undefined ? (
                   <Text variant="bodySm" tone="danger">
@@ -190,14 +175,7 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
         <Stack gap="md">
           <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
             {([values, isSubmitting]) => (
-              <Button
-                type="submit"
-                tone="brand"
-                size="xl"
-                className={fullWidthCls}
-                disabled={!values.title.trim()}
-                loading={isSubmitting}
-              >
+              <Button type="submit" tone="brand" size="xl" fullWidth disabled={!values.title.trim()} loading={isSubmitting}>
                 {t.taskNew.create}
               </Button>
             )}

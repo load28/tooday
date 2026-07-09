@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ProjectDetailScreen } from '@/features/projects/project-detail-screen';
+import { AppTabBar } from '@/routes/-app-tab-bar';
 
 export const Route = createFileRoute('/_app/projects/$projectId')({
   loader: async ({ context, params }) => {
@@ -10,5 +11,5 @@ export const Route = createFileRoute('/_app/projects/$projectId')({
 
 function ProjectDetailRoute() {
   const { projectId } = Route.useParams();
-  return <ProjectDetailScreen projectId={projectId} />;
+  return <ProjectDetailScreen projectId={projectId} tabBar={<AppTabBar active="projects" />} />;
 }

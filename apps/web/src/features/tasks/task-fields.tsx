@@ -27,7 +27,6 @@ export function useProjectOptions(projects: Project[]): SheetOption<string>[] {
 /** 스케줄 시트에서 고를 수 있는 기간(분) 프리셋 */
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120] as const;
 
-const fullWidthCls = css({ width: '100%' });
 const valueCls = css({ display: 'inline-flex', alignItems: 'center', gap: 'sm', minWidth: 0 });
 const checkCls = css({ color: 'primary', flex: '0 0 auto' });
 const durationRowCls = css({ display: 'flex', flexWrap: 'wrap', gap: 'sm' });
@@ -202,7 +201,7 @@ export function ScheduleSheet({ open, onClose, startAt, durationMin, onApply }: 
             ))}
           </ToggleGroup.Root>
         </Stack>
-        <Button tone="brand" size="lg" className={fullWidthCls} onClick={() => onApply(draftStart, draftDuration)}>
+        <Button tone="brand" size="lg" fullWidth onClick={() => onApply(draftStart, draftDuration)}>
           {t.schedule.apply}
         </Button>
       </Stack>

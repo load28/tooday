@@ -11,6 +11,8 @@ type TextBase = {
   tone?: TextTone;
   align?: TextAlign;
   truncate?: boolean;
+  /** 완료 항목 취소선 — 색은 tone으로 함께 지정한다 */
+  strike?: boolean;
   className?: string;
   children?: ReactNode;
 };
@@ -18,10 +20,10 @@ type TextBase = {
 type TextProps<T extends ElementType> = TextBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof TextBase | 'as'>;
 
 export function Text<T extends ElementType = 'span'>(props: TextProps<T>) {
-  const { as, variant, tone, align, truncate, className, children, ...rest } = props;
+  const { as, variant, tone, align, truncate, strike, className, children, ...rest } = props;
   const Tag = (as ?? 'span') as ElementType;
   return (
-    <Tag {...rest} className={cx(text({ variant, tone, align, truncate }), className)}>
+    <Tag {...rest} className={cx(text({ variant, tone, align, truncate, strike }), className)}>
       {children}
     </Tag>
   );

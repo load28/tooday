@@ -10,6 +10,7 @@ import { divider } from './recipes/divider';
 import { dot } from './recipes/dot';
 import { fieldRoot } from './recipes/field';
 import { input } from './recipes/input';
+import { progressFill, progressTrack } from './recipes/progress-bar';
 import { row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from './recipes/row';
 import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from './recipes/screen';
 import { sectionHeader, sectionHeaderTrailing } from './recipes/section';
@@ -29,6 +30,8 @@ const uiRecipes = {
   divider,
   spinner,
   input,
+  progressTrack,
+  progressFill,
   row,
   rowSlotLeading,
   rowSlotContent,
@@ -221,6 +224,7 @@ export default defineConfig({
         sizes: {
           ...spacingScale,
           controlSm: { value: '32px' },
+          controlMd: { value: '36px' },
           tap: { value: '40px' },
           tapLg: { value: '48px' },
           tapXl: { value: '56px' },
@@ -228,6 +232,8 @@ export default defineConfig({
           handle: { value: '36px' },
           appBar: { value: '52px' },
           tabBar: { value: '60px' },
+          // 타임라인의 시간 컬럼 폭
+          timeCol: { value: '52px' },
           icon: { value: '20px' },
           iconLg: { value: '24px' },
         },
@@ -300,6 +306,9 @@ export default defineConfig({
           sheetHandleTop: { value: '{spacing.lg}' },
 
           dividerLeadingInset: { value: '3rem' },
+
+          // 빈 상태 블록의 수직 패딩
+          emptyStateY: { value: '60px' },
         },
       },
 

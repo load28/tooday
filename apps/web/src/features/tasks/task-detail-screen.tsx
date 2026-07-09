@@ -18,7 +18,7 @@ import {
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
-import { AppBar, BaseButton, Button, Chip, Dot, Screen, Stack, Text } from '@/shared/ui';
+import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
   display: 'flex',
@@ -29,25 +29,11 @@ const pageCls = css({
   paddingBottom: '4xl',
 });
 
-const titleInputCls = css({
-  width: '100%',
-  border: 'none',
-  background: 'transparent',
-  paddingInline: '2xs',
-  outline: 'none',
-  textStyle: 'display',
-  color: 'text',
-  fontFamily: 'inherit',
-  _placeholder: { color: 'textPlaceholder' },
-});
-
 // 상태 알약을 감싸는 탭 타깃 — 리셋·포커스 링은 BaseButton이, 색은 Chip이 tone으로 관리한다
 const statusButtonCls = css({
   alignSelf: 'flex-start',
   borderRadius: 'pill',
 });
-
-const fullWidthCls = css({ width: '100%' });
 
 type TaskDetailScreenProps = {
   taskId: string;
@@ -127,7 +113,8 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
     >
       <div className={pageCls}>
         <Stack gap="lg">
-          <input
+          <Input
+            variant="inline"
             value={titleDraft}
             onChange={(event) => setTitleDraft(event.currentTarget.value)}
             onBlur={commitTitle}
@@ -139,7 +126,6 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
               }
             }}
             aria-label={t.taskDetail.title}
-            className={titleInputCls}
           />
 
           <BaseButton className={statusButtonCls} onClick={() => setStatusSheetOpen(true)}>
@@ -164,13 +150,7 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
         </MetaList>
 
         <Stack gap="md">
-          <Button
-            tone="dangerSoft"
-            size="lg"
-            className={fullWidthCls}
-            loading={remove.isPending}
-            onClick={() => remove.mutate({ id: taskId })}
-          >
+          <Button tone="dangerSoft" size="lg" fullWidth loading={remove.isPending} onClick={() => remove.mutate({ id: taskId })}>
             <Trash2 size={16} />
             {t.taskDetail.delete}
           </Button>

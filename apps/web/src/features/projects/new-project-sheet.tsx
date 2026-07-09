@@ -19,7 +19,6 @@ function toCreateProjectRequest({ name, color }: ProjectFormValues): CreateProje
   return { name: name.trim(), color };
 }
 
-const fullWidthCls = css({ width: '100%' });
 const colorRowCls = css({ paddingBlock: '2xs', paddingInline: '2xs' });
 
 type NewProjectSheetProps = {
@@ -128,14 +127,7 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
         <Stack gap="md">
           <form.Subscribe selector={(state) => [state.values, state.isSubmitting] as const}>
             {([values, isSubmitting]) => (
-              <Button
-                type="submit"
-                tone="brand"
-                size="lg"
-                className={fullWidthCls}
-                disabled={!values.name.trim()}
-                loading={isSubmitting}
-              >
+              <Button type="submit" tone="brand" size="lg" fullWidth disabled={!values.name.trim()} loading={isSubmitting}>
                 {t.projectNew.create}
               </Button>
             )}
