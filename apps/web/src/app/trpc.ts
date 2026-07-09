@@ -6,7 +6,12 @@ import { TRPC_ENDPOINT } from '@tooday/shared';
 import { createTRPCClient, httpLink } from '@trpc/client';
 import { createTRPCOptionsProxy, type TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 
-export const BFF_URL = import.meta.env.VITE_BFF_URL ?? 'http://localhost:3002';
+const BFF_URL = import.meta.env.VITE_BFF_URL ?? 'http://localhost:3002';
+
+/** BFF 절대 URL 조립의 단일 소유자 — base URL 배선이 이 모듈 밖으로 새지 않게 한다. */
+export function bffUrl(path: string): string {
+  return `${BFF_URL}${path}`;
+}
 
 // SSR에서만 브라우저가 보낸 세션 쿠키를 BFF로 전달한다.
 // 서버 전용 모듈은 server 브랜치에서만 로드 — 클라이언트 번들에서는 컴파일 시 제거된다.
@@ -18,7 +23,7 @@ const resolveSsrCookieHeaders = createIsomorphicFn()
     return cookie ? { cookie } : {};
   });
 
-const REFRESH_URL = `${BFF_URL}${TRPC_ENDPOINT}/auth.refresh`;
+const REFRESH_URL = bffUrl(`${TRPC_ENDPOINT}/auth.refresh`);
 
 /** 401을 refresh로 자동 복구하지 않을 경로 — refresh 자체(재귀 방지) + 로그인/회원가입(401이 정상 응답) */
 function isAuthEndpoint(input: RequestInfo | URL): boolean {
@@ -28,7 +33,11 @@ function isAuthEndpoint(input: RequestInfo | URL): boolean {
 
 // 액세스 만료로 여러 요청이 동시에 401을 맞아도 refresh는 한 번만 나가게 하는 single-flight.
 let inflightRefresh: Promise<boolean> | null = null;
-function refreshSession(): Promise<boolean> {
+/**
+ * 액세스 만료 시 refresh(회전)를 한 번만 내보내는 single-flight. tRPC의 fetchWithRefresh와
+ * SSE 채널(use-task-sync)이 이 함수를 공유해 refresh 경로가 두 벌로 갈라지지 않게 한다.
+ */
+export function refreshSession(): Promise<boolean> {
   inflightRefresh ??= fetch(REFRESH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -77,7 +86,7 @@ export function createTrpc(): RouterAppContext {
     links: [
       // 노배치(httpLink): 쿼리가 GET 단일 경로 URL로 나가야 BFF의 HTTP 캐시 정책이 동작한다
       httpLink({
-        url: `${BFF_URL}${TRPC_ENDPOINT}`,
+        url: bffUrl(TRPC_ENDPOINT),
         fetch: fetchWithRefresh,
         headers: () => resolveSsrCookieHeaders(),
       }),
