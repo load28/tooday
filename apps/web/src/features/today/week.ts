@@ -1,5 +1,5 @@
 import type { Locale } from '@/shared/i18n';
-import { toIsoDate } from '@/shared/time';
+import { formatDateLabel, formatWeekday, toIsoDate } from '@/shared/time';
 
 export type DayCell = {
   /** ISO 날짜 문자열 — React key 용 */
@@ -33,19 +33,16 @@ export function weekRange(now: Date): { from: string; to: string } {
 }
 
 export function buildWeek(now: Date, locale: Locale): DayCell[] {
-  const dowFormat = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-  const labelFormat = new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'long' });
-
   return Array.from({ length: WEEK_LENGTH }, (_, i) => {
     const offset = WEEK_START_OFFSET + i;
     const date = dateAtOffset(now, offset);
     return {
       key: toIsoDate(date),
       offset,
-      dow: dowFormat.format(date),
+      dow: formatWeekday(locale, date),
       day: date.getDate(),
       isToday: offset === 0,
-      label: labelFormat.format(date),
+      label: formatDateLabel(locale, date, 'long'),
     };
   });
 }

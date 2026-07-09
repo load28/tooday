@@ -18,6 +18,7 @@ import {
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
+import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({
@@ -64,11 +65,7 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
     [projects, task.projectId],
   );
 
-  const dateLabel = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'short' }).format(new Date(`${task.date}T00:00`)),
-    [locale, task.date],
-  );
+  const dateLabel = useMemo(() => formatDateLabel(locale, parseIsoDate(task.date), 'short'), [locale, task.date]);
 
   const update = useMutation(
     trpc.task.update.mutationOptions(
