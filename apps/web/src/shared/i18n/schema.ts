@@ -21,6 +21,11 @@ export interface MessageSchema {
     noProject: Msg;
     back: Msg;
     more: Msg;
+    loading: Msg;
+  };
+  notFound: {
+    code: Msg;
+    message: Msg;
   };
   nav: {
     label: Msg;
