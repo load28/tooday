@@ -95,7 +95,7 @@ export function ProjectDetailScreen({ projectId, tabBar }: ProjectDetailScreenPr
         value={[tab]}
         onValueChange={(details) => {
           // 단일 선택 — 선택된 세그먼트를 다시 눌러 빈 상태가 되는 것은 무시한다
-          const next = details.value[0] as TaskStatus | undefined;
+          const next = STATUS_ORDER.find((status) => status === details.value[0]);
           if (next !== undefined) setTab(next);
         }}
         className={segmentCls}
