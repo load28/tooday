@@ -16,6 +16,11 @@ const DOMAIN_ERROR_MESSAGES: Record<DomainErrorCode, string> = {
   TASK_NOT_FOUND: '작업을 찾을 수 없습니다.',
 };
 
+/** 도메인 에러 코드의 표준 사용자 메시지. 메시지 테이블을 노출하지 않고 코드로만 조회하게 한다. */
+export function domainErrorMessage(code: DomainErrorCode): string {
+  return DOMAIN_ERROR_MESSAGES[code];
+}
+
 /** 도메인 계층(스토어, 라우터)이 던지는 유일한 에러 타입. 전송 계층 매핑은 trpc/init.ts가 담당한다. */
 export class DomainError extends Error {
   constructor(

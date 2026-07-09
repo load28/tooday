@@ -2,6 +2,13 @@ import type { DatabaseSchema } from '@bff/platform/db/schema';
 import type { Kysely, Transaction } from 'kysely';
 import { sql } from 'kysely';
 
+/*
+ * 위치 근거(platform 유지): 현재 유일한 호출처는 task 어댑터이지만, 유저별 단조증가 seq 발급은
+ * 도메인 무관한 델타 동기화 기반 설비다 — 기준 테이블 `sync_counters`도 platform/db/schema.ts에
+ * 정의되고 발급 규약이 거기 못박혀 있다. 이 원리(스냅샷+seq+커서)는 태스크 공유 등 타 도메인으로
+ * 재사용될 설계이므로(docs/task-sharing-architecture.md) platform에 둔다.
+ */
+
 /**
  * 동기화 seq 발급 하에 쓰기를 실행한다.
  *

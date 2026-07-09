@@ -10,6 +10,8 @@ export {
   signupRequestSchema,
   tokenPairSchema,
 } from './auth';
+export type { AppConfigResponse } from './pub';
+export { appConfigResponseSchema } from './pub';
 export type {
   CreateProjectRequest,
   CreateTaskRequest,
