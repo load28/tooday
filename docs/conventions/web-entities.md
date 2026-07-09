@@ -23,8 +23,13 @@ routes → features → entities → shared
 
 apps/web/src/entities/<domain>/   # 도메인 공용 모델·표시 상수
   task/status.ts                  #   STATUS_ORDER, STATUS_*_TONE
-  project/color.ts                #   PROJECT_COLOR
+  task/patch.ts                   #   applyTaskPatch
 ```
+
+> `project/color.ts`(PROJECT_COLOR)는 entities의 첫 사례였지만, 진행률 바가 shared/ui
+> `ProgressBar`로 승격되며 색 매핑이 recipe tone(Dot과 동일한 팔레트 이름)으로 흡수돼
+> 제거됐다 (T009). 도메인 색 이름 → 토큰 매핑이 다시 여러 feature에 필요해지면
+> 같은 자리(entities/project/)에 되살린다.
 
 dependency-cruiser가 CI에서 강제한다 (`bun run lint:deps`):
 

@@ -34,6 +34,10 @@ export const text = defineRecipe({
     truncate: {
       true: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
     },
+    // 완료 항목 취소선 — 색은 tone이 관리하므로 여기서는 장식선만 얹는다
+    strike: {
+      true: { textDecoration: 'line-through', textDecorationColor: 'borderStrong' },
+    },
     align: {
       start: { textAlign: 'start' },
       center: { textAlign: 'center' },

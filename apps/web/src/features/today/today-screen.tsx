@@ -1,8 +1,8 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
-import { Bell, CalendarDays, CalendarX2, LayoutGrid, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Bell, CalendarX2, Plus } from 'lucide-react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
 import { applyTaskPatch } from '@/entities/task/patch';
@@ -13,13 +13,15 @@ import { WeekStrip } from '@/features/today/week-strip';
 import { format, useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
-import { AppBar, Button, Card, Screen, Section, Stack, TabBar, Text } from '@/shared/ui';
+import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
 
 const pageCls = css({ paddingBottom: '4xl' });
 
 // 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
 const heroCls = css({
-  margin: '4px 16px 16px',
+  marginTop: 'xs',
+  marginInline: 'pageX',
+  marginBottom: '2xl',
   display: 'flex',
   flexDirection: 'column',
   gap: 'xl',
@@ -34,7 +36,7 @@ const timelineCls = css({
 
 const rowCls = css({
   display: 'grid',
-  gridTemplateColumns: '52px 1fr',
+  gridTemplateColumns: '{sizes.timeCol} 1fr',
   gap: 'xl',
   alignItems: 'stretch',
 });
@@ -44,10 +46,11 @@ const timeColCls = css({
   flexDirection: 'column',
   alignItems: 'flex-end',
   gap: '2xs',
-  paddingTop: '14px',
+  // 카드 패딩(cardPadMd)에서 numeric(18px)·subtitle(22px) lineHeight 차의 절반을 당겨 첫 줄을 광학 정렬한다
+  paddingTop: 'calc({spacing.cardPadMd} - 2px)',
 });
 
-const emptyCls = css({ paddingY: '60px', paddingX: '4xl' });
+const emptyCls = css({ paddingY: 'emptyStateY', paddingX: '4xl' });
 
 type DaySection = 'morning' | 'afternoon' | 'evening';
 const SECTION_ORDER: DaySection[] = ['morning', 'afternoon', 'evening'];
@@ -62,9 +65,11 @@ function sectionOf(startAt: string): DaySection {
 type TodayScreenProps = {
   /** 기준 시각(epoch ms). SSR과 하이드레이션이 같은 값을 쓰도록 라우트 loader에서 내려온다. */
   now: number;
+  /** 하단 탭 내비 — feature 간 내비 조립이므로 라우트(배선 층)가 AppTabBar를 주입한다 */
+  tabBar: ReactNode;
 };
 
-export function TodayScreen({ now }: TodayScreenProps) {
+export function TodayScreen({ now, tabBar }: TodayScreenProps) {
   const navigate = useNavigate();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
@@ -133,19 +138,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
           </AppBar.Trailing>
         </AppBar>
       }
-      bottomBar={
-        <TabBar
-          aria-label={t.nav.label}
-          items={[
-            { key: 'today', label: t.nav.today, icon: <CalendarDays size={22} /> },
-            { key: 'projects', label: t.nav.projects, icon: <LayoutGrid size={22} /> },
-          ]}
-          activeKey="today"
-          onSelect={(key) => {
-            if (key === 'projects') void navigate({ to: '/projects' });
-          }}
-        />
-      }
+      bottomBar={tabBar}
     >
       <div className={pageCls}>
         <Card radius="2xl" padding="lg" className={heroCls}>

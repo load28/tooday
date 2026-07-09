@@ -31,7 +31,7 @@
 | T006 | [폼 인프라 통일](T006-unify-form-infra.md) | 높음 | ✅ 완료 |
 | T007 | [낙관적 업데이트 중복 제거 + 캐시 정책 컨벤션](T007-optimistic-update-dedup.md) | 중간 | ✅ 완료 |
 | T008 | [디자인 시스템 컨벤션 위반 2건 수정](T008-design-system-violations.md) | 중간 | ✅ 완료 |
-| T009 | [공유 프리미티브 추출 + 매직 값 토큰화](T009-shared-primitives-extraction.md) | 중간 | ⬜ 대기 |
+| T009 | [공유 프리미티브 추출 + 매직 값 토큰화](T009-shared-primitives-extraction.md) | 중간 | ✅ 완료 |
 | T010 | [BFF 잔여 정리 (pub 계약·config·SSE 401·sync 위치)](T010-bff-cleanups.md) | 중간 | ⬜ 대기 |
 | T011 | [tRPC 프로시저 경로 문자열 하드코딩 제거](T011-trpc-path-strings.md) | 낮음 | ⬜ 대기 |
 | T012 | [SSE 클라이언트 auth 경로 정리](T012-sse-client-auth.md) | 낮음 | ⬜ 대기 |

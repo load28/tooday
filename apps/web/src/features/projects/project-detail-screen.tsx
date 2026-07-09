@@ -2,12 +2,12 @@ import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import type { Task, TaskStatus } from '@tooday/shared';
-import { CalendarDays, ChevronLeft, LayoutGrid, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronLeft, Plus } from 'lucide-react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { STATUS_ORDER } from '@/entities/task/status';
 import { useT } from '@/shared/i18n';
-import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, TabBar, Text } from '@/shared/ui';
+import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, Text } from '@/shared/ui';
 
 const segmentCls = css({
   display: 'grid',
@@ -24,7 +24,7 @@ const segmentCls = css({
 // 세그먼트 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
 const segmentButtonCls = css({
   gap: 'sm',
-  height: '36px',
+  height: 'controlMd',
   borderRadius: 'md',
   color: 'textTertiary',
   textStyle: 'bodySm',
@@ -37,17 +37,17 @@ const listCls = css({
   paddingBottom: '4xl',
 });
 
-const emptyCls = css({ paddingY: '48px', paddingInline: '2xl' });
+const emptyCls = css({ paddingY: 'emptyStateY', paddingInline: '2xl' });
 
 const rowCls = css({ width: '100%' });
 
-const titleDoneCls = css({ textDecoration: 'line-through', textDecorationColor: 'borderStrong' });
-
 type ProjectDetailScreenProps = {
   projectId: string;
+  /** 하단 탭 내비 — feature 간 내비 조립이므로 라우트(배선 층)가 AppTabBar를 주입한다 */
+  tabBar: ReactNode;
 };
 
-export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
+export function ProjectDetailScreen({ projectId, tabBar }: ProjectDetailScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
   const { trpc } = useRouteContext({ from: '__root__' });
@@ -89,20 +89,7 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
           </AppBar.Trailing>
         </AppBar>
       }
-      bottomBar={
-        <TabBar
-          aria-label={t.nav.label}
-          items={[
-            { key: 'today', label: t.nav.today, icon: <CalendarDays size={22} /> },
-            { key: 'projects', label: t.nav.projects, icon: <LayoutGrid size={22} /> },
-          ]}
-          activeKey="projects"
-          onSelect={(key) => {
-            if (key === 'today') void navigate({ to: '/today' });
-            else void navigate({ to: '/projects' });
-          }}
-        />
-      }
+      bottomBar={tabBar}
     >
       <ToggleGroup.Root
         value={[tab]}
@@ -152,12 +139,7 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
                     </Text>
                   }
                 >
-                  <Text
-                    variant="bodyStrong"
-                    tone={isDone ? 'tertiary' : 'default'}
-                    truncate
-                    className={isDone ? titleDoneCls : undefined}
-                  >
+                  <Text variant="bodyStrong" tone={isDone ? 'tertiary' : 'default'} truncate strike={isDone}>
                     {task.title}
                   </Text>
                 </Row>

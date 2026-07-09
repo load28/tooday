@@ -31,8 +31,6 @@ const formCls = css({
   gap: '4xl',
 });
 
-const submitCls = css({ width: '100%' });
-
 export function SignupScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
@@ -154,7 +152,7 @@ export function SignupScreen() {
                 type="submit"
                 tone="brand"
                 size="xl"
-                className={submitCls}
+                fullWidth
                 disabled={!(values.name.trim() && values.email.trim() && values.password)}
                 loading={isSubmitting}
               >

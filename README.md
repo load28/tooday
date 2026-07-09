@@ -55,7 +55,7 @@ apps/web/src/
   features/<feature>/ # 화면·폼·쿼리 등 기능 코드 (auth/, today/, tasks/, projects/)
                       #   feature 간 직접 import 금지 — 도메인 공용은 entities/,
                       #   도메인 무관은 shared/, 조립은 routes/
-  entities/<domain>/  # 도메인 공용 모델·표시 상수 (task/, project/) — FSD entities만
+  entities/<domain>/  # 도메인 공용 모델·표시 상수 (task/) — FSD entities만
                       #   부분 채택 (docs/conventions/web-entities.md)
   app/                # 앱 셸 — tRPC 클라이언트, global.css
   shared/ui/          # 도메인 무관 디자인 시스템 프리미티브

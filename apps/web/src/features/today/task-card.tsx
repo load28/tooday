@@ -1,6 +1,6 @@
 import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
-import { css, cva, cx } from 'styled-system/css';
+import { css, cva } from 'styled-system/css';
 import { useT } from '@/shared/i18n';
 import { BaseButton, Card, Dot, HStack, Text } from '@/shared/ui';
 
@@ -19,12 +19,6 @@ const bodyCls = css({
   alignItems: 'stretch',
   gap: 'sm',
   _focusVisible: { borderRadius: 'xs' },
-});
-
-// 색은 Text의 tone prop으로 바꾼다 — 여기서 color를 덮으면 recipe의 tone 클래스와 충돌한다
-const titleDoneCls = css({
-  textDecoration: 'line-through',
-  textDecorationColor: 'borderStrong',
 });
 
 const checkRecipe = cva({
@@ -60,7 +54,7 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
   return (
     <Card padding="md" selected={task.status === 'doing'} className={cardCls}>
       <BaseButton onClick={onClick} className={bodyCls}>
-        <Text as="h3" variant="subtitle" tone={isDone ? 'tertiary' : 'default'} truncate className={cx(isDone && titleDoneCls)}>
+        <Text as="h3" variant="subtitle" tone={isDone ? 'tertiary' : 'default'} truncate strike={isDone}>
           {task.title}
         </Text>
         <HStack gap="sm">

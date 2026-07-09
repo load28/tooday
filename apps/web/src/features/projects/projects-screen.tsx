@@ -1,13 +1,12 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
-import { CalendarDays, LayoutGrid, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { LayoutGrid, Plus } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
-import { PROJECT_COLOR } from '@/entities/project/color';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { format, useT } from '@/shared/i18n';
-import { AppBar, Button, Card, Dot, HStack, Screen, Stack, TabBar, Text } from '@/shared/ui';
+import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } from '@/shared/ui';
 
 const heroCls = css({
   paddingInline: 'pageX',
@@ -28,22 +27,14 @@ const cardCls = css({
   textAlign: 'left',
 });
 
-const trackCls = css({
-  height: '4px',
-  borderRadius: 'pill',
-  bg: 'surfaceSoft',
-  overflow: 'hidden',
-});
+const emptyCls = css({ paddingY: 'emptyStateY', paddingInline: '4xl' });
 
-const fillCls = css({
-  height: '100%',
-  borderRadius: 'pill',
-  transition: 'width {durations.slow} {easings.standard}',
-});
+type ProjectsScreenProps = {
+  /** 하단 탭 내비 — feature 간 내비 조립이므로 라우트(배선 층)가 AppTabBar를 주입한다 */
+  tabBar: ReactNode;
+};
 
-const emptyCls = css({ paddingY: '60px', paddingInline: '4xl' });
-
-export function ProjectsScreen() {
+export function ProjectsScreen({ tabBar }: ProjectsScreenProps) {
   const navigate = useNavigate();
   const { trpc } = useRouteContext({ from: '__root__' });
   const t = useT();
@@ -66,19 +57,7 @@ export function ProjectsScreen() {
           </AppBar.Trailing>
         </AppBar>
       }
-      bottomBar={
-        <TabBar
-          aria-label={t.nav.label}
-          items={[
-            { key: 'today', label: t.nav.today, icon: <CalendarDays size={22} /> },
-            { key: 'projects', label: t.nav.projects, icon: <LayoutGrid size={22} /> },
-          ]}
-          activeKey="projects"
-          onSelect={(key) => {
-            if (key === 'today') void navigate({ to: '/today' });
-          }}
-        />
-      }
+      bottomBar={tabBar}
     >
       <div className={heroCls}>
         <Stack gap="2xs">
@@ -101,7 +80,6 @@ export function ProjectsScreen() {
       ) : (
         <Stack gap="md" className={listCls}>
           {projects.map((project) => {
-            const accent = PROJECT_COLOR[project.color];
             const ratio = project.totalCount > 0 ? project.doneCount / project.totalCount : 0;
             return (
               <Card
@@ -119,9 +97,7 @@ export function ProjectsScreen() {
                     {project.name}
                   </Text>
                 </HStack>
-                <div className={trackCls}>
-                  <div className={fillCls} style={{ width: `${ratio * 100}%`, background: accent }} />
-                </div>
+                <ProgressBar value={ratio} tone={project.color} />
                 <Text variant="caption" tone="tertiary">
                   {format(t.projects.progress, { done: project.doneCount, total: project.totalCount })}
                 </Text>
