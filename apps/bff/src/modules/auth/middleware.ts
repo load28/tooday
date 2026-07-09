@@ -2,6 +2,7 @@ import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import type { RefreshTokenStore } from '@bff/modules/auth/ports';
 import { verifyLiveSession } from '@bff/modules/auth/session-liveness';
 import { extractAccessToken } from '@bff/modules/auth/token';
+import { DOMAIN_ERROR_CODES, domainErrorMessage } from '@bff/platform/errors';
 import { errorResponse } from '@bff/platform/http';
 import { createMiddleware } from 'hono/factory';
 
@@ -26,7 +27,12 @@ export function requireAuth({ accessTokens, refreshTokens, cookieName }: Require
     const token = extractAccessToken({ c, cookieName });
     const userId = await verifyLiveSession({ token, accessTokens, refreshTokens });
     if (!userId) {
-      return errorResponse({ c, status: 401, code: 'UNAUTHENTICATED', message: '인증이 필요합니다.' });
+      return errorResponse({
+        c,
+        status: 401,
+        code: DOMAIN_ERROR_CODES.UNAUTHENTICATED,
+        message: domainErrorMessage(DOMAIN_ERROR_CODES.UNAUTHENTICATED),
+      });
     }
     c.set('auth', { userId });
     await next();

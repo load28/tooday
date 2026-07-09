@@ -36,6 +36,7 @@ function setup(overrides: Partial<BffConfig> = {}) {
     pgPoolSize: 1,
     redisUrl: null,
     logFormat: 'pretty',
+    logRequests: false,
     ...overrides,
   };
   const users = new InMemoryUserStore();

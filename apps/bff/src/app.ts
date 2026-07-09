@@ -33,7 +33,7 @@ export function createApp(deps: AppDeps) {
   const log = deps.logger ?? createLogger(deps.config.logFormat);
   const app = new Hono();
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (deps.config.logRequests) {
     app.use('*', createRequestLogger(log));
   }
 

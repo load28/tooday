@@ -1,3 +1,10 @@
+/**
+ * 위치 근거(platform 유지): 현재 유일한 notify 소비처는 task 모듈이지만, "유저별 데이터
+ * 변경 신호"는 도메인에 무관한 전송 계약이다. app 셸의 SSE 채널(`/sync/events`)이 이 포트를
+ * 직접 소비하고, seq+커서 동기화 원리는 태스크 공유 등 타 도메인으로 재사용될 설계다
+ * (docs/task-sharing-architecture.md). task 모듈로 내리면 app 셸·trpc 조립이 도메인 모듈을
+ * 역으로 참조하게 되므로 platform에 둔다.
+ */
 export type SyncListener = () => void;
 
 /**

@@ -22,6 +22,8 @@ export interface BffConfig {
   /** Redis 연결 문자열. 설정 시 리프레시 토큰 저장소로 Redis를 쓴다(미설정이면 DB 테이블). */
   redisUrl: string | null;
   logFormat: LogFormat;
+  /** 요청 로거를 붙일지 — 테스트에서는 로그 소음을 없애려 끈다. */
+  logRequests: boolean;
 }
 
 const MINUTE_MS = 60 * 1000;
@@ -53,5 +55,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     redisUrl: env.REDIS_URL ?? null,
     logFormat:
       env.BFF_LOG_FORMAT === 'json' || env.BFF_LOG_FORMAT === 'pretty' ? env.BFF_LOG_FORMAT : isProduction ? 'json' : 'pretty',
+    logRequests: env.NODE_ENV !== 'test',
   };
 }
