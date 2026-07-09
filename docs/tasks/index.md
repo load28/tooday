@@ -32,10 +32,10 @@
 | T007 | [낙관적 업데이트 중복 제거 + 캐시 정책 컨벤션](T007-optimistic-update-dedup.md) | 중간 | ✅ 완료 |
 | T008 | [디자인 시스템 컨벤션 위반 2건 수정](T008-design-system-violations.md) | 중간 | ✅ 완료 |
 | T009 | [공유 프리미티브 추출 + 매직 값 토큰화](T009-shared-primitives-extraction.md) | 중간 | ✅ 완료 |
-| T010 | [BFF 잔여 정리 (pub 계약·config·SSE 401·sync 위치)](T010-bff-cleanups.md) | 중간 | ⬜ 대기 |
-| T011 | [tRPC 프로시저 경로 문자열 하드코딩 제거](T011-trpc-path-strings.md) | 낮음 | ⬜ 대기 |
-| T012 | [SSE 클라이언트 auth 경로 정리](T012-sse-client-auth.md) | 낮음 | ⬜ 대기 |
-| T013 | [i18n 우회 문자열 이관](T013-i18n-bypasses.md) | 낮음 | ⬜ 대기 |
+| T010 | [BFF 잔여 정리 (pub 계약·config·SSE 401·sync 위치)](T010-bff-cleanups.md) | 중간 | ✅ 완료 |
+| T011 | [tRPC 프로시저 경로 문자열 하드코딩 제거](T011-trpc-path-strings.md) | 낮음 | ✅ 완료 |
+| T012 | [SSE 클라이언트 auth 경로 정리](T012-sse-client-auth.md) | 낮음 | ✅ 완료 |
+| T013 | [i18n 우회 문자열 이관](T013-i18n-bypasses.md) | 낮음 | ✅ 완료 |
 | T014 | [design-guide 토큰 드리프트 해소](T014-design-guide-token-drift.md) | 낮음 | ⬜ 대기 |
-| T015 | [날짜 라벨 포맷 shared/time.ts로 집중화](T015-date-format-centralize.md) | 낮음 | ⬜ 대기 |
-| T016 | [소소한 통일 (캐스트 가드·내비게이션 API)](T016-minor-consistency.md) | 낮음 | ⬜ 대기 |
+| T015 | [날짜 라벨 포맷 shared/time.ts로 집중화](T015-date-format-centralize.md) | 낮음 | ✅ 완료 |
+| T016 | [소소한 통일 (캐스트 가드·내비게이션 API)](T016-minor-consistency.md) | 낮음 | ✅ 완료 |
