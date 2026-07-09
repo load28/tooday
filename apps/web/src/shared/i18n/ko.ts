@@ -22,6 +22,11 @@ export const ko = defineMessages<MessageSchema>()({
     noProject: '프로젝트 없음',
     back: '뒤로',
     more: '더보기',
+    loading: '로딩 중',
+  },
+  notFound: {
+    code: '404',
+    message: '페이지를 찾을 수 없습니다.',
   },
   nav: {
     label: '주요 메뉴',

@@ -2,12 +2,14 @@ import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import { createTrpc } from '@/app/trpc.ts';
 import { routeTree } from '@/routeTree.gen.ts';
+import { useT } from '@/shared/i18n';
 
 function NotFound() {
+  const t = useT();
   return (
     <div>
-      <h1>404</h1>
-      <p>페이지를 찾을 수 없습니다.</p>
+      <h1>{t.notFound.code}</h1>
+      <p>{t.notFound.message}</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { type MouseEvent, type ReactNode, useId } from 'react';
 import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
+import { useT } from '@/shared/i18n';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
 
@@ -70,6 +71,7 @@ type ButtonProps = BaseButtonProps &
   };
 
 export function Button({ loading, loadingText, spinner, className, children, onClick, ...rest }: ButtonProps) {
+  const t = useT();
   const [variantProps, baseProps] = buttonStyle.splitVariantProps(rest);
   const labelId = useId();
   const loadingLabelId = useId();
@@ -100,7 +102,7 @@ export function Button({ loading, loadingText, spinner, className, children, onC
           </span>
           <span className={loadingLayerCls}>
             <span id={loadingLabelId} className={srOnlyCls}>
-              로딩 중
+              {t.common.loading}
             </span>
             {spinner ?? <Spinner aria-hidden />}
             {loadingText}
