@@ -1,3 +1,4 @@
+import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import { css, cva } from 'styled-system/css';
 import type { DayCell } from '@/features/today/week';
 import { BaseButton } from '@/shared/ui';
@@ -11,7 +12,7 @@ const stripCls = css({
   paddingX: 'xl',
 });
 
-// 리셋·포커스 링은 BaseButton이 제공 — 여기는 셀 고유 레이아웃·상태 색만 얹는다.
+// 셀 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
 const cellRecipe = cva({
   base: {
     flexDirection: 'column',
@@ -19,18 +20,18 @@ const cellRecipe = cva({
     paddingBottom: 'sm',
     borderRadius: 'lg',
     transition: 'background {durations.base} {easings.standard}, color {durations.base} {easings.standard}',
+    _on: { background: 'primary', color: 'onPrimary' },
   },
   variants: {
-    state: {
+    tone: {
       idle: { color: 'textTertiary' },
       today: { color: 'primary' },
-      active: { background: 'primary', color: 'onPrimary' },
     },
   },
 });
 
 const dowCls = css({ textStyle: 'micro', marginBottom: 'xs' });
-const dayCls = css({ fontSize: '16px', fontWeight: 700, lineHeight: '20px', fontFeatureSettings: '"tnum" 1' });
+const dayCls = css({ textStyle: 'numericLg' });
 
 const dotRecipe = cva({
   base: {
@@ -42,8 +43,7 @@ const dotRecipe = cva({
   variants: {
     mark: {
       none: { background: 'transparent' },
-      tasks: { background: 'primary' },
-      activeTasks: { background: 'rgba(255, 255, 255, 0.6)' },
+      tasks: { background: 'primary', '[data-state="on"] &': { background: 'onPrimaryMuted' } },
     },
   },
 });
@@ -57,24 +57,24 @@ type WeekStripProps = {
 
 export function WeekStrip({ days, activeOffset, hasTasks, onSelect }: WeekStripProps) {
   return (
-    <div className={stripCls}>
-      {days.map((d) => {
-        const isActive = d.offset === activeOffset;
-        const marked = hasTasks(d);
-        return (
-          <BaseButton
-            key={d.key}
-            aria-label={d.label}
-            aria-pressed={isActive}
-            onClick={() => onSelect(d.offset)}
-            className={cellRecipe({ state: isActive ? 'active' : d.isToday ? 'today' : 'idle' })}
-          >
+    <ToggleGroup.Root
+      value={[String(activeOffset)]}
+      onValueChange={(details) => {
+        // 단일 선택 — 선택된 셀을 다시 눌러 빈 상태가 되는 것은 무시한다
+        const next = details.value[0];
+        if (next !== undefined) onSelect(Number(next));
+      }}
+      className={stripCls}
+    >
+      {days.map((d) => (
+        <ToggleGroup.Item key={d.key} value={String(d.offset)} asChild>
+          <BaseButton aria-label={d.label} className={cellRecipe({ tone: d.isToday ? 'today' : 'idle' })}>
             <span className={dowCls}>{d.dow}</span>
             <span className={dayCls}>{d.day}</span>
-            <span className={dotRecipe({ mark: marked ? (isActive ? 'activeTasks' : 'tasks') : 'none' })} />
+            <span className={dotRecipe({ mark: hasTasks(d) ? 'tasks' : 'none' })} />
           </BaseButton>
-        );
-      })}
-    </div>
+        </ToggleGroup.Item>
+      ))}
+    </ToggleGroup.Root>
   );
 }

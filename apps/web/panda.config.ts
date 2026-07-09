@@ -268,6 +268,7 @@ export default defineConfig({
           primarySoft: { value: '{colors.brand.100}' },
           primarySofter: { value: '{colors.brand.50}' },
           onPrimary: { value: '{colors.white}' },
+          onPrimaryMuted: { value: 'rgba(255, 255, 255, 0.6)' },
 
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },
@@ -414,6 +415,15 @@ export default defineConfig({
             fontWeight: '700',
             letterSpacing: '-0.01em',
             lineHeight: '18px',
+            fontFeatureSettings: '"tnum" 1',
+          },
+        },
+        numericLg: {
+          value: {
+            fontSize: '16px',
+            fontWeight: '700',
+            letterSpacing: '-0.01em',
+            lineHeight: '20px',
             fontFeatureSettings: '"tnum" 1',
           },
         },
