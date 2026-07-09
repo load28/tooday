@@ -12,7 +12,7 @@ const CLOCK_EPOCH = new Date(2001, 0, 1);
 /** locale별 date-fns locale + 표시 패턴. locale마다 필드 순서가 달라 패턴을 여기서 지정한다. */
 type DateFormatConfig = {
   locale: DateFnsLocale;
-  /** 연도 없는 날짜 라벨 — '5월 3일 토요일'(long) / '5월 3일 토'(short) */
+  /** 연도 없는 날짜 라벨 — '5월 2일 토요일'(long) / '5월 2일 (토)'(short) */
   dateLabel: { long: string; short: string };
   /** 요일 약칭 — '토' */
   weekday: string;
@@ -33,7 +33,7 @@ export function parseIsoDate(iso: string): Date {
   return parseISO(iso);
 }
 
-/** 표시용 날짜 라벨 — locale에 맞춰 '5월 3일 토요일'(long) / '5월 3일 토'(short) */
+/** 표시용 날짜 라벨 — locale에 맞춰 '5월 2일 토요일'(long) / '5월 2일 (토)'(short) */
 export function formatDateLabel(locale: Locale, date: Date, weekday: 'long' | 'short' = 'long'): string {
   const cfg = DATE_FORMATS[locale];
   return dfFormat(date, cfg.dateLabel[weekday], { locale: cfg.locale });
