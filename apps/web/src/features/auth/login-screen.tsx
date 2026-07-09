@@ -33,14 +33,6 @@ const formCls = css({
 
 const submitCls = css({ width: '100%' });
 
-const signupLinkCls = css({
-  textStyle: 'bodyStrong',
-  color: 'textBrand',
-  textDecoration: 'none',
-  borderRadius: 'xs',
-  _focusVisible: { outline: 'none', boxShadow: 'focus' },
-});
-
 export function LoginScreen() {
   const router = useRouter();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
@@ -162,13 +154,13 @@ export function LoginScreen() {
               ) : null
             }
           </form.Subscribe>
-          <HStack gap="md" justify="center">
+          <HStack gap="0" justify="center">
             <Text variant="bodySm" tone="tertiary">
               {t.auth.login.noAccount}
             </Text>
-            <Link to="/signup" className={signupLinkCls}>
-              {t.auth.login.signupLink}
-            </Link>
+            <Button asChild tone="brandGhost" size="sm">
+              <Link to="/signup">{t.auth.login.signupLink}</Link>
+            </Button>
           </HStack>
         </Stack>
       </form>

@@ -9,6 +9,8 @@ const buttonStyle = cva({
   variants: {
     tone: {
       ghost: { color: 'text', _press: { bg: 'pressedStrong' } },
+      // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
+      brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' } },
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.
       subtle: {
         bg: 'surfaceMuted',

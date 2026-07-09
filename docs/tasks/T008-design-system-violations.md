@@ -1,9 +1,9 @@
 # T008 — 디자인 시스템 컨벤션 위반 2건 수정
 
-- 상태: 대기
+- 상태: 완료
 - 생성: 2026-07-08
-- 완료: -
-- 커밋: -
+- 완료: 2026-07-09
+- 커밋: (기입 예정)
 
 ## 배경
 
@@ -31,9 +31,9 @@
 
 ## 완료 기준
 
-- [ ] 수제 포커스 링·수동 선택 배선 0건 (두 화면 모두)
-- [ ] 키보드 내비게이션·aria가 Ark 제공으로 동작
-- [ ] typecheck / web 테스트 통과, 화면 동작 확인(/verify 스킬)
+- [x] 수제 포커스 링·수동 선택 배선 0건 (두 화면 모두)
+- [x] 키보드 내비게이션·aria가 Ark 제공으로 동작
+- [x] typecheck / web 테스트 통과, 화면 동작 확인(/verify 스킬)
 
 ## 대화 기록
 
@@ -54,6 +54,34 @@
 >
 > **사용자**: 나머지해야하는 작업을 태스크로 문서로 기록하자
 
+---
+
+(2026-07-09)
+
+> **사용자**: 8번태스크가 뭔지 알려줘
+>
+> **Claude**: T008은 **"디자인 시스템 컨벤션 위반 2건 수정"** 태스크입니다 (우선순위
+> 중간, 상태 대기 — 아직 착수 전). [중략 — 태스크 내용 요약 설명] 진행할까요?
+>
+> **사용자**: 네
+
 ## 작업 로그
 
-- (없음)
+- **auth 링크** (`login-screen.tsx`, `signup-screen.tsx`): 수제 `signupLinkCls`/`loginLinkCls`
+  (BaseButton 포커스 링 재구현 + tone/radius css() 지정) 제거 →
+  `<Button asChild tone="brandGhost" size="sm"><Link/></Button>`. 필요한 variant가 없어
+  ui-styling.md 규칙대로 `Button`에 `brandGhost` tone(브랜드 텍스트 링크 룩:
+  `color: textBrand`, press는 `primarySofter`)을 추가해서 사용. 링크가 버튼 패딩을 갖게 되어
+  HStack gap은 `md` → `0`으로 보정.
+- **WeekStrip** (`week-strip.tsx`): 수동 `aria-pressed` + JS 조건부 recipe
+  (`state: active`) 배선 제거 → Ark `ToggleGroup.Root/Item` + `BaseButton`(asChild) +
+  오버레이 `_on`(`background: primary, color: onPrimary`)으로 전환. 점(dot)의 활성 색은
+  `[data-state="on"] &` 셀렉터로 처리. Ark가 단일 선택에 radiogroup/radio 시맨틱과
+  roving focus를 자동 적용.
+- **토큰화** (`panda.config.ts`): 하드코딩 타이포(`16px/700/20px` + tnum) →
+  textStyle `numericLg` 신설, raw `rgba(255,255,255,0.6)` → 시맨틱 토큰
+  `onPrimaryMuted` 신설 후 사용.
+- **검증**: `bun run typecheck` 4/4 통과, web 테스트 12/12 통과, `biome check` 통과.
+  /verify 스킬로 E2E 14/14 통과 — 링크 색·포커스 링·내비게이션, 가입 → /today,
+  WeekStrip 7셀·선택 이동·재클릭 유지·ArrowRight+Enter 키보드 선택·radiogroup 시맨틱·
+  날짜 타이포(16px/700/20px)·활성 배경(primary), `onPrimaryMuted` CSS 규칙 생성 확인.
