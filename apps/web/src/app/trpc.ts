@@ -23,12 +23,19 @@ const resolveSsrCookieHeaders = createIsomorphicFn()
     return cookie ? { cookie } : {};
   });
 
-const REFRESH_URL = bffUrl(`${TRPC_ENDPOINT}/auth.refresh`);
+// 프로시저 이름을 라우터 타입에서 파생 — BFF에서 리네임되면 컴파일 에러가 난다.
+type AuthProcedure = keyof AppRouter['auth'];
 
-/** 401을 refresh로 자동 복구하지 않을 경로 — refresh 자체(재귀 방지) + 로그인/회원가입(401이 정상 응답) */
+const authProcedureUrl = (procedure: AuthProcedure): string => bffUrl(`${TRPC_ENDPOINT}/auth.${procedure}`);
+
+const REFRESH_URL = authProcedureUrl('refresh');
+
+/** 401을 refresh로 자동 복구하지 않을 프로시저 — refresh 자체(재귀 방지) + 로그인/회원가입(401이 정상 응답) */
+const NON_REFRESHABLE = ['refresh', 'login', 'signup'] satisfies AuthProcedure[];
+
 function isAuthEndpoint(input: RequestInfo | URL): boolean {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  return /auth\.(refresh|login|signup)/.test(url);
+  return NON_REFRESHABLE.some((procedure) => url.includes(`auth.${procedure}`));
 }
 
 // 액세스 만료로 여러 요청이 동시에 401을 맞아도 refresh는 한 번만 나가게 하는 single-flight.
