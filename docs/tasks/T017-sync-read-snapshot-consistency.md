@@ -1,9 +1,9 @@
 # T017 — 동기화 읽기 스냅샷 일관성 (영구 유실 버그)
 
-- 상태: 대기
+- 상태: 완료
 - 생성: 2026-07-10
-- 완료: -
-- 커밋: -
+- 완료: 2026-07-10
+- 커밋: 56314f9
 
 ## 배경
 
@@ -54,10 +54,10 @@
 
 ## 완료 기준
 
-- [ ] `task.changes`가 단일 스냅샷에서 tasks+projects+커서를 읽는다
-- [ ] `task.range`가 단일 스냅샷에서 데이터+커서를 읽는다
-- [ ] `remove`가 `version`을 증가시킨다
-- [ ] 회귀 테스트 추가, `bun run typecheck` / 기존 테스트 전체 통과
+- [x] `task.changes`가 단일 스냅샷에서 tasks+projects+커서를 읽는다
+- [x] `task.range`가 단일 스냅샷에서 데이터+커서를 읽는다
+- [x] `remove`가 `version`을 증가시킨다
+- [x] 회귀 테스트 추가, `bun run typecheck` / 기존 테스트 전체 통과
 
 ## 대화 기록
 
@@ -85,6 +85,66 @@
 > write** [중략] The tombstone therefore carries a stale `version`, breaking
 > the "monotonic per write" invariant a client might rely on.
 
+### 2026-07-10 — 검토·착수 대화
+
+> **사용자**: 저장된 하나의 태스크를 알려달라. 어떤 내용인지 검토부터 하자
+>
+> **Claude**: 대기 중인 태스크 8건 가운데 우선순위 「높음」인 T017을 골라 내용을
+> 검토했습니다. 태스크 문서가 지목한 코드 위치도 실제로 확인해서 주장과
+> 대조했습니다. [태스크가 주장하는 문제 3건 요약: ① `task.changes`의
+> `Promise.all` + max 커서 조합으로 인한 영구 유실, ② `task.range` 초기 로드
+> 베이스라인 오염, ③ `remove`의 version 미증가] 코드 대조 결과 — 세 가지 지적
+> 모두 현재 코드와 정확히 일치합니다. `router.ts:86-91`의 `Promise.all` +
+> `Math.max` 커서 조합, `router.ts:26-30`의 3중 병렬 읽기, `sql.ts:242`에서
+> `update`와 달리 `version` 증가가 빠진 것까지 그대로입니다. [중략] 진단이
+> 정확하고 수정 방향도 아키텍처 컨벤션(포트가 트랜잭션 소유)에 맞게 잡혀 있어서
+> 문서 그대로 진행해도 무리가 없어 보입니다.
+>
+> **사용자**: 음 이해가 안가네 더 이해하기 쉽게 설명을 해달라
+>
+> **Claude**: [동기화 원리 설명: 모든 변경에 일련번호(seq), 기기는 "몇 번까지
+> 받았어" 커서 보유. 성립 조건은 단 하나 — "커서가 N이면 N번 이하 변경은 전부
+> 전달됐다"] 문제: 서버가 두 번 나눠서 읽는다 — 델타를 내려주는 `task.changes`는
+> 두 개의 쿼리를 동시에 던지는데, 프로덕션 Postgres는 커넥션 풀을 쓰기 때문에 이
+> 두 쿼리가 서로 다른 커넥션에서 실행되고 각자 서로 다른 순간의 데이터베이스를
+> 봅니다. [타임라인: ① 태스크 쿼리 실행 → ② 다른 기기가 태스크 수정(seq 5) →
+> ③ 프로젝트 수정(seq 6) → ④ 프로젝트 쿼리 실행] 응답에 담긴 건 프로젝트
+> 변경(seq 6)뿐인데 커서는 "본 것들 중 최댓값"인 6이 됩니다. 기기는 다음에
+> "7번부터 주세요"라고 하죠. seq 5짜리 태스크 변경은 영영 안 내려옵니다. 에러도
+> 안 나고 조용히 어긋나는 게 이 버그의 고약한 점입니다. [중략] 고치는 방법을 한
+> 문장으로: 여러 번 나눠 읽던 걸 한 장의 사진으로 바꾼다 — 관련 쿼리들을 하나의
+> 트랜잭션(REPEATABLE READ)으로 묶고, 커서도 같은 사진 안에서 카운터 테이블
+> (`sync_counters`)을 직접 읽어 정합니다.
+>
+> **사용자**: 좋아 진행하자
+>
+> **Claude**: [구현 진행 — 작업 로그 참조. 완료 기준 4건 전부 충족, 커밋 56314f9]
+
 ## 작업 로그
 
-- (없음)
+- **56314f9** — 동기화 읽기 단일 스냅샷화 + tombstone version 증가
+  - `SyncReadStore` 포트 신설 (`modules/task/ports.ts`): `range`/`changes`가
+    데이터+커서를 한 스냅샷에서 읽는 연산을 통째로 소유. 조합 가능한 낱개 읽기
+    (`listRange`·`changesSince`·`syncCursor`)는 포트에서 제거해 라우터가 다시
+    조합하는 구멍을 봉인 (헥사고날 경계 유지 — 트랜잭션 조립은 어댑터 소관).
+  - `SqlSyncReadStore`: REPEATABLE READ 트랜잭션 하나에서 counters → 데이터 순으로
+    읽고 커서를 `sync_counters.seq`에서 도출. 쓰기가 advisory lock으로 직렬화되어
+    seq 발급 순서 = 커밋 순서이므로 "스냅샷의 counters.seq = N ⇒ seq ≤ N 변경 전부
+    가시"가 성립 — 커서 ≤ 데이터 스냅샷 보장. 낱개 SELECT는 모듈 함수로 추출해
+    스토어 메서드(`listByUser`)와 스냅샷 트랜잭션이 공유.
+  - `InMemorySyncReadStore`: 데이터+커서를 동기 블록 하나에서 계산 (SQL의 단일
+    스냅샷에 대응). 메모리 스토어의 낱개 읽기는 동기 메서드로 전환.
+  - `SqlTaskStore.remove`에 `version + 1` 추가 (memory 구현은 이미 증가하고 있었음
+    — 어댑터 간 불일치이기도 했다).
+  - 라우터 `range`/`changes`는 `syncReads` 위임으로 축소, `AppDeps`/`AppRouterDeps`/
+    `TaskRouterDeps`에 `syncReads` 배선 (`index.ts`는 `SqlSyncReadStore`,
+    `app.test.ts`는 `InMemorySyncReadStore`).
+  - 회귀 테스트 (`adapters.test.ts`): ① 커서-counters 도출 계약 — not-found
+    `remove`가 seq를 소모해 갭을 만들면 행-max 도출(1)과 counters 도출(2)이
+    구별된다, SQL 전용 (memory는 not-found에 seq를 소모하지 않음). 스냅샷 레이스
+    자체는 단일 커넥션 PGlite로 재현 불가 — 태스크 문서의 예상대로 계약 잠금으로
+    대체. ② tombstone `version: 2` 단언. 기존 계약 테스트는 `syncReads` 경유로 이관.
+  - 검증: `bun run typecheck` 4패키지 통과, `biome lint`/`check`/`lint:deps` 클린,
+    BFF `bun test src` 96 pass / 0 fail (종료 코드 99는 변경 전 baseline에서도
+    동일한 기존 현상, design-guide 테스트의 Vite 종료 타임아웃 실패도 본 변경과
+    무관 — 해당 패키지 파일 변경 없음).
