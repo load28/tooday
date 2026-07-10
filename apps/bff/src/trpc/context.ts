@@ -1,7 +1,5 @@
-import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { serializeAccessCookie, serializeAuthCookieRemovals, serializeRefreshCookie } from '@bff/modules/auth/cookies';
-import type { RefreshTokenStore } from '@bff/modules/auth/ports';
-import { verifyLiveSession } from '@bff/modules/auth/session-liveness';
+import type { AuthGateway } from '@bff/modules/auth/ports';
 import { extractAccessToken } from '@bff/modules/auth/token';
 import type { BffConfig } from '@bff/platform/config';
 import type { TokenPair } from '@tooday/shared';
@@ -20,15 +18,14 @@ export type TrpcContext = {
 
 export interface TrpcContextDeps {
   config: BffConfig;
-  accessTokens: AccessTokenService;
-  refreshTokens: RefreshTokenStore;
+  auth: AuthGateway;
 }
 
-export function createContextFactory({ config, accessTokens, refreshTokens }: TrpcContextDeps) {
+export function createContextFactory({ config, auth }: TrpcContextDeps) {
   return async (opts: FetchCreateContextFnOptions, c: HonoContext): Promise<TrpcContext> => {
-    // 인증 핫패스 — 액세스 JWT 검증 + 세션 라이브니스 체크(즉시 무효화). 유저 조회는 안 탐.
+    // 인증 핫패스 — 검증(JWT + 세션 라이브니스)의 실제 동작은 러스트 API가 소유한다.
     const accessToken = extractAccessToken({ c, cookieName: config.accessCookieName });
-    const userId = await verifyLiveSession({ token: accessToken, accessTokens, refreshTokens });
+    const userId = await auth.verifyAccessToken(accessToken);
 
     return {
       userId,

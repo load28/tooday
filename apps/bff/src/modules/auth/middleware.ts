@@ -1,14 +1,11 @@
-import type { AccessTokenService } from '@bff/modules/auth/access-token';
-import type { RefreshTokenStore } from '@bff/modules/auth/ports';
-import { verifyLiveSession } from '@bff/modules/auth/session-liveness';
+import type { AuthGateway } from '@bff/modules/auth/ports';
 import { extractAccessToken } from '@bff/modules/auth/token';
 import { DOMAIN_ERROR_CODES, domainErrorMessage } from '@bff/platform/errors';
 import { errorResponse } from '@bff/platform/http';
 import { createMiddleware } from 'hono/factory';
 
 export interface RequireAuthDeps {
-  accessTokens: AccessTokenService;
-  refreshTokens: RefreshTokenStore;
+  auth: AuthGateway;
   cookieName: string;
 }
 
@@ -19,13 +16,13 @@ export type AuthedEnv = {
 
 /**
  * tRPC 밖의 Hono 라우트(SSE 등)용 인증 가드.
- * protectedProcedure와 동일한 규칙(액세스 JWT 검증 + 세션 라이브니스 → 미인증 시 401)을
- * verifyLiveSession으로 공유해, 인증 로직이 두 벌로 갈라지지 않게 한다.
+ * protectedProcedure와 동일한 규칙(게이트웨이 verifyAccessToken → 미인증 시 401)을
+ * 공유해, 인증 로직이 두 벌로 갈라지지 않게 한다.
  */
-export function requireAuth({ accessTokens, refreshTokens, cookieName }: RequireAuthDeps) {
+export function requireAuth({ auth, cookieName }: RequireAuthDeps) {
   return createMiddleware<AuthedEnv>(async (c, next) => {
     const token = extractAccessToken({ c, cookieName });
-    const userId = await verifyLiveSession({ token, accessTokens, refreshTokens });
+    const userId = await auth.verifyAccessToken(token);
     if (!userId) {
       return errorResponse({
         c,

@@ -1,6 +1,5 @@
-import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { requireAuth } from '@bff/modules/auth/middleware';
-import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
+import type { AuthGateway } from '@bff/modules/auth/ports';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import type { UserReader } from '@bff/modules/user/ports';
 import type { BffConfig } from '@bff/platform/config';
@@ -19,10 +18,8 @@ import { streamSSE } from 'hono/streaming';
 
 export interface AppDeps {
   config: BffConfig;
-  users: UserStore;
+  auth: AuthGateway;
   userReader: UserReader;
-  refreshTokens: RefreshTokenStore;
-  accessTokens: AccessTokenService;
   tasks: TaskStore;
   projects: ProjectStore;
   sync: SyncBroker;
@@ -72,8 +69,7 @@ export function createApp(deps: AppDeps) {
   app.get(
     SYNC_EVENTS_PATH,
     requireAuth({
-      accessTokens: deps.accessTokens,
-      refreshTokens: deps.refreshTokens,
+      auth: deps.auth,
       cookieName: deps.config.accessCookieName,
     }),
     (c) => {

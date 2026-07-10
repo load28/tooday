@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '@bff/app';
 import { createAccessTokenService } from '@bff/modules/auth/access-token';
-import { InMemoryRefreshTokenStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
+import { InMemoryAuthGateway, InMemoryRefreshTokenStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
 import { serializeAccessCookie, serializeAuthCookieRemovals, serializeRefreshCookie } from '@bff/modules/auth/cookies';
 import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
@@ -27,14 +27,10 @@ function setup(overrides: Partial<BffConfig> = {}) {
     accessCookieName: 'tooday_access',
     refreshCookieName: 'tooday_refresh',
     cookieSecure: false,
-    jwtSecret: 'test-secret',
     accessTtlMs: 60_000,
-    refreshIdleTtlMs: 60_000,
     refreshAbsoluteTtlMs: 120_000,
-    databaseUrl: null,
-    pgliteDataDir: 'memory://',
-    pgPoolSize: 1,
-    redisUrl: null,
+    apiUrl: 'http://localhost:0', // 인메모리 게이트웨이를 쓰므로 실제로 호출되지 않는다
+    apiInternalToken: null,
     logFormat: 'pretty',
     logRequests: false,
     ...overrides,
@@ -42,16 +38,20 @@ function setup(overrides: Partial<BffConfig> = {}) {
   const users = new InMemoryUserStore();
   const counter = new InMemorySyncCounter();
   const sync = new InMemorySyncBroker();
-  const app = createApp({
-    config,
+  // 러스트 API의 인증 흐름을 인메모리로 흉내 낸 게이트웨이 — 조립(쿠키·캐시·매핑)만 검증한다
+  const auth = new InMemoryAuthGateway({
     users,
-    // InMemoryUserStore가 포트 밖 findById로 UserReader를 구조적으로 충족한다 — 같은 가짜 users 테이블
-    userReader: users,
     refreshTokens: new InMemoryRefreshTokenStore({
-      idleTtlMs: config.refreshIdleTtlMs,
+      idleTtlMs: 60_000,
       absoluteTtlMs: config.refreshAbsoluteTtlMs,
     }),
-    accessTokens: createAccessTokenService({ secret: config.jwtSecret, ttlMs: config.accessTtlMs }),
+    accessTokens: createAccessTokenService({ secret: 'test-secret', ttlMs: config.accessTtlMs }),
+  });
+  const app = createApp({
+    config,
+    auth,
+    // InMemoryUserStore가 findById로 UserReader를 구조적으로 충족한다 — 같은 가짜 users 테이블
+    userReader: users,
     tasks: new InMemoryTaskStore(counter),
     projects: new InMemoryProjectStore(counter),
     sync,

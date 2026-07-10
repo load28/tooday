@@ -1,7 +1,8 @@
 # 로컬 개발용 인프라 — 실제 서버가 필요한 것만(PostgreSQL, Redis) 한 번에 띄운다.
-# BFF는 이 둘을 기본적으로 요구하지 않는다(미설정이면 임베디드 PGlite + DB 세션).
-# 여기서 띄운 뒤 apps/bff/.env 에 아래 접속 문자열을 넣으면 프로덕션과 같은 경로로 돈다:
+# apps/api(러스트)는 PostgreSQL이 필수다 — 개발 전에 `bun run infra:up`으로 띄운다.
+# API의 기본 DATABASE_URL이 아래 접속 문자열이라 env 없이 바로 붙는다:
 #   DATABASE_URL=postgres://tooday:tooday@localhost:5432/tooday
+# Redis는 리프레시 토큰 저장소 opt-in(REDIS_URL 설정)일 때만 필요하다:
 #   REDIS_URL=redis://localhost:6379
 #
 # 사용:  bun run infra:up   /  infra:down  /  infra:logs  /  infra:reset

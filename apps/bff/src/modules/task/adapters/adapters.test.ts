@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'bun:test';
 import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
-import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
-import { testDatabase } from '@bff/platform/db/testing';
+
+/*
+ * 인메모리 태스크 세계의 행동 명세 — 실제 구현(러스트 API apps/api/src/task.rs)과 의미가
+ * 일치해야 app.test.ts의 조립 검증이 유효하다. 실제 구현은 러스트 단위 테스트와 E2E가 검증한다.
+ */
 
 interface Stores {
   projects: ProjectStore;
   tasks: TaskStore;
-  /** SQL 구현은 tasks.user_id FK 때문에 실제 유저 행이 필요하다 */
   seedUser: (id: string) => Promise<void>;
 }
 
@@ -25,22 +27,6 @@ const IMPLEMENTATIONS: Implementation[] = [
         projects: new InMemoryProjectStore(counter),
         tasks: new InMemoryTaskStore(counter),
         seedUser: async () => {},
-      };
-    },
-  },
-  {
-    name: 'sql(pglite)',
-    make: async () => {
-      const db = await testDatabase();
-      return {
-        projects: new SqlProjectStore(db),
-        tasks: new SqlTaskStore(db),
-        seedUser: async (id) => {
-          await db
-            .insertInto('users')
-            .values({ id, email: `${id}@tooday.app`, name: id, password_hash: 'x' })
-            .execute();
-        },
       };
     },
   },

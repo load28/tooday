@@ -1,0 +1,16 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": ["src/**", "migrations/**", "Cargo.toml", "Cargo.lock"],
+      "outputs": []
+    },
+    "test": {
+      "inputs": ["src/**", "migrations/**", "Cargo.toml", "Cargo.lock"]
+    },
+    "typecheck": {
+      "inputs": ["src/**", "migrations/**", "Cargo.toml", "Cargo.lock"]
+    }
+  }
+}

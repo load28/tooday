@@ -1,5 +1,4 @@
-import type { AccessTokenService } from '@bff/modules/auth/access-token';
-import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
+import type { AuthGateway } from '@bff/modules/auth/ports';
 import { createAuthRouter } from '@bff/modules/auth/router';
 import { pubRouter } from '@bff/modules/pub/router';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
@@ -10,10 +9,8 @@ import type { SyncBroker } from '@bff/platform/sync-broker';
 import { router } from '@bff/trpc/init';
 
 export interface AppRouterDeps {
-  users: UserStore;
+  auth: AuthGateway;
   userReader: UserReader;
-  refreshTokens: RefreshTokenStore;
-  accessTokens: AccessTokenService;
   tasks: TaskStore;
   projects: ProjectStore;
   sync: SyncBroker;

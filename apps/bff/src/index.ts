@@ -1,54 +1,26 @@
 import { createApp } from '@bff/app';
-import { createAccessTokenService } from '@bff/modules/auth/access-token';
-import { SqlUserStore } from '@bff/modules/auth/adapters/sql';
-import { createRefreshTokenStore } from '@bff/modules/auth/refresh-token-store';
-import { startRefreshTokenSweep } from '@bff/modules/auth/refresh-token-sweeper';
-import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
-import { SqlUserReader } from '@bff/modules/user/adapters/sql';
+import { HttpAuthGateway } from '@bff/modules/auth/adapters/http';
+import { HttpProjectStore, HttpTaskStore } from '@bff/modules/task/adapters/http';
+import { HttpUserReader } from '@bff/modules/user/adapters/http';
+import { createApiClient } from '@bff/platform/api-client';
 import { loadConfig } from '@bff/platform/config';
-import { migrateToLatest } from '@bff/platform/db/migrate';
-import { createPgliteDatabase } from '@bff/platform/db/pglite';
-import { createPostgresDatabase } from '@bff/platform/db/postgres';
 import { createLogger } from '@bff/platform/logging';
 import { InMemorySyncBroker } from '@bff/platform/sync-broker';
 
 const config = loadConfig();
 const logger = createLogger(config.logFormat);
 
-const db = config.databaseUrl
-  ? createPostgresDatabase({ url: config.databaseUrl, poolSize: config.pgPoolSize })
-  : await createPgliteDatabase(config.pgliteDataDir);
-const { applied } = await migrateToLatest(db);
-logger.info('database_ready', {
-  engine: config.databaseUrl ? 'postgres' : 'pglite',
-  migrationsApplied: applied,
-});
-
-const users = new SqlUserStore(db);
-const accessTokens = createAccessTokenService({ secret: config.jwtSecret, ttlMs: config.accessTtlMs });
-const {
-  store: refreshTokens,
-  backend,
-  needsExpirySweep,
-} = createRefreshTokenStore({
-  redisUrl: config.redisUrl,
-  db,
-  idleTtlMs: config.refreshIdleTtlMs,
-  absoluteTtlMs: config.refreshAbsoluteTtlMs,
-});
-logger.info('refresh_token_store_ready', { backend });
-if (needsExpirySweep) {
-  await startRefreshTokenSweep({ store: refreshTokens, logger });
-}
+// 실제 내부 동작(인증·데이터·동기화 seq)은 전부 러스트 API(apps/api)가 소유한다 —
+// BFF는 HTTP 어댑터로 포트를 채워 tRPC 계약·쿠키·캐시·SSE만 조립한다.
+const api = createApiClient({ baseUrl: config.apiUrl, internalToken: config.apiInternalToken });
+logger.info('api_client_ready', { apiUrl: config.apiUrl });
 
 const app = createApp({
   config,
-  users,
-  userReader: new SqlUserReader(db),
-  refreshTokens,
-  accessTokens,
-  tasks: new SqlTaskStore(db),
-  projects: new SqlProjectStore(db),
+  auth: new HttpAuthGateway(api),
+  userReader: new HttpUserReader(api),
+  tasks: new HttpTaskStore(api),
+  projects: new HttpProjectStore(api),
   sync: new InMemorySyncBroker(),
   logger,
 });

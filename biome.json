@@ -19,7 +19,8 @@
       "!**/.tanstack",
       "!**/.output",
       "!**/styled-system",
-      "!**/dist"
+      "!**/dist",
+      "!apps/api/target"
     ]
   },
   "formatter": {

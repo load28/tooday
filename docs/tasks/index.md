@@ -47,3 +47,4 @@
 | T022 | [계약·동기화 테스트 공백](T022-contract-test-gaps.md) | 중간 | ⬜ 대기 |
 | T023 | [웹 잔여 공통화·정리 (폼 조각·중복 레이아웃)](T023-web-shared-scaffolds.md) | 낮음 | ⬜ 대기 |
 | T024 | [디자인 토큰 위생 (panda.config 정합)](T024-design-token-hygiene.md) | 낮음 | ⬜ 대기 |
+| T025 | [BFF 내부 동작을 러스트 API(apps/api)로 일괄 분리](T025-rust-api-migration.md) | 높음 | ✅ 완료 |

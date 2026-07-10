@@ -5,14 +5,16 @@
 ```
 [웹뷰 앱 (TanStack Start)]
         ↓ tRPC (React Query)
-[BFF (Hono + tRPC)]
-        ↓ HTTP (인증 헤더 주입)
-[API 서버]
+[BFF (Hono + tRPC)] — 조립: 쿠키·tRPC 계약·캐시 정책·SSE
+        ↓ HTTP (내부 API, INTERNAL_API_TOKEN)
+[API 서버 (apps/api, Rust: axum + sqlx + PostgreSQL)] — 실제 내부 동작
 ```
 
 - 웹뷰 전용 앱 (SEO 불필요)
 - TanStack Start는 클라이언트 중심 SSR 프레임워크로 사용
-- BFF가 인증의 관문 역할을 담당
+- BFF가 인증의 관문 역할을 담당 — 단, 관문의 **실제 동작**(비밀번호 해싱, 토큰
+  발급·검증·회전, 재사용 탐지, 세션 라이브니스)은 러스트 API가 소유하고, BFF는
+  `AuthGateway` 포트(HTTP 어댑터)로 위임해 쿠키·응답만 조립한다 (T025)
 - Start의 서버 함수는 최소한으로 사용
 
 ## 역할 분리
@@ -25,15 +27,16 @@
 
 ### BFF (Hono + tRPC)
 
-- 로그인/로그아웃 처리 (Set-Cookie)
-- 쿠키 파싱 → 세션 검증 → 인증 헤더 주입
-- 모든 데이터 API 프록시
-- 필요 시 데이터 어그리게이션 (여러 API 합성)
+- 로그인/로그아웃 처리의 표면 (Set-Cookie) — 토큰 발급 자체는 API에 위임
+- 쿠키/`Authorization` 파싱 → API `/internal/auth/verify`로 검증 위임 → `ctx.userId`
+- 모든 데이터 API 프록시 (포트별 HTTP 어댑터)
+- 필요 시 데이터 어그리게이션 (여러 API 합성 — 예: `task.range`, `task.projects`)
 
-### API 서버
+### API 서버 (apps/api — Rust)
 
-- 비즈니스 로직 및 데이터 처리
-- BFF로부터 인증 헤더를 받아 유저 식별
+- 비즈니스 로직 및 데이터 처리 (인증 내부 동작 + 태스크/프로젝트 + sync seq)
+- PostgreSQL(sqlx)·Redis(리프레시 저장소 opt-in) 소유, 마이그레이션도 여기서 적용
+- BFF와는 `INTERNAL_API_TOKEN` Bearer로 신뢰 경계를 긋는다 (프로덕션 필수)
 
 ## 토큰 모델 (액세스 / 리프레시)
 
@@ -41,16 +44,16 @@
 
 | | 액세스 토큰 | 리프레시 토큰 |
 |--|-----------|-------------|
-| 형태 | JWT (HS256, `hono/jwt`) | 불투명 랜덤 문자열 |
+| 형태 | JWT (HS256, `jsonwebtoken` — apps/api) | 불투명 랜덤 문자열 |
 | 저장 | **저장 안 함**(무상태) | Redis/DB에 해시로 저장 |
 | 내용 | `userId(sub)` + `sid` + `exp` | 없음(키일 뿐) |
 | 검증 | 서명·만료(무상태) + 세션 라이브니스 1회 | 저장소 조회 |
 | 수명 | 짧다 (기본 15분) | idle 14일(슬라이딩) / absolute 90일(하드캡) |
 | 쓰임 | 매 요청 인증 | 액세스 만료 시 재발급 |
 
-- **핫패스가 유저 조회를 안 탄다** — 매 요청은 액세스 JWT 서명·만료 검증(`AccessTokenService`)
-  + 세션 라이브니스 체크 1회(아래)만 한다. 유저 프로필은 JWT에 담지 않고 `user.me`에서만
-  지연 조회한다(프로필 변경이 토큰 만료까지 지연되지 않게).
+- **핫패스가 유저 조회를 안 탄다** — 매 요청은 API `/internal/auth/verify` 한 호출로
+  액세스 JWT 서명·만료 검증 + 세션 라이브니스 체크(아래)를 함께 한다. 유저 프로필은 JWT에
+  담지 않고 `user.me`에서만 지연 조회한다(프로필 변경이 토큰 만료까지 지연되지 않게).
 - **두 토큰 모두 httpOnly 쿠키**(`tooday_access`, `tooday_refresh`)로 내려 SSR 인증이 쿠키
   포워딩으로 그대로 동작한다. 네이티브/웹뷰 브릿지는 쿠키를 못 쓰므로 body의 토큰을
   `Authorization: Bearer`로 싣는다.
@@ -71,8 +74,9 @@
 
 무상태 JWT는 그 자체로는 만료 전 무효화가 불가하다. 그래서 액세스 JWT에 **`sid`(OIDC
 세션 id 클레임)**를 심고, 매 요청 서명·만료 검증 뒤 **세션이 살아있는지 한 번 확인**한다
-(`session-liveness.ts`의 `verifyLiveSession` — tRPC 컨텍스트와 SSE 미들웨어가 공유). 로그아웃·
-재사용 탐지가 세션을 폐기하면 아직 만료 안 된 액세스도 **다음 요청에서 곧바로 거부**된다.
+(API `/internal/auth/verify`, 구현은 `apps/api/src/auth/routes.rs` — BFF에서는 tRPC 컨텍스트와
+SSE 미들웨어가 `AuthGateway.verifyAccessToken`으로 공유). 로그아웃·재사용 탐지가 세션을
+폐기하면 아직 만료 안 된 액세스도 **다음 요청에서 곧바로 거부**된다.
 
 - **세션 = 리프레시 회전 계보.** 자기 리프레시 토큰으로 존재하며, 폐기되면 사라진다
   (`isSessionLive(sid)`). 조회처는 Redis `EXISTS`(인메모리, 1ms 미만) 또는 DB 인덱스 조회.
@@ -93,9 +97,9 @@
 ```
 1. 사용자 → 로그인 폼 (클라이언트 컴포넌트)
 2. → tRPC mutation (auth.login) 호출
-3. → BFF가 자격 증명 검증
-4. → 리프레시 토큰 발급(Redis/DB 저장) + 액세스 JWT 서명
-5. → Set-Cookie로 액세스·리프레시를 httpOnly 쿠키에 설정 + body에 토큰 쌍(브릿지용)
+3. → BFF가 러스트 API `/internal/auth/login`에 위임: 자격 증명 검증(argon2)
+4. → API가 리프레시 토큰 발급(Redis/DB 저장) + 액세스 JWT 서명 → 토큰 쌍 반환
+5. → BFF가 Set-Cookie로 액세스·리프레시를 httpOnly 쿠키에 설정 + body에 토큰 쌍(브릿지용)
 6. → 클라이언트에 성공 응답
 ```
 
@@ -104,8 +108,8 @@
 ```
 1. 요청이 401 (액세스 JWT 만료)
 2. → 클라이언트가 auth.refresh 호출 (리프레시 쿠키)  ← 웹은 single-flight로 한 번만
-3. → BFF가 리프레시 회전: 옛 토큰 supersede, 새 토큰 발급(idle 슬라이딩, absolute 캡)
-4. → 새 액세스·리프레시 쿠키 Set-Cookie
+3. → BFF가 API `/internal/auth/refresh`에 위임: 옛 토큰 supersede, 새 토큰 발급(idle 슬라이딩, absolute 캡)
+4. → BFF가 새 액세스·리프레시 쿠키 Set-Cookie
 5. → 클라이언트가 원요청 재시도
 ```
 
