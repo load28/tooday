@@ -32,10 +32,12 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   `REDIS_URL` 설정 시 Redis(라이브니스=EXISTS, 네이티브 TTL로 스윕 불필요), 미설정이면 DB
   테이블 — `DATABASE_URL`과 같은 opt-in이라 개발·테스트는 외부 의존성 0.
   자세한 설계는 [docs/authentication-architecture.md](docs/authentication-architecture.md).
-- **apps/push-server** — Rust(tokio) 푸시 스케줄러 데몬. 태스크 시작 시간이 되면
-  구독 기기(`push_subscriptions`)로 푸시를 보낸다 — 폴링 + `task_push_sends`
-  dedup claim으로 다중 인스턴스에서도 1회 발송. 발송기는 플러그블(log/expo).
-  [apps/push-server/README.md](apps/push-server/README.md) 참고.
+- **apps/push-server** — BFF와 독립인 Rust(tokio) 푸시 서버. 태스크 시작 시간이
+  되면 구독 기기(`push_subscriptions`)로 푸시를 보낸다 — 폴링 + `task_push_sends`
+  dedup claim으로 다중 인스턴스에서도 1회 발송. DB는 공유하되 스키마 소유는 분리:
+  푸시 테이블은 자체 마이그레이션으로 직접 관리하고 BFF 테이블은 읽기만 한다.
+  구독 등록/해제 HTTP API 내장(BFF 액세스 JWT를 시크릿 공유로 검증, port 3003).
+  발송기는 플러그블(log/expo). [apps/push-server/README.md](apps/push-server/README.md) 참고.
 - **apps/design-guide** — Toss 스타일 미니멀 디자인 가이드 / 화면 프로토타입.
   시간 뷰 (`/`), 프로젝트 보드 (`/projects`, `/projects/$id`), 태스크 상세
   (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).

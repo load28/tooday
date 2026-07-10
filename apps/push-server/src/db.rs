@@ -78,6 +78,39 @@ pub async fn release_claim(client: &Client, task: &DueTask) -> anyhow::Result<()
     Ok(())
 }
 
+/// 구독 upsert — 같은 토큰이 다시 오면(재로그인·계정 전환) 최신 유저·플랫폼으로 덮는다.
+pub async fn upsert_subscription(
+    client: &Client,
+    token: &str,
+    user_id: &str,
+    platform: &str,
+) -> anyhow::Result<()> {
+    client
+        .execute(
+            "insert into push_subscriptions (token, user_id, platform) \
+             values ($1, ($2::text)::uuid, $3) \
+             on conflict (token) do update set user_id = excluded.user_id, platform = excluded.platform",
+            &[&token, &user_id, &platform],
+        )
+        .await?;
+    Ok(())
+}
+
+/// 본인 소유 구독만 지운다 — 다른 유저의 토큰은 건드리지 못한다.
+pub async fn delete_subscription(
+    client: &Client,
+    token: &str,
+    user_id: &str,
+) -> anyhow::Result<()> {
+    client
+        .execute(
+            "delete from push_subscriptions where token = $1 and user_id = ($2::text)::uuid",
+            &[&token, &user_id],
+        )
+        .await?;
+    Ok(())
+}
+
 pub async fn fetch_targets(client: &Client, user_id: &str) -> anyhow::Result<Vec<PushTarget>> {
     let rows = client
         .query(

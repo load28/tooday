@@ -56,9 +56,32 @@
 
 ### 남긴 것 (후속 태스크 후보)
 
-- BFF에 구독 등록/해제 tRPC 라우트 (`push.register` 등) + RN 셸에서 토큰 전달.
+- ~~BFF에 구독 등록/해제 tRPC 라우트~~ → 방향 수정으로 push-server 자체 API로 이관 (아래).
+- RN 셸에서 push-server API로 토큰 전달 배선.
 - 유저별 시간대 컬럼과 due 판정 반영.
 - FCM HTTP v1 / APNs 직결 발송기.
+
+### 방향 수정 (2026-07-10) — BFF와 완전 분리
+
+사용자 지시로 푸시 서버를 BFF에서 완전히 독립시켰다. DB는 공유하되 **스키마
+소유를 분리**한다:
+
+- BFF 마이그레이션 0007과 `schema.ts`의 푸시 테이블 타입을 **제거** — BFF는
+  푸시의 존재를 모른다.
+- 푸시 테이블은 push-server가 부팅 시 자체 버전드 마이그레이션
+  (`src/migrations.rs`, 이력 테이블 `push_server_migrations`,
+  `pg_advisory_lock`으로 다중 인스턴스 동시 부팅 안전)으로 만든다.
+  BFF 테이블에 FK를 걸지 않는다 — 서비스 간 DDL 의존(부팅 순서·이름 변경
+  파급)을 없애기 위해서다. 고아 행은 무해하다(dedup 로그 + due 조인으로
+  선택 안 됨).
+- 구독 등록/해제도 BFF가 아니라 push-server 내장 HTTP API(axum, 기본
+  127.0.0.1:3003)가 받는다. 인증은 BFF 발급 액세스 JWT(HS256, `sub`=userId)를
+  시크릿 공유(`PUSH_JWT_SECRET`=`BFF_JWT_SECRET`)로 직접 검증 — BFF와 달리
+  세션 라이브니스 체크는 생략(저위험 쓰기 + 액세스 TTL 15분에 폐기 지연이
+  갇힌다).
+  - `POST /subscriptions {token, platform}` upsert / `DELETE /subscriptions
+    {token}` 본인 소유만 / `GET /healthz`.
+- 커넥션은 수동 재접속 대신 deadpool-postgres 풀로 전환 (스케줄러·API 공용).
 
 ## 완료 기준
 
@@ -78,6 +101,16 @@
 > 설계 방향: `apps/push-server/`(Rust/tokio 폴링 데몬), DB 마이그레이션 0007로
 > `push_subscriptions`·`task_push_sends` 추가, 시간대 없는 `date`+`start_at`은
 > 설정 타임존(기본 Asia/Seoul)으로 해석, 발송기는 플러그블(log/expo).
+> [구현·검증 완료 후 요약 보고 — 마이그레이션은 BFF 체계(0007)에 추가했고
+> 구독 등록 API는 BFF tRPC 라우트로 후속 제안]
+
+> **사용자**: bff말고 푸시서버기 뱔도로있어야함
+>
+> **Claude**: BFF와의 접점을 걷어내고 푸시서버를 완전히 독립시키라는 말씀이군요.
+> 지금도 별도 프로세스이긴 한데, 테이블 DDL을 BFF 마이그레이션에 넣어둔 게
+> 결합점입니다. 그걸 푸시서버 소유로 옮기고(자체 마이그레이션, BFF 테이블에 FK
+> 없음), 구독 등록 API도 BFF가 아니라 푸시서버 자체에 얹겠습니다(BFF 액세스
+> JWT를 시크릿 공유로 검증). → 「방향 수정 (2026-07-10)」 반영.
 
 ## 작업 로그
 
@@ -95,3 +128,15 @@
     `start_at` 변경 시 새 키로 재알림(로그·행 확인).
   - 발견·수정: tokio-postgres에서 `$1::uuid` 캐스트는 파라미터 타입을 uuid로
     추론시켜 String 직렬화가 실패한다 — `($1::text)::uuid`로 우회.
+- 2026-07-10: 방향 수정 — BFF와 완전 분리 (위 「방향 수정」 참고).
+  - BFF 되돌림: 마이그레이션 0007 제거, `schema.ts` 푸시 테이블 타입 제거.
+  - push-server에 추가: `migrations.rs`(자체 버전드 마이그레이션 + advisory
+    lock), `auth.rs`(JWT 검증), `http.rs`(axum 구독 API),
+    deadpool-postgres 풀 전환.
+  - 검증: `cargo test` 8건(기존 4 + JWT 4: 유효/만료/오서명/sub 없음) 통과,
+    clippy 0, bff `bun test` 95 pass(0007 제거 후에도 정상), typecheck·biome 통과.
+  - E2E(docker Postgres 리셋 후): BFF 마이그레이션 0006까지만 적용 →
+    push-server 부팅이 `0001_init` 자체 적용(`push_server_migrations` 확인) →
+    HTTP API: 무인증 401 / 잘못된 platform 400 / 등록·해제 204 (hono/jwt로
+    서명한 실제 형식의 액세스 JWT 사용) → 일정 갱신 시 등록된 토큰으로만
+    발송(해제한 fcm 토큰 제외, sent=1/targets=1), 중복 발송 없음.

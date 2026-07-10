@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -22,6 +23,11 @@ pub struct Config {
     /// 유저별 시간대는 후속 과제 (docs/tasks/T025-rust-push-server.md).
     pub timezone: Tz,
     pub sender: SenderKind,
+    /// 구독 등록/해제 HTTP API 바인드 주소.
+    pub http_addr: SocketAddr,
+    /// BFF와 공유하는 액세스 JWT 서명 시크릿(BFF_JWT_SECRET와 같은 값).
+    /// 미설정이면 HTTP API를 끈 채 스케줄러만 돈다.
+    pub jwt_secret: Option<String>,
 }
 
 impl Config {
@@ -50,12 +56,19 @@ impl Config {
             other => bail!("PUSH_SENDER는 log | expo 중 하나여야 합니다 (받은 값: '{other}')"),
         };
 
+        let http_addr: SocketAddr = env_or("PUSH_HTTP_ADDR", "127.0.0.1:3003".parse()?)?;
+        let jwt_secret = std::env::var("PUSH_JWT_SECRET")
+            .ok()
+            .filter(|s| !s.is_empty());
+
         Ok(Self {
             database_url,
             poll_interval: Duration::from_secs(poll_secs),
             lookback_min,
             timezone,
             sender,
+            http_addr,
+            jwt_secret,
         })
     }
 }
