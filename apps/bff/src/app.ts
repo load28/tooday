@@ -1,7 +1,7 @@
 import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import { requireAuth } from '@bff/modules/auth/middleware';
 import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
-import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import type { ProjectStore, SyncReadStore, TaskStore } from '@bff/modules/task/ports';
 import type { UserReader } from '@bff/modules/user/ports';
 import type { BffConfig } from '@bff/platform/config';
 import { errorResponse } from '@bff/platform/http';
@@ -25,6 +25,7 @@ export interface AppDeps {
   accessTokens: AccessTokenService;
   tasks: TaskStore;
   projects: ProjectStore;
+  syncReads: SyncReadStore;
   sync: SyncBroker;
   logger?: Logger;
 }

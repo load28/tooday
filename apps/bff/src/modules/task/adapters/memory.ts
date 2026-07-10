@@ -6,13 +6,14 @@ import type {
   ListTasksRangeInput,
   ProjectStore,
   ProjectTaskCounts,
+  SyncReadStore,
   TaskRefInput,
   TaskStore,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
+import type { Project, ProjectChange, SyncChangesResponse, Task, TaskChange, TaskRangeResponse } from '@tooday/shared';
 
 /** 유저별 단조증가 seq — SQL 구현의 sync_counters에 대응. 두 스토어가 하나를 공유해야 한다 */
 export class InMemorySyncCounter {
@@ -98,7 +99,8 @@ export class InMemoryProjectStore implements ProjectStore {
     return toProject(record);
   }
 
-  async changesSince({ userId, cursor }: ListChangesInput): Promise<ProjectChange[]> {
+  /** InMemorySyncReadStore 전용 — 동기 계산이라 별도 스냅샷 문제가 없다 */
+  changesSince({ userId, cursor }: ListChangesInput): ProjectChange[] {
     return [...this.byId.values()]
       .filter((record) => record.userId === userId && record.syncSeq > cursor)
       .sort(bySyncSeq)
@@ -119,7 +121,8 @@ export class InMemoryTaskStore implements TaskStore {
     return last;
   }
 
-  async listRange({ userId, from, to }: ListTasksRangeInput): Promise<Task[]> {
+  /** InMemorySyncReadStore 전용 — 동기 계산이라 별도 스냅샷 문제가 없다 */
+  listRange({ userId, from, to }: ListTasksRangeInput): Task[] {
     return [...this.byId.values()]
       .filter((record) => record.userId === userId && !record.deleted && record.date >= from && record.date <= to)
       .sort((a, b) => a.date.localeCompare(b.date) || a.startAt.localeCompare(b.startAt))
@@ -192,14 +195,39 @@ export class InMemoryTaskStore implements TaskStore {
     return true;
   }
 
-  async changesSince({ userId, cursor }: ListChangesInput): Promise<TaskChange[]> {
+  /** InMemorySyncReadStore 전용 — 동기 계산이라 별도 스냅샷 문제가 없다 */
+  changesSince({ userId, cursor }: ListChangesInput): TaskChange[] {
     return [...this.byId.values()]
       .filter((record) => record.userId === userId && record.syncSeq > cursor)
       .sort(bySyncSeq)
       .map((record) => ({ ...toTask(record), syncSeq: record.syncSeq, deleted: record.deleted }));
   }
+}
 
-  async syncCursor(userId: string): Promise<number> {
-    return this.counter.current(userId);
+/**
+ * SQL 구현의 단일 REPEATABLE READ 스냅샷에 대응 — 데이터와 커서를 하나의 동기
+ * 블록에서 계산하므로 사이에 다른 쓰기가 낄 수 없다 (커서 ≤ 데이터 스냅샷 보장).
+ */
+export class InMemorySyncReadStore implements SyncReadStore {
+  constructor(
+    private readonly counter: InMemorySyncCounter,
+    private readonly tasks: InMemoryTaskStore,
+    private readonly projects: InMemoryProjectStore,
+  ) {}
+
+  async range(input: ListTasksRangeInput): Promise<TaskRangeResponse> {
+    const cursor = this.counter.current(input.userId);
+    const tasks = this.tasks.listRange(input);
+    // listByUser는 포트 시그니처상 async지만 본문에 await가 없어 여기서 동기로 계산된다
+    const projects = await this.projects.listByUser(input.userId);
+    return { tasks, projects, cursor };
+  }
+
+  async changes(input: ListChangesInput): Promise<SyncChangesResponse> {
+    return {
+      tasks: this.tasks.changesSince(input),
+      projects: this.projects.changesSince(input),
+      cursor: Math.max(input.cursor, this.counter.current(input.userId)),
+    };
   }
 }

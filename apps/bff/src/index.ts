@@ -3,7 +3,7 @@ import { createAccessTokenService } from '@bff/modules/auth/access-token';
 import { SqlUserStore } from '@bff/modules/auth/adapters/sql';
 import { createRefreshTokenStore } from '@bff/modules/auth/refresh-token-store';
 import { startRefreshTokenSweep } from '@bff/modules/auth/refresh-token-sweeper';
-import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
+import { SqlProjectStore, SqlSyncReadStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
 import { SqlUserReader } from '@bff/modules/user/adapters/sql';
 import { loadConfig } from '@bff/platform/config';
 import { migrateToLatest } from '@bff/platform/db/migrate';
@@ -49,6 +49,7 @@ const app = createApp({
   accessTokens,
   tasks: new SqlTaskStore(db),
   projects: new SqlProjectStore(db),
+  syncReads: new SqlSyncReadStore(db),
   sync: new InMemorySyncBroker(),
   logger,
 });

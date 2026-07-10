@@ -1,4 +1,4 @@
-import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import type { ProjectStore, SyncReadStore, TaskStore } from '@bff/modules/task/ports';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import type { SyncBroker } from '@bff/platform/sync-broker';
 import { protectedProcedure, router } from '@bff/trpc/init';
@@ -16,19 +16,19 @@ import {
 export interface TaskRouterDeps {
   tasks: TaskStore;
   projects: ProjectStore;
+  syncReads: SyncReadStore;
   sync: SyncBroker;
 }
 
-export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
+export function createTaskRouter({ tasks, projects, syncReads, sync }: TaskRouterDeps) {
   return router({
-    /** 메인(오늘) 화면 주간 창 데이터 + 동기화 커서 */
+    /**
+     * 메인(오늘) 화면 주간 창 데이터 + 동기화 커서 베이스라인.
+     * 데이터와 커서는 스토어가 단일 스냅샷에서 함께 읽는다 — 라우터에서 낱개
+     * 조회를 조합하면 스냅샷이 갈라져 커서가 못 본 변경을 지나칠 수 있다.
+     */
     range: protectedProcedure.input(taskRangeRequestSchema).query(async ({ ctx, input }): Promise<TaskRangeResponse> => {
-      const [taskList, projectList, cursor] = await Promise.all([
-        tasks.listRange({ userId: ctx.userId, ...input }),
-        projects.listByUser(ctx.userId),
-        tasks.syncCursor(ctx.userId),
-      ]);
-      return { tasks: taskList, projects: projectList, cursor };
+      return syncReads.range({ userId: ctx.userId, ...input });
     }),
 
     /** 태스크 상세 화면 — 단건 조회 */
@@ -81,14 +81,9 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
       return { id: input.id };
     }),
 
-    /** 델타 동기화 — 커서 이후의 변경 전부 (tombstone 포함) */
+    /** 델타 동기화 — 커서 이후의 변경 전부 (tombstone 포함), 단일 스냅샷 (range 주석 참조) */
     changes: protectedProcedure.input(syncChangesRequestSchema).query(async ({ ctx, input }): Promise<SyncChangesResponse> => {
-      const [taskChanges, projectChanges] = await Promise.all([
-        tasks.changesSince({ userId: ctx.userId, cursor: input.cursor }),
-        projects.changesSince({ userId: ctx.userId, cursor: input.cursor }),
-      ]);
-      const maxSeq = Math.max(input.cursor, ...taskChanges.map((c) => c.syncSeq), ...projectChanges.map((c) => c.syncSeq));
-      return { tasks: taskChanges, projects: projectChanges, cursor: maxSeq };
+      return syncReads.changes({ userId: ctx.userId, cursor: input.cursor });
     }),
 
     createProject: protectedProcedure.input(createProjectRequestSchema).mutation(async ({ ctx, input }) => {

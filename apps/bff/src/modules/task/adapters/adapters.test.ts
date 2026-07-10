@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'bun:test';
-import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
-import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
-import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import {
+  InMemoryProjectStore,
+  InMemorySyncCounter,
+  InMemorySyncReadStore,
+  InMemoryTaskStore,
+} from '@bff/modules/task/adapters/memory';
+import { SqlProjectStore, SqlSyncReadStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
+import type { ProjectStore, SyncReadStore, TaskStore } from '@bff/modules/task/ports';
 import { testDatabase } from '@bff/platform/db/testing';
 
 interface Stores {
   projects: ProjectStore;
   tasks: TaskStore;
+  syncReads: SyncReadStore;
   /** SQL 구현은 tasks.user_id FK 때문에 실제 유저 행이 필요하다 */
   seedUser: (id: string) => Promise<void>;
 }
@@ -21,9 +27,12 @@ const IMPLEMENTATIONS: Implementation[] = [
     name: 'memory',
     make: async () => {
       const counter = new InMemorySyncCounter();
+      const projects = new InMemoryProjectStore(counter);
+      const tasks = new InMemoryTaskStore(counter);
       return {
-        projects: new InMemoryProjectStore(counter),
-        tasks: new InMemoryTaskStore(counter),
+        projects,
+        tasks,
+        syncReads: new InMemorySyncReadStore(counter, tasks, projects),
         seedUser: async () => {},
       };
     },
@@ -35,6 +44,7 @@ const IMPLEMENTATIONS: Implementation[] = [
       return {
         projects: new SqlProjectStore(db),
         tasks: new SqlTaskStore(db),
+        syncReads: new SqlSyncReadStore(db),
         seedUser: async (id) => {
           await db
             .insertInto('users')
@@ -78,16 +88,16 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await projects.findById({ userId: USER_B, id: tooday.id })).toBeNull();
     });
 
-    it('태스크를 범위로 조회한다 — 유저·범위 필터, 날짜·시작시각 정렬', async () => {
-      const { tasks } = await setup();
+    it('range는 유저·범위 필터, 날짜·시작시각 정렬로 태스크를 내려준다', async () => {
+      const { tasks, syncReads } = await setup();
       const afternoon = await tasks.create(TASK_INPUT);
       const morning = await tasks.create({ ...TASK_INPUT, title: '아침 스트레칭', startAt: '07:30' });
       const nextDay = await tasks.create({ ...TASK_INPUT, title: '컴포넌트 리뷰', date: '2026-07-05' });
       await tasks.create({ ...TASK_INPUT, title: '범위 밖', date: '2026-07-20' });
       await tasks.create({ ...TASK_INPUT, userId: USER_B, title: '남의 태스크' });
 
-      const listed = await tasks.listRange({ userId: USER_A, from: '2026-07-02', to: '2026-07-08' });
-      expect(listed).toEqual([morning, afternoon, nextDay]);
+      const listed = await syncReads.range({ userId: USER_A, from: '2026-07-02', to: '2026-07-08' });
+      expect(listed.tasks).toEqual([morning, afternoon, nextDay]);
     });
 
     it('findById는 소유자의 살아있는 태스크만 돌려준다', async () => {
@@ -133,18 +143,20 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await tasks.countsByProject(USER_B)).toEqual([]);
     });
 
-    it('remove는 소프트 삭제로 tombstone을 델타에 싣고, 두 번째 삭제는 false다', async () => {
-      const { tasks } = await setup();
-      const task = await tasks.create(TASK_INPUT); // seq 1
+    it('remove는 소프트 삭제로 tombstone을 델타에 싣고 version을 올린다 — 두 번째 삭제는 false', async () => {
+      const { tasks, syncReads } = await setup();
+      const task = await tasks.create(TASK_INPUT); // seq 1, version 1
 
       expect(await tasks.remove({ userId: USER_B, id: task.id })).toBe(false);
       expect(await tasks.remove({ userId: USER_A, id: task.id })).toBe(true); // seq 2
       expect(await tasks.remove({ userId: USER_A, id: task.id })).toBe(false);
 
-      expect(await tasks.listRange({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' })).toEqual([]);
-      const changes = await tasks.changesSince({ userId: USER_A, cursor: 1 });
-      expect(changes).toHaveLength(1);
-      expect(changes[0]).toMatchObject({ id: task.id, deleted: true });
+      const range = await syncReads.range({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' });
+      expect(range.tasks).toEqual([]);
+      const delta = await syncReads.changes({ userId: USER_A, cursor: 1 });
+      expect(delta.tasks).toHaveLength(1);
+      // tombstone도 쓰기 — version이 단조 증가해야 한다
+      expect(delta.tasks[0]).toMatchObject({ id: task.id, deleted: true, version: 2 });
     });
 
     it('update는 patch의 필드만 적용하고 version을 올린다', async () => {
@@ -168,25 +180,60 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await tasks.update({ userId: USER_A, id: crypto.randomUUID(), patch: { status: 'done' } })).toBeNull();
     });
 
-    it('쓰기마다 유저의 sync 커서가 전진하고, changesSince는 커서 이후만 내려준다', async () => {
-      const { tasks, projects } = await setup();
-      expect(await tasks.syncCursor(USER_A)).toBe(0);
+    it('쓰기마다 커서가 전진하고, changes는 커서 이후의 변경만 내려준다', async () => {
+      const { tasks, projects, syncReads } = await setup();
+      expect(await syncReads.range({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' })).toEqual({
+        tasks: [],
+        projects: [],
+        cursor: 0,
+      });
 
       const project = await projects.create({ userId: USER_A, name: 'TooDay 앱', color: 'blue' }); // seq 1
       const task = await tasks.create(TASK_INPUT); // seq 2
-      expect(await tasks.syncCursor(USER_A)).toBe(2);
+      expect((await syncReads.range({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' })).cursor).toBe(2);
 
       await tasks.update({ userId: USER_A, id: task.id, patch: { status: 'done' } }); // seq 3
 
-      expect(await tasks.changesSince({ userId: USER_A, cursor: 2 })).toEqual([
-        { ...task, status: 'done', version: 2, syncSeq: 3, deleted: false },
+      expect(await syncReads.changes({ userId: USER_A, cursor: 2 })).toEqual({
+        tasks: [{ ...task, status: 'done', version: 2, syncSeq: 3, deleted: false }],
+        projects: [],
+        cursor: 3,
+      });
+      expect((await syncReads.changes({ userId: USER_A, cursor: 0 })).projects).toEqual([
+        { ...project, syncSeq: 1, deleted: false },
       ]);
-      expect(await projects.changesSince({ userId: USER_A, cursor: 0 })).toEqual([{ ...project, syncSeq: 1, deleted: false }]);
-      expect(await tasks.changesSince({ userId: USER_A, cursor: 3 })).toEqual([]);
+      // 커서 이후 변경이 없으면 빈 델타, 커서는 제자리
+      expect(await syncReads.changes({ userId: USER_A, cursor: 3 })).toEqual({ tasks: [], projects: [], cursor: 3 });
 
       // 유저 격리 — B의 커서·델타는 A의 쓰기에 영향받지 않는다
-      expect(await tasks.syncCursor(USER_B)).toBe(0);
-      expect(await tasks.changesSince({ userId: USER_B, cursor: 0 })).toEqual([]);
+      expect(await syncReads.changes({ userId: USER_B, cursor: 0 })).toEqual({ tasks: [], projects: [], cursor: 0 });
     });
   });
 }
+
+/*
+ * 커서 도출 계약 — 커서는 반환 행들의 max가 아니라 같은 스냅샷의 sync_counters에서
+ * 나온다 (T017). 스냅샷 레이스 자체는 단일 커넥션 PGlite로 재현할 수 없으므로,
+ * not-found 쓰기가 seq를 소모해(갭 허용) 카운터가 행보다 앞서는 상황으로 도출
+ * 방식을 구별해 잠근다. memory는 not-found에 seq를 소모하지 않아 SQL 전용이다.
+ */
+describe('SqlSyncReadStore — 커서는 counters에서 도출된다', () => {
+  it('행 없는 쓰기로 seq 갭이 생겨도 커서는 카운터를 따른다', async () => {
+    const db = await testDatabase();
+    await db.insertInto('users').values({ id: USER_A, email: 'a@tooday.app', name: 'a', password_hash: 'x' }).execute();
+    const tasks = new SqlTaskStore(db);
+    const syncReads = new SqlSyncReadStore(db);
+
+    await tasks.create(TASK_INPUT); // seq 1
+    // 없는 태스크의 remove — 행 변경 없이 seq 2를 소모한다 (갭)
+    expect(await tasks.remove({ userId: USER_A, id: crypto.randomUUID() })).toBe(false);
+
+    const delta = await syncReads.changes({ userId: USER_A, cursor: 0 });
+    expect(delta.tasks.map((change) => change.syncSeq)).toEqual([1]);
+    // 행-max 도출이었다면 1 — 카운터 도출이므로 2
+    expect(delta.cursor).toBe(2);
+
+    const range = await syncReads.range({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' });
+    expect(range.cursor).toBe(2);
+  });
+});

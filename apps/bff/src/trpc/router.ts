@@ -2,7 +2,7 @@ import type { AccessTokenService } from '@bff/modules/auth/access-token';
 import type { RefreshTokenStore, UserStore } from '@bff/modules/auth/ports';
 import { createAuthRouter } from '@bff/modules/auth/router';
 import { pubRouter } from '@bff/modules/pub/router';
-import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import type { ProjectStore, SyncReadStore, TaskStore } from '@bff/modules/task/ports';
 import { createTaskRouter } from '@bff/modules/task/router';
 import type { UserReader } from '@bff/modules/user/ports';
 import { createUserRouter } from '@bff/modules/user/router';
@@ -16,6 +16,7 @@ export interface AppRouterDeps {
   accessTokens: AccessTokenService;
   tasks: TaskStore;
   projects: ProjectStore;
+  syncReads: SyncReadStore;
   sync: SyncBroker;
 }
 

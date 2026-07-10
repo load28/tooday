@@ -3,7 +3,12 @@ import { createApp } from '@bff/app';
 import { createAccessTokenService } from '@bff/modules/auth/access-token';
 import { InMemoryRefreshTokenStore, InMemoryUserStore } from '@bff/modules/auth/adapters/memory';
 import { serializeAccessCookie, serializeAuthCookieRemovals, serializeRefreshCookie } from '@bff/modules/auth/cookies';
-import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
+import {
+  InMemoryProjectStore,
+  InMemorySyncCounter,
+  InMemorySyncReadStore,
+  InMemoryTaskStore,
+} from '@bff/modules/task/adapters/memory';
 import type { BffConfig } from '@bff/platform/config';
 import { InMemorySyncBroker } from '@bff/platform/sync-broker';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
@@ -41,6 +46,8 @@ function setup(overrides: Partial<BffConfig> = {}) {
   };
   const users = new InMemoryUserStore();
   const counter = new InMemorySyncCounter();
+  const tasks = new InMemoryTaskStore(counter);
+  const projects = new InMemoryProjectStore(counter);
   const sync = new InMemorySyncBroker();
   const app = createApp({
     config,
@@ -52,8 +59,9 @@ function setup(overrides: Partial<BffConfig> = {}) {
       absoluteTtlMs: config.refreshAbsoluteTtlMs,
     }),
     accessTokens: createAccessTokenService({ secret: config.jwtSecret, ttlMs: config.accessTtlMs }),
-    tasks: new InMemoryTaskStore(counter),
-    projects: new InMemoryProjectStore(counter),
+    tasks,
+    projects,
+    syncReads: new InMemorySyncReadStore(counter, tasks, projects),
     sync,
   });
   return { app, config, sync };
