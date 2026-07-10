@@ -70,6 +70,29 @@ export interface SyncCountersTable {
   seq: number;
 }
 
+/**
+ * 유저별 푸시 대상 기기 토큰 — apps/push-server가 읽어 발송한다.
+ * 등록/해제 API는 후속 태스크 (docs/tasks/T025-rust-push-server.md 참고).
+ */
+export interface PushSubscriptionsTable {
+  token: string;
+  user_id: string;
+  platform: 'expo' | 'fcm' | 'apns' | 'webpush';
+  created_at: Generated<Date>;
+}
+
+/**
+ * 태스크 시작 알림 발송 dedup 로그 — 쓰기는 apps/push-server만 한다.
+ * PK (task_id, 예정 일시): 일정이 바뀌면 새 키가 되어 재알림되고,
+ * 같은 일정으로는 ON CONFLICT DO NOTHING으로 발송이 한 번만 점유된다.
+ */
+export interface TaskPushSendsTable {
+  task_id: string;
+  scheduled_date: string;
+  scheduled_start_at: string;
+  sent_at: Generated<Date>;
+}
+
 /** Kysely가 컴파일 타임에 쿼리를 검증하는 기준 스키마 */
 export interface DatabaseSchema {
   users: UsersTable;
@@ -77,4 +100,6 @@ export interface DatabaseSchema {
   projects: ProjectsTable;
   tasks: TasksTable;
   sync_counters: SyncCountersTable;
+  push_subscriptions: PushSubscriptionsTable;
+  task_push_sends: TaskPushSendsTable;
 }

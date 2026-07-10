@@ -30,3 +30,6 @@ todos.json
 .epiq/log/
 
 .claude/settings.local.json
+
+# Rust (apps/push-server)
+**/target

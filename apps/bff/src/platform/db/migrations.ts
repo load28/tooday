@@ -251,6 +251,44 @@ const migration0006SessionId: Migration = {
   },
 };
 
+/**
+ * 0007 — 태스크 시작 시간 푸시 알림 기반 (apps/push-server가 소비).
+ *
+ * - push_subscriptions: 유저별 푸시 대상 기기 토큰. 등록 API는 후속 —
+ *   지금은 push-server가 읽는 자리만 만든다.
+ * - task_push_sends: 발송 dedup 로그. PK가 (task_id, 예정 일시)라 태스크 일정이
+ *   바뀌면 새 키가 되어 자연히 재알림되고, 같은 일정으로는 서버가 몇 대든
+ *   INSERT … ON CONFLICT DO NOTHING으로 발송을 한 번만 점유한다.
+ */
+const migration0007Push: Migration = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await db.schema
+      .createTable('push_subscriptions')
+      .addColumn('token', 'text', (col) => col.primaryKey())
+      .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+      .addColumn('platform', 'text', (col) => col.notNull())
+      .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+      .addCheckConstraint('push_subscriptions_platform_valid', sql`platform in ('expo', 'fcm', 'apns', 'webpush')`)
+      .execute();
+    // 발송 시 "이 유저의 토큰 전부" 조회 경로
+    await db.schema.createIndex('push_subscriptions_user_id').on('push_subscriptions').column('user_id').execute();
+
+    await db.schema
+      .createTable('task_push_sends')
+      .addColumn('task_id', 'uuid', (col) => col.notNull().references('tasks.id').onDelete('cascade'))
+      .addColumn('scheduled_date', 'text', (col) => col.notNull())
+      .addColumn('scheduled_start_at', 'text', (col) => col.notNull())
+      .addColumn('sent_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+      .addPrimaryKeyConstraint('task_push_sends_pk', ['task_id', 'scheduled_date', 'scheduled_start_at'])
+      .execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    await db.schema.dropTable('task_push_sends').execute();
+    await db.schema.dropTable('push_subscriptions').execute();
+  },
+};
+
 /** 키 이름의 사전순이 곧 적용 순서 — 새 변경은 다음 번호로 추가하고 기존 항목은 수정하지 않는다 */
 const MIGRATIONS: Record<string, Migration> = {
   '0001_init': migration0001Init,
@@ -259,6 +297,7 @@ const MIGRATIONS: Record<string, Migration> = {
   '0004_refresh_tokens': migration0004RefreshTokens,
   '0005_reuse_detection': migration0005ReuseDetection,
   '0006_session_id': migration0006SessionId,
+  '0007_push': migration0007Push,
 };
 
 export class StaticMigrationProvider implements MigrationProvider {
