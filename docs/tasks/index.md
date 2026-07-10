@@ -36,6 +36,14 @@
 | T011 | [tRPC 프로시저 경로 문자열 하드코딩 제거](T011-trpc-path-strings.md) | 낮음 | ✅ 완료 |
 | T012 | [SSE 클라이언트 auth 경로 정리](T012-sse-client-auth.md) | 낮음 | ✅ 완료 |
 | T013 | [i18n 우회 문자열 이관](T013-i18n-bypasses.md) | 낮음 | ✅ 완료 |
-| T014 | [design-guide 토큰 드리프트 해소](T014-design-guide-token-drift.md) | 낮음 | ⬜ 대기 |
+| T014 | [design-guide 토큰 드리프트 해소](T014-design-guide-token-drift.md) | 낮음 | ➖ 미처리 (종결) |
 | T015 | [날짜 라벨 포맷 shared/time.ts로 집중화](T015-date-format-centralize.md) | 낮음 | ✅ 완료 |
 | T016 | [소소한 통일 (캐스트 가드·내비게이션 API)](T016-minor-consistency.md) | 낮음 | ✅ 완료 |
+| T017 | [동기화 읽기 스냅샷 일관성 (영구 유실 버그)](T017-sync-read-snapshot-consistency.md) | 높음 | ⬜ 대기 |
+| T018 | [리프레시 토큰 회전 원자성](T018-refresh-rotation-atomicity.md) | 높음 | ⬜ 대기 |
+| T019 | [BFF 운영 견고화 (config 검증·장애 가시성)](T019-bff-operational-hardening.md) | 중간 | ⬜ 대기 |
+| T020 | [낙관적 뮤테이션 에러 표면화 + 라우트 에러 경계](T020-mutation-error-surfaces.md) | 중간 | ⬜ 대기 |
+| T021 | [계약 단일 선언 잔여 (드리프트 봉인)](T021-contract-single-declaration.md) | 중간 | ⬜ 대기 |
+| T022 | [계약·동기화 테스트 공백](T022-contract-test-gaps.md) | 중간 | ⬜ 대기 |
+| T023 | [웹 잔여 공통화·정리 (폼 조각·중복 레이아웃)](T023-web-shared-scaffolds.md) | 낮음 | ⬜ 대기 |
+| T024 | [디자인 토큰 위생 (panda.config 정합)](T024-design-token-hygiene.md) | 낮음 | ⬜ 대기 |
