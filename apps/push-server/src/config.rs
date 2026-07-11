@@ -23,11 +23,22 @@ pub struct Config {
     /// 유저별 시간대는 후속 과제 (docs/tasks/T025-rust-push-server.md).
     pub timezone: Tz,
     pub sender: SenderKind,
-    /// 구독 등록/해제 HTTP API 바인드 주소.
+    /// HTTP 서버(healthz/readyz/metrics + subscriptions) 바인드 주소.
     pub http_addr: SocketAddr,
     /// BFF와 공유하는 액세스 JWT 서명 시크릿(BFF_JWT_SECRET와 같은 값).
-    /// 미설정이면 HTTP API를 끈 채 스케줄러만 돈다.
+    /// 미설정이면 /subscriptions만 503 — 운영 표면과 스케줄러는 동작한다.
     pub jwt_secret: Option<String>,
+    /// DB 커넥션 풀 크기 — 스케줄러 팬아웃 + HTTP 핸들러가 나눠 쓴다.
+    pub db_pool_size: usize,
+    /// 틱 안에서 동시에 처리할 발송 수.
+    pub fanout_concurrency: usize,
+    /// 전달 재시도 상한 — 도달하면 발송을 포기(failed)한다.
+    pub max_attempts: i32,
+    /// 발송 점유(lease) 시간(초) — 이 시간 안에 확정 못 하면(크래시 등)
+    /// 복구 경로가 이어받는다. 정상 발송 소요보다 넉넉해야 이중 발송이 없다.
+    pub lease_secs: u64,
+    /// 재시도 백오프 기본값(초) — base × 2^attempts, 상한 15분.
+    pub retry_base_secs: u64,
 }
 
 impl Config {
@@ -61,6 +72,23 @@ impl Config {
             .ok()
             .filter(|s| !s.is_empty());
 
+        let db_pool_size: usize = env_or("PUSH_DB_POOL_SIZE", 8)?;
+        let fanout_concurrency: usize = env_or("PUSH_FANOUT_CONCURRENCY", 16)?;
+        let max_attempts: i32 = env_or("PUSH_MAX_ATTEMPTS", 5)?;
+        let lease_secs: u64 = env_or("PUSH_LEASE_SECS", 60)?;
+        let retry_base_secs: u64 = env_or("PUSH_RETRY_BASE_SECS", 30)?;
+        for (name, value) in [
+            ("PUSH_DB_POOL_SIZE", db_pool_size as i64),
+            ("PUSH_FANOUT_CONCURRENCY", fanout_concurrency as i64),
+            ("PUSH_MAX_ATTEMPTS", max_attempts as i64),
+            ("PUSH_LEASE_SECS", lease_secs as i64),
+            ("PUSH_RETRY_BASE_SECS", retry_base_secs as i64),
+        ] {
+            if value < 1 {
+                bail!("{name}는 1 이상이어야 합니다");
+            }
+        }
+
         Ok(Self {
             database_url,
             poll_interval: Duration::from_secs(poll_secs),
@@ -69,6 +97,11 @@ impl Config {
             sender,
             http_addr,
             jwt_secret,
+            db_pool_size,
+            fanout_concurrency,
+            max_attempts,
+            lease_secs,
+            retry_base_secs,
         })
     }
 }

@@ -8,23 +8,39 @@ use deadpool_postgres::Pool;
 /// BFF 테이블에 FK를 걸지 않는다 — 서비스 간 DDL 의존(부팅 순서·이름 변경 파급)을
 /// 만들지 않기 위해서다. 고아 행은 무해하다: task_push_sends는 dedup 로그일 뿐이고,
 /// 삭제된 유저의 구독은 due 태스크 조인으로 선택될 일이 없다.
-const MIGRATIONS: &[(&str, &str)] = &[(
-    "0001_init",
-    "create table push_subscriptions ( \
-       token text primary key, \
-       user_id uuid not null, \
-       platform text not null check (platform in ('expo', 'fcm', 'apns', 'webpush')), \
-       created_at timestamptz not null default now() \
-     ); \
-     create index push_subscriptions_user_id on push_subscriptions (user_id); \
-     create table task_push_sends ( \
-       task_id uuid not null, \
-       scheduled_date text not null, \
-       scheduled_start_at text not null, \
-       sent_at timestamptz not null default now(), \
-       primary key (task_id, scheduled_date, scheduled_start_at) \
-     );",
-)];
+const MIGRATIONS: &[(&str, &str)] = &[
+    (
+        "0001_init",
+        "create table push_subscriptions ( \
+           token text primary key, \
+           user_id uuid not null, \
+           platform text not null check (platform in ('expo', 'fcm', 'apns', 'webpush')), \
+           created_at timestamptz not null default now() \
+         ); \
+         create index push_subscriptions_user_id on push_subscriptions (user_id); \
+         create table task_push_sends ( \
+           task_id uuid not null, \
+           scheduled_date text not null, \
+           scheduled_start_at text not null, \
+           sent_at timestamptz not null default now(), \
+           primary key (task_id, scheduled_date, scheduled_start_at) \
+         );",
+    ),
+    (
+        // task_push_sends를 발송 완료 로그에서 전달 상태 머신으로 승격 (T026).
+        // pending = 점유됐지만 전달 미확정 — lease_until이 지나면 복구 경로가 집어간다.
+        // 기존 행은 전부 완료된 발송이므로 'sent'로 백필된다(default).
+        "0002_delivery_state",
+        "alter table task_push_sends add column status text not null default 'sent' \
+           check (status in ('pending', 'sent', 'failed')); \
+         alter table task_push_sends add column attempts integer not null default 0; \
+         alter table task_push_sends add column lease_until timestamptz; \
+         alter table task_push_sends alter column sent_at drop not null; \
+         alter table task_push_sends alter column sent_at drop default; \
+         create index task_push_sends_pending on task_push_sends (lease_until) \
+           where status = 'pending';",
+    ),
+];
 
 /// pg_advisory_lock 키 — push-server 마이그레이션 전용 (임의의 고정값).
 const MIGRATION_LOCK_KEY: i64 = 0x746f_6f64_6179_7073; // "toodayps"

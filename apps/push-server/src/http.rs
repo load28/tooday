@@ -3,20 +3,25 @@ use std::sync::Arc;
 
 use axum::extract::State;
 use axum::http::{header, HeaderMap, StatusCode};
+use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use deadpool_postgres::Pool;
 use serde::Deserialize;
+use tokio::sync::watch;
 
 use crate::auth::verify_access_token;
 use crate::db;
+use crate::metrics::Metrics;
 
-/// 구독 등록/해제 HTTP API — BFF를 거치지 않는 push-server 자체 표면.
-/// 클라이언트는 BFF 로그인으로 받은 액세스 JWT를 그대로 Bearer로 보낸다.
+/// 운영 표면(/healthz, /readyz, /metrics)은 항상 뜨고, 구독 등록/해제는
+/// BFF 액세스 JWT를 검증할 시크릿이 있을 때만 활성화된다.
 #[derive(Clone)]
 pub struct ApiState {
     pub pool: Pool,
-    pub jwt_secret: Arc<str>,
+    /// BFF와 공유하는 JWT 시크릿 — None이면 /subscriptions는 503.
+    pub jwt_secret: Option<Arc<str>>,
+    pub metrics: Arc<Metrics>,
 }
 
 const PLATFORMS: &[&str] = &["expo", "fcm", "apns", "webpush"];
@@ -35,15 +40,45 @@ struct UnregisterRequest {
 pub fn router(state: ApiState) -> Router {
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
+        .route("/readyz", get(readyz))
+        .route("/metrics", get(metrics))
         .route("/subscriptions", post(register).delete(unregister))
         .with_state(state)
 }
 
-pub async fn serve(addr: SocketAddr, state: ApiState) -> anyhow::Result<()> {
+pub async fn serve(
+    addr: SocketAddr,
+    state: ApiState,
+    mut shutdown: watch::Receiver<bool>,
+) -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    tracing::info!(%addr, "구독 등록 HTTP API 대기");
-    axum::serve(listener, router(state)).await?;
+    tracing::info!(%addr, "HTTP 서버 대기 (healthz/readyz/metrics + subscriptions)");
+    axum::serve(listener, router(state))
+        .with_graceful_shutdown(async move {
+            let _ = shutdown.changed().await;
+        })
+        .await?;
     Ok(())
+}
+
+/// readiness — DB에 실제로 질의가 나가는지까지 본다 (k8s readinessProbe 자리).
+async fn readyz(State(state): State<ApiState>) -> impl IntoResponse {
+    let ready = match state.pool.get().await {
+        Ok(client) => client.simple_query("select 1").await.is_ok(),
+        Err(_) => false,
+    };
+    if ready {
+        (StatusCode::OK, "ok")
+    } else {
+        (StatusCode::SERVICE_UNAVAILABLE, "db unreachable")
+    }
+}
+
+async fn metrics(State(state): State<ApiState>) -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/plain; version=0.0.4")],
+        state.metrics.render_prometheus(),
+    )
 }
 
 fn authed_user(headers: &HeaderMap, secret: &str) -> Result<String, StatusCode> {
@@ -60,7 +95,10 @@ async fn register(
     headers: HeaderMap,
     Json(req): Json<RegisterRequest>,
 ) -> StatusCode {
-    let user_id = match authed_user(&headers, &state.jwt_secret) {
+    let Some(secret) = &state.jwt_secret else {
+        return StatusCode::SERVICE_UNAVAILABLE; // PUSH_JWT_SECRET 미설정
+    };
+    let user_id = match authed_user(&headers, secret) {
         Ok(user_id) => user_id,
         Err(status) => return status,
     };
@@ -78,7 +116,10 @@ async fn unregister(
     headers: HeaderMap,
     Json(req): Json<UnregisterRequest>,
 ) -> StatusCode {
-    let user_id = match authed_user(&headers, &state.jwt_secret) {
+    let Some(secret) = &state.jwt_secret else {
+        return StatusCode::SERVICE_UNAVAILABLE;
+    };
+    let user_id = match authed_user(&headers, secret) {
         Ok(user_id) => user_id,
         Err(status) => return status,
     };
