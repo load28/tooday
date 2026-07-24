@@ -1,6 +1,6 @@
 import { defineRecipe } from '@pandacss/dev';
 
-export const divider = defineRecipe({
+export const tDivider = defineRecipe({
   className: 'divider',
   base: { border: 'none', background: 'divider', flexShrink: 0 },
   variants: {

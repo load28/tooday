@@ -2,7 +2,7 @@ import { defineRecipe } from '@pandacss/dev';
 
 // alignItems 충돌을 피하려 direction은 flexDirection만, alignItems는 align variant만 맡는다
 // (정렬 기본값은 컴포넌트가 align에 넣어 넘긴다).
-export const stack = defineRecipe({
+export const tStack = defineRecipe({
   className: 'stack',
   base: { display: 'flex', minWidth: 0 },
   variants: {
@@ -48,7 +48,7 @@ export const stack = defineRecipe({
   },
 });
 
-export const spacer = defineRecipe({
+export const tSpacer = defineRecipe({
   className: 'spacer',
   base: { flexShrink: 0, alignSelf: 'stretch' },
   variants: {

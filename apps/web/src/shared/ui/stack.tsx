@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
 import { cx } from 'styled-system/css';
-import { spacer, stack } from 'styled-system/recipes';
+import { tSpacer, tStack } from 'styled-system/recipes';
 
 type AlignToken = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
 type JustifyToken = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
@@ -21,7 +21,7 @@ type StackProps<T extends ElementType> = StackBase & { as?: T } & Omit<Component
 export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'xl', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const cls = stack({
+  const cls = tStack({
     direction: 'column',
     gap,
     align: align ?? 'stretch',
@@ -39,7 +39,7 @@ export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
 export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'md', align, justify, wrap, inline, className, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const cls = stack({
+  const cls = tStack({
     direction: 'row',
     gap,
     align: align ?? 'center',
@@ -57,5 +57,5 @@ export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
 type SpacerSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | 'auto';
 
 export function Spacer({ size = 'auto' }: { size?: SpacerSize }) {
-  return <span aria-hidden="true" className={spacer({ size })} />;
+  return <span aria-hidden="true" className={tSpacer({ size })} />;
 }
