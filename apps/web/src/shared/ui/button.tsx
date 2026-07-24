@@ -6,12 +6,18 @@ import { Spinner } from '@/shared/ui/spinner';
 
 // 버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — cva(utilities)라 baseButton(recipes 층)을 결정적으로 덮는다.
 const buttonStyle = cva({
-  base: { gap: 'md' },
+  base: {
+    gap: 'md',
+    // 비활성 = tone 무관 중립 회색으로 collapse (활성색을 opacity로 흐리지 않는다).
+    // cva(utilities)라 baseButton(recipes)의 &:disabled opacity를 결정적으로 덮는다 — opacity는 1로 되돌린다.
+    '&:disabled': { opacity: 1, bg: 'disabledSurface', color: 'disabledText' },
+  },
   variants: {
     tone: {
-      ghost: { color: 'text', _press: { bg: 'pressedStrong' } },
+      // 채움 없는 tone은 비활성에도 배경을 깔지 않고 텍스트만 회색으로 둔다.
+      ghost: { color: 'text', _press: { bg: 'pressedStrong' }, '&:disabled': { bg: 'transparent' } },
       // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
-      brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' } },
+      brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' }, '&:disabled': { bg: 'transparent' } },
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.
       subtle: {
         bg: 'surfaceMuted',

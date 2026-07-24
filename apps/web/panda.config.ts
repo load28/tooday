@@ -276,6 +276,11 @@ export default defineConfig({
           onPrimary: { value: '{colors.white}' },
           onPrimaryMuted: { value: 'rgba(255, 255, 255, 0.6)' },
 
+          // 비활성 — tone 무관 중립 회색으로 collapse. opacity로 활성색을 흐리지 않고
+          // 색을 명시 교체해, brandSoft(활성 밝은 파랑)와의 혼동·배경 합성 문제를 없앤다.
+          disabledSurface: { value: '{colors.cool.100}' },
+          disabledText: { value: '{colors.cool.400}' },
+
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },
           warning: { value: '{colors.sun.500}' },
