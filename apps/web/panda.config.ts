@@ -276,14 +276,15 @@ export default defineConfig({
           onPrimary: { value: '{colors.white}' },
           onPrimaryMuted: { value: 'rgba(255, 255, 255, 0.6)' },
 
-          // 비활성 — tone 무관 중립 회색으로 collapse. opacity로 활성색을 흐리지 않고
-          // 색을 명시 교체해, brandSoft(활성 밝은 파랑)와의 혼동·배경 합성 문제를 없앤다.
-          // 값 근거: 테두리 없는 채움 버튼이라 Carbon(gray-30 #c6c6c6)식 '중간 회색' 채움을 쓴다 —
-          // cool.100은 page bg(#f5f6f8)와 대비 1.02:1로 배경에 묻혀(사용자 피드백), cool.300으로 올려
-          // 경계 대비 1.35:1 확보. 라벨은 cool.600으로 채움 위 3.15:1(3:1 비텍스트 기준 충족).
-          // 대안(Ant/Fluent식 밝은 채움+테두리)은 이 앱의 테두리 없는 버튼 언어와 어긋나 기각.
-          disabledSurface: { value: '{colors.cool.300}' },
-          disabledText: { value: '{colors.cool.600}' },
+          // 비활성 — tone 무관 중립으로 collapse. opacity로 활성색을 흐리지 않고 색을 명시 교체해
+          // brandSoft(활성 밝은 파랑)와의 혼동·배경 합성 문제를 없앤다.
+          // 이 시스템의 표면은 surfaceSoft(cool.100)에서 끝나 전부 밝다 → page bg(#f5f6f8) 위에서
+          // 채움만으로는 경계가 안 선다(cool.100 대비 1.02:1). 그래서 각 토큰을 '본래 역할'대로 쓴다:
+          // 표면=surfaceSoft 계열, 경계=border 토큰(인풋이 이미 쓰는 방식), 라벨=텍스트 계층.
+          // (Fluent·Ant처럼 '밝은 표면 시스템'이 테두리로 경계를 만드는 정석)
+          disabledSurface: { value: '{colors.cool.100}' }, // surfaceSoft 무게 — 실제 표면
+          disabledBorder: { value: '{colors.cool.300}' }, // borderStrong 무게 — 경계선
+          disabledText: { value: '{colors.cool.500}' }, // textTertiary 무게 — 저강조 라벨
 
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },

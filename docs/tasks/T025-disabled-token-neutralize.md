@@ -113,4 +113,12 @@ cool.300(#d1d6db)이다. 대비 측정(page bg #f5f6f8 대상):
   조사(위 섹션) 후 채움 cool.100→cool.300(#d1d6db, 경계 1.02→1.35:1),
   라벨 cool.400→cool.600(#6b7684, 채움 위 1.37→3.15:1)로 리튠. panda.config 토큰 값만
   변경(button/input recipe는 토큰 참조라 무변경). `panda codegen`, typecheck, Biome 통과.
-  after2 스크린샷으로 배경 대비 개선 확인.
+  after2 스크린샷으로 배경 대비 개선 확인. (커밋 5d53534)
+- 2026-07-24: 2차 피드백("외부(Carbon) 명도에 맞추지 말고 이 시스템 컬러로 도출하라") 반영.
+  이 시스템 표면은 surfaceSoft(cool.100)에서 끝나 전부 밝음 → 채움만으로는 page bg 위 경계 불가.
+  각 토큰을 본래 역할대로 재도출(Fluent/Ant식 '밝은 표면+테두리', 이 앱 인풋의 경계 방식과 동일):
+  disabledSurface cool.300→cool.100(표면), disabledBorder cool.300 신설(경계),
+  disabledText cool.600→cool.500(저강조 라벨). 경계는 button/input recipe의 &:disabled에
+  `boxShadow: inset 0 0 0 1px {colors.disabledBorder}`로 그려 테두리 없는 box 모델을 유지.
+  ghost·brandGhost는 배경·경계 없이 텍스트만. `panda codegen`, typecheck, Biome 통과.
+  after3 스크린샷 — 비활성 버튼이 위 입력 필드와 같은 경계(밝은 표면+얇은 테두리)로 정합됨을 확인.
