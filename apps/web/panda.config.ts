@@ -6,7 +6,7 @@ import { baseButton } from './recipes/base-button';
 import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from './recipes/bottom-sheet';
 import { card } from './recipes/card';
 import { chip } from './recipes/chip';
-import { divider } from './recipes/divider';
+import { tDivider } from './recipes/divider';
 import { dot } from './recipes/dot';
 import { fieldRoot } from './recipes/field';
 import { input } from './recipes/input';
@@ -15,7 +15,7 @@ import { row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from './recipes/
 import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from './recipes/screen';
 import { sectionHeader, sectionHeaderTrailing } from './recipes/section';
 import { spinner } from './recipes/spinner';
-import { spacer, stack } from './recipes/stack';
+import { tSpacer, tStack } from './recipes/stack';
 import { surface } from './recipes/surface';
 import { tabBarIconWrap, tabBarInner, tabBarNav } from './recipes/tab-bar';
 import { text } from './recipes/text';
@@ -27,7 +27,7 @@ const uiRecipes = {
   text,
   surface,
   dot,
-  divider,
+  tDivider,
   spinner,
   input,
   progressTrack,
@@ -36,8 +36,8 @@ const uiRecipes = {
   rowSlotLeading,
   rowSlotContent,
   rowSlotTrailing,
-  stack,
-  spacer,
+  tStack,
+  tSpacer,
   screenViewport,
   screenHeader,
   screenContent,
