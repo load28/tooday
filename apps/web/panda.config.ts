@@ -278,8 +278,12 @@ export default defineConfig({
 
           // 비활성 — tone 무관 중립 회색으로 collapse. opacity로 활성색을 흐리지 않고
           // 색을 명시 교체해, brandSoft(활성 밝은 파랑)와의 혼동·배경 합성 문제를 없앤다.
-          disabledSurface: { value: '{colors.cool.100}' },
-          disabledText: { value: '{colors.cool.400}' },
+          // 값 근거: 테두리 없는 채움 버튼이라 Carbon(gray-30 #c6c6c6)식 '중간 회색' 채움을 쓴다 —
+          // cool.100은 page bg(#f5f6f8)와 대비 1.02:1로 배경에 묻혀(사용자 피드백), cool.300으로 올려
+          // 경계 대비 1.35:1 확보. 라벨은 cool.600으로 채움 위 3.15:1(3:1 비텍스트 기준 충족).
+          // 대안(Ant/Fluent식 밝은 채움+테두리)은 이 앱의 테두리 없는 버튼 언어와 어긋나 기각.
+          disabledSurface: { value: '{colors.cool.300}' },
+          disabledText: { value: '{colors.cool.600}' },
 
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },

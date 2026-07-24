@@ -65,6 +65,41 @@ semanticTokens에 전용 disabled 토큰이 없다(`apps/web/panda.config.ts:252
 >
 > **사용자**: 그럼 이렇게 변경을해보고 스샷을 보여줘
 
+## 엔터프라이즈 disabled 토큰 조사 (2차 개선 근거)
+
+1차(cool.100 채움)가 page bg(#f5f6f8)와 대비 1.02:1로 배경에 묻힌다는 피드백을 받아
+실제 디자인 시스템의 disabled 값을 조사했다. 두 계열로 갈린다:
+
+| 시스템 | disabled 채움 | disabled 텍스트 | 테두리 |
+| --- | --- | --- | --- |
+| IBM Carbon (White) | `button-disabled` = `#c6c6c6` (gray-30, **중간 회색**) | `text-on-color-disabled` = `#8d8d8d` | 없음(테두리 없는 버튼) |
+| Microsoft Fluent 2 | `colorNeutralBackgroundDisabled` = grey94 `#f0f0f0` (밝음) | grey74 `#bdbdbd` | `colorNeutralStrokeDisabled` = grey88 `#e0e0e0` **있음** |
+| Ant Design v5 | `colorBgContainerDisabled` = `rgba(0,0,0,0.04)` (밝음) | `colorTextDisabled` = `rgba(0,0,0,0.25)` (#bfbfbf) | `colorBorder` `#d9d9d9` **있음** |
+| Material 3 (Filled) | container = on-surface @ **12%** (subtle) | label = on-surface @ **38%** (또렷) | 없음 |
+
+**핵심 규칙**: *밝은 채움을 쓰는 시스템(Fluent·Ant)은 반드시 테두리로 배경과 분리*하고,
+*테두리를 안 쓰는 시스템(Carbon)은 중간 회색(gray-30) 채움*으로 경계를 만든다.
+Material은 채움이 옅은 대신 라벨을 38%로 또렷하게 해 "버튼이 여기 있다"를 라벨이 전달한다.
+
+이 앱의 버튼은 **테두리 없는 채움**(Toss식)이므로 Carbon 계열(중간 회색 채움)을 택한다.
+Toss 그레이스케일(cool.*)에서 Carbon gray-30(#c6c6c6)에 가장 근접한 채움은
+cool.300(#d1d6db)이다. 대비 측정(page bg #f5f6f8 대상):
+
+- cool.100 #f2f4f6 → 1.02:1 (묻힘, 1차)
+- cool.200 #e5e8eb → 1.14:1
+- **cool.300 #d1d6db → 1.35:1** (채택 — 또렷한 경계)
+- cool.400 #b0b8c1 → 1.85:1 (더 강하나 '활성 secondary'처럼 무거워 기각)
+
+라벨: cool.400(#b0b8c1)은 cool.300 위 1.37:1로 안 읽힌다 → **cool.600(#6b7684)**로
+올려 채움 위 3.15:1(비텍스트 UI 3:1 기준 충족, Material 38% 라벨의 또렷함 철학과 일치).
+
+**출처:**
+- [Best Practice] IBM Carbon Design System — Color tokens: `button-disabled`(gray-30 #c6c6c6), `text-on-color-disabled`(gray-50 #8d8d8d) (`@carbon/themes` White theme)
+- [Best Practice] Microsoft Fluent 2 — Web alias color tokens: `colorNeutralBackgroundDisabled`=grey94(#f0f0f0), `colorNeutralStrokeDisabled`=grey88(#e0e0e0), `colorNeutralForegroundDisabled`=grey74(#bdbdbd) (fluentui `packages/tokens` global colors)
+- [Best Practice] Ant Design v5 — Alias tokens `colorBgContainerDisabled`(rgba(0,0,0,0.04)), `colorTextDisabled`(rgba(0,0,0,0.25))
+- [Best Practice] Material Design 3 — Filled button disabled: container on-surface @12%, label on-surface @38%
+- [Standard] W3C WCAG 2.2 — 1.4.11 Non-text Contrast(3:1 기준); 1.4.3 disabled(inactive) 컴포넌트는 대비 예외
+
 ## 작업 로그
 
 - 2026-07-24: `disabledSurface`/`disabledText` 시맨틱 토큰 추가(panda.config.ts),
@@ -73,4 +108,9 @@ semanticTokens에 전용 disabled 토큰이 없다(`apps/web/panda.config.ts:252
   검증: `panda codegen` 재생성, `bun run typecheck` 통과, `bun run check`(Biome) 통과.
   실서버(web:3000 + bff:3002)를 띄워 Playwright로 login/signup/new-task의 비활성·활성
   버튼 before/after 스크린샷 캡처 — 비활성이 흐린 파랑에서 중립 회색으로 바뀌고
-  활성 브랜드 블루와 명확히 구분됨을 확인.
+  활성 브랜드 블루와 명확히 구분됨을 확인. (커밋 788aa62)
+- 2026-07-24: 피드백("회색이 배경과 구분이 약함") 반영. 엔터프라이즈 disabled 토큰
+  조사(위 섹션) 후 채움 cool.100→cool.300(#d1d6db, 경계 1.02→1.35:1),
+  라벨 cool.400→cool.600(#6b7684, 채움 위 1.37→3.15:1)로 리튠. panda.config 토큰 값만
+  변경(button/input recipe는 토큰 참조라 무변경). `panda codegen`, typecheck, Biome 통과.
+  after2 스크린샷으로 배경 대비 개선 확인.
