@@ -15,8 +15,10 @@
    어시스턴트 응답 모두 원문 그대로** (무관한 부분만 `[중략]` 가능). 진행 중
    새 대화가 생기면 append 한다.
 4. **완료 여부로 관리한다.** 상태는 `대기 → 진행중 → 완료` 세 가지. 완료 시
-   태스크 파일에 완료일·커밋 해시를 기입하고, 이 인덱스의 표를 갱신한다.
-   완료 태스크는 지우지 않는다 — 기록이 곧 이력이다.
+   태스크 파일에 완료일을 기입하고 이 인덱스의 표를 갱신한다 — 가능하면 그 태스크의
+   커밋 안에서 함께 한다. **커밋 해시는 문서에 기입하지 않는다**: 커밋 메시지의
+   `(T0XX)`로 매핑돼 `git log --grep=T0XX`로 찾는다. 완료 태스크는 지우지 않는다 —
+   기록이 곧 이력이다.
 5. **작업 로그**에 무엇을 했고 어떻게 검증했는지(lint/typecheck/test) 커밋 단위로 남긴다.
 6. **커밋은 태스크 단위로 하고, 커밋 제목 끝에 `(T0XX)`로 태스크 번호를 명시한다** —
    절대 규칙. 상세는 [conventions/git-commits.md](../conventions/git-commits.md).
@@ -50,6 +52,6 @@
 | T023 | [웹 잔여 공통화·정리 (폼 조각·중복 레이아웃)](T023-web-shared-scaffolds.md) | 낮음 | ⬜ 대기 |
 | T024 | [디자인 토큰 위생 (panda.config 정합)](T024-design-token-hygiene.md) | 낮음 | ⬜ 대기 |
 | T025 | [비활성 룩을 opacity에서 전용 중립 토큰으로 교체](T025-disabled-token-neutralize.md) | 중간 | ✅ 완료 |
-| T026 | [PGlite 데이터 디렉토리 부모 미생성으로 BFF 기동 실패](T026-pglite-datadir-mkdir.md) | 높음 | 🔨 진행중 (코드 완료·커밋 대기) |
-| T027 | [Panda 커스텀 레시피가 내장 패턴 이름과 충돌 (config 경고)](T027-panda-recipe-pattern-name-collision.md) | 낮음 | 🔨 진행중 (코드 완료·커밋 대기) |
-| T028 | [커밋 컨벤션 신설 — 태스크 단위 + 태스크 번호](T028-commit-convention-task-number.md) | 높음 | 🔨 진행중 (문서 완료·커밋 대기) |
+| T026 | [PGlite 데이터 디렉토리 부모 미생성으로 BFF 기동 실패](T026-pglite-datadir-mkdir.md) | 높음 | ✅ 완료 |
+| T027 | [Panda 커스텀 레시피가 내장 패턴 이름과 충돌 (config 경고)](T027-panda-recipe-pattern-name-collision.md) | 낮음 | ✅ 완료 |
+| T028 | [커밋 컨벤션 신설 — 태스크 단위 + 태스크 번호](T028-commit-convention-task-number.md) | 높음 | ✅ 완료 |
