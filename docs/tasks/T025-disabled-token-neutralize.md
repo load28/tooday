@@ -114,11 +114,14 @@ cool.300(#d1d6db)이다. 대비 측정(page bg #f5f6f8 대상):
   라벨 cool.400→cool.600(#6b7684, 채움 위 1.37→3.15:1)로 리튠. panda.config 토큰 값만
   변경(button/input recipe는 토큰 참조라 무변경). `panda codegen`, typecheck, Biome 통과.
   after2 스크린샷으로 배경 대비 개선 확인. (커밋 5d53534)
-- 2026-07-24: 2차 피드백("외부(Carbon) 명도에 맞추지 말고 이 시스템 컬러로 도출하라") 반영.
-  이 시스템 표면은 surfaceSoft(cool.100)에서 끝나 전부 밝음 → 채움만으로는 page bg 위 경계 불가.
-  각 토큰을 본래 역할대로 재도출(Fluent/Ant식 '밝은 표면+테두리', 이 앱 인풋의 경계 방식과 동일):
-  disabledSurface cool.300→cool.100(표면), disabledBorder cool.300 신설(경계),
-  disabledText cool.600→cool.500(저강조 라벨). 경계는 button/input recipe의 &:disabled에
-  `boxShadow: inset 0 0 0 1px {colors.disabledBorder}`로 그려 테두리 없는 box 모델을 유지.
-  ghost·brandGhost는 배경·경계 없이 텍스트만. `panda codegen`, typecheck, Biome 통과.
-  after3 스크린샷 — 비활성 버튼이 위 입력 필드와 같은 경계(밝은 표면+얇은 테두리)로 정합됨을 확인.
+- 2026-07-24: 2차 피드백("외부(Carbon) 명도에 맞추지 말고 이 시스템 컬러로 도출하라")을
+  '밝은 표면+테두리'로 잘못 해석해 disabledBorder(cool.300) 신설 + inset ring을 넣었었다. (커밋 d4ac110)
+- 2026-07-24: 3차 피드백("테두리 두는 게 더 이상하다. 동일한 disable 채움 컬러가 아니라
+  '동일한 방식으로 추론된' 컬러를 쓰라") 반영해 테두리 접근을 **되돌린다**. 요지: 채움은
+  테두리 없이 그대로 두되, 채움 '값'을 이 시스템의 램프 역할로 도출하라는 것.
+  → 도출: 이 램프에서 밝은 표면(cool.50~100) 위에 중립이 '보이도록' 배정된 단계는
+  border 계열(cool.200~300)이고, 채움은 선보다 존재감이 크므로 그중 강한 borderStrong(cool.300)에
+  대응한다(외부 명도 매칭이 아니라 램프 역할 도출). 라벨은 텍스트 계층 저강조 = textTertiary(cool.500).
+  변경: disabledBorder 토큰 제거, button/input recipe의 boxShadow(inset ring) 제거,
+  disabledSurface=cool.300(테두리 없이 채움), disabledText=cool.500. ghost·brandGhost는 텍스트만.
+  `panda codegen`, typecheck, Biome 통과. after4 스크린샷 — 테두리 없는 중립 채움으로 확인.

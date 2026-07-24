@@ -13,14 +13,8 @@ export const input = defineRecipe({
     fontFamily: 'inherit',
     outline: 'none',
     _placeholder: { color: 'textPlaceholder' },
-    // 비활성 = 중립 토큰으로 교체 (opacity로 흐리지 않는다 — 버튼과 동일 원칙).
-    // 표면=disabledSurface, 경계=disabledBorder(inset ring), 라벨=disabledText.
-    _disabled: {
-      cursor: 'not-allowed',
-      bg: 'disabledSurface',
-      color: 'disabledText',
-      boxShadow: 'inset 0 0 0 1px {colors.disabledBorder}',
-    },
+    // 비활성 = 중립 채움으로 교체 (opacity로 흐리지 않는다 — 버튼과 동일 원칙, 테두리 없이).
+    _disabled: { cursor: 'not-allowed', bg: 'disabledSurface', color: 'disabledText' },
   },
   variants: {
     variant: {

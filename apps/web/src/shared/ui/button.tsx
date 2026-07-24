@@ -8,27 +8,16 @@ import { Spinner } from '@/shared/ui/spinner';
 const buttonStyle = cva({
   base: {
     gap: 'md',
-    // 비활성 = tone 무관 중립으로 collapse (활성색을 opacity로 흐리지 않는다).
-    // 표면(disabledSurface)은 밝아 배경과 안 갈리므로 경계는 disabledBorder를 inset ring으로 그린다 —
-    // 테두리 없는 box 모델을 유지하면서(레이아웃 불변) 인풋과 같은 방식으로 경계를 만든다.
+    // 비활성 = tone 무관 중립 채움으로 collapse (활성색을 opacity로 흐리지 않는다). 테두리 없이 채움만 쓴다.
     // cva(utilities)라 baseButton(recipes)의 &:disabled opacity를 결정적으로 덮는다 — opacity는 1로 되돌린다.
-    '&:disabled': {
-      opacity: 1,
-      bg: 'disabledSurface',
-      color: 'disabledText',
-      boxShadow: 'inset 0 0 0 1px {colors.disabledBorder}',
-    },
+    '&:disabled': { opacity: 1, bg: 'disabledSurface', color: 'disabledText' },
   },
   variants: {
     tone: {
-      // 채움 없는 tone은 비활성에도 배경·경계 없이 텍스트만 저강조로 둔다.
-      ghost: { color: 'text', _press: { bg: 'pressedStrong' }, '&:disabled': { bg: 'transparent', boxShadow: 'none' } },
+      // 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다.
+      ghost: { color: 'text', _press: { bg: 'pressedStrong' }, '&:disabled': { bg: 'transparent' } },
       // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
-      brandGhost: {
-        color: 'textBrand',
-        _press: { bg: 'primarySofter' },
-        '&:disabled': { bg: 'transparent', boxShadow: 'none' },
-      },
+      brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' }, '&:disabled': { bg: 'transparent' } },
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.
       subtle: {
         bg: 'surfaceMuted',

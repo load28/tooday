@@ -276,14 +276,12 @@ export default defineConfig({
           onPrimary: { value: '{colors.white}' },
           onPrimaryMuted: { value: 'rgba(255, 255, 255, 0.6)' },
 
-          // 비활성 — tone 무관 중립으로 collapse. opacity로 활성색을 흐리지 않고 색을 명시 교체해
-          // brandSoft(활성 밝은 파랑)와의 혼동·배경 합성 문제를 없앤다.
-          // 이 시스템의 표면은 surfaceSoft(cool.100)에서 끝나 전부 밝다 → page bg(#f5f6f8) 위에서
-          // 채움만으로는 경계가 안 선다(cool.100 대비 1.02:1). 그래서 각 토큰을 '본래 역할'대로 쓴다:
-          // 표면=surfaceSoft 계열, 경계=border 토큰(인풋이 이미 쓰는 방식), 라벨=텍스트 계층.
-          // (Fluent·Ant처럼 '밝은 표면 시스템'이 테두리로 경계를 만드는 정석)
-          disabledSurface: { value: '{colors.cool.100}' }, // surfaceSoft 무게 — 실제 표면
-          disabledBorder: { value: '{colors.cool.300}' }, // borderStrong 무게 — 경계선
+          // 비활성 — tone 무관 중립으로 collapse. opacity로 흐리지 않고 색을 명시 교체(brandSoft 혼동 방지).
+          // 값은 외부 시스템(Carbon 등)의 명도를 따라가지 않고, 이 시스템의 램프 '역할'로 도출한다:
+          // 이 램프에서 밝은 표면(cool.50~100) 위에서 중립이 '보이도록' 배정된 단계는 border 계열(cool.200~300)이다.
+          // 채움은 선(border)보다 존재감이 커야 하므로 그중 강한 단계 = borderStrong(cool.300)에 대응한다.
+          // 테두리 없이 채움만 쓴다. 라벨은 텍스트 계층의 저강조 단계 = textTertiary(cool.500).
+          disabledSurface: { value: '{colors.cool.300}' }, // borderStrong 무게 — 밝은 배경 위 '보이는' 중립 채움
           disabledText: { value: '{colors.cool.500}' }, // textTertiary 무게 — 저강조 라벨
 
           success: { value: '{colors.mint.600}' },
