@@ -276,6 +276,14 @@ export default defineConfig({
           onPrimary: { value: '{colors.white}' },
           onPrimaryMuted: { value: 'rgba(255, 255, 255, 0.6)' },
 
+          // 비활성 — tone 무관 중립으로 collapse. opacity로 흐리지 않고 색을 명시 교체(brandSoft 혼동 방지).
+          // 값은 외부 시스템(Carbon 등)의 명도를 따라가지 않고, 이 시스템의 램프 '역할'로 도출한다:
+          // 이 램프에서 밝은 표면(cool.50~100) 위에서 중립이 '보이도록' 배정된 단계는 border 계열(cool.200~300)이다.
+          // 채움은 선(border)보다 존재감이 커야 하므로 그중 강한 단계 = borderStrong(cool.300)에 대응한다.
+          // 테두리 없이 채움만 쓴다. 라벨은 텍스트 계층의 저강조 단계 = textTertiary(cool.500).
+          disabledSurface: { value: '{colors.cool.300}' }, // borderStrong 무게 — 밝은 배경 위 '보이는' 중립 채움
+          disabledText: { value: '{colors.cool.500}' }, // textTertiary 무게 — 저강조 라벨
+
           success: { value: '{colors.mint.600}' },
           successSoft: { value: '{colors.mint.100}' },
           warning: { value: '{colors.sun.500}' },

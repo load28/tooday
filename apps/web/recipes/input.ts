@@ -13,7 +13,8 @@ export const input = defineRecipe({
     fontFamily: 'inherit',
     outline: 'none',
     _placeholder: { color: 'textPlaceholder' },
-    _disabled: { cursor: 'not-allowed', opacity: 0.5 },
+    // 비활성 = 중립 채움으로 교체 (opacity로 흐리지 않는다 — 버튼과 동일 원칙, 테두리 없이).
+    _disabled: { cursor: 'not-allowed', bg: 'disabledSurface', color: 'disabledText' },
   },
   variants: {
     variant: {
