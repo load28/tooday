@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ProjectsScreen } from '@/features/projects/projects-screen';
-import { AppTabBar } from '@/routes/-app-tab-bar';
 
-export const Route = createFileRoute('/_app/projects/')({
+export const Route = createFileRoute('/_app/_tabs/projects/')({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(context.trpc.task.projects.queryOptions());
   },
@@ -10,5 +9,5 @@ export const Route = createFileRoute('/_app/projects/')({
 });
 
 function ProjectsRoute() {
-  return <ProjectsScreen tabBar={<AppTabBar active="projects" />} />;
+  return <ProjectsScreen />;
 }

@@ -14,11 +14,12 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicSignupRouteRouteImport } from './routes/_public/signup/route'
 import { Route as PublicLoginRouteRouteImport } from './routes/_public/login/route'
-import { Route as AppTodayRouteRouteImport } from './routes/_app/today/route'
-import { Route as AppProjectsIndexRouteImport } from './routes/_app/projects/index'
+import { Route as AppTabsRouteRouteImport } from './routes/_app/_tabs/route'
 import { Route as AppTasksNewRouteRouteImport } from './routes/_app/tasks/new/route'
 import { Route as AppTasksTaskIdRouteRouteImport } from './routes/_app/tasks/$taskId/route'
-import { Route as AppProjectsProjectIdRouteRouteImport } from './routes/_app/projects/$projectId/route'
+import { Route as AppTabsTodayRouteRouteImport } from './routes/_app/_tabs/today/route'
+import { Route as AppTabsProjectsIndexRouteImport } from './routes/_app/_tabs/projects/index'
+import { Route as AppTabsProjectsProjectIdRouteRouteImport } from './routes/_app/_tabs/projects/$projectId/route'
 
 const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
@@ -43,14 +44,8 @@ const PublicLoginRouteRoute = PublicLoginRouteRouteImport.update({
   path: '/login',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const AppTodayRouteRoute = AppTodayRouteRouteImport.update({
-  id: '/today',
-  path: '/today',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
-  id: '/projects/',
-  path: '/projects/',
+const AppTabsRouteRoute = AppTabsRouteRouteImport.update({
+  id: '/_tabs',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppTasksNewRouteRoute = AppTasksNewRouteRouteImport.update({
@@ -63,79 +58,91 @@ const AppTasksTaskIdRouteRoute = AppTasksTaskIdRouteRouteImport.update({
   path: '/tasks/$taskId',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppProjectsProjectIdRouteRoute =
-  AppProjectsProjectIdRouteRouteImport.update({
+const AppTabsTodayRouteRoute = AppTabsTodayRouteRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AppTabsRouteRoute,
+} as any)
+const AppTabsProjectsIndexRoute = AppTabsProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => AppTabsRouteRoute,
+} as any)
+const AppTabsProjectsProjectIdRouteRoute =
+  AppTabsProjectsProjectIdRouteRouteImport.update({
     id: '/projects/$projectId',
     path: '/projects/$projectId',
-    getParentRoute: () => AppRouteRoute,
+    getParentRoute: () => AppTabsRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/today': typeof AppTodayRouteRoute
   '/login': typeof PublicLoginRouteRoute
   '/signup': typeof PublicSignupRouteRoute
-  '/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/today': typeof AppTabsTodayRouteRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
   '/tasks/new': typeof AppTasksNewRouteRoute
-  '/projects/': typeof AppProjectsIndexRoute
+  '/projects/$projectId': typeof AppTabsProjectsProjectIdRouteRoute
+  '/projects/': typeof AppTabsProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/today': typeof AppTodayRouteRoute
   '/login': typeof PublicLoginRouteRoute
   '/signup': typeof PublicSignupRouteRoute
-  '/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/today': typeof AppTabsTodayRouteRoute
   '/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
   '/tasks/new': typeof AppTasksNewRouteRoute
-  '/projects': typeof AppProjectsIndexRoute
+  '/projects/$projectId': typeof AppTabsProjectsProjectIdRouteRoute
+  '/projects': typeof AppTabsProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
-  '/_app/today': typeof AppTodayRouteRoute
+  '/_app/_tabs': typeof AppTabsRouteRouteWithChildren
   '/_public/login': typeof PublicLoginRouteRoute
   '/_public/signup': typeof PublicSignupRouteRoute
-  '/_app/projects/$projectId': typeof AppProjectsProjectIdRouteRoute
+  '/_app/_tabs/today': typeof AppTabsTodayRouteRoute
   '/_app/tasks/$taskId': typeof AppTasksTaskIdRouteRoute
   '/_app/tasks/new': typeof AppTasksNewRouteRoute
-  '/_app/projects/': typeof AppProjectsIndexRoute
+  '/_app/_tabs/projects/$projectId': typeof AppTabsProjectsProjectIdRouteRoute
+  '/_app/_tabs/projects/': typeof AppTabsProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/today'
     | '/login'
     | '/signup'
-    | '/projects/$projectId'
+    | '/today'
     | '/tasks/$taskId'
     | '/tasks/new'
+    | '/projects/$projectId'
     | '/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/today'
     | '/login'
     | '/signup'
-    | '/projects/$projectId'
+    | '/today'
     | '/tasks/$taskId'
     | '/tasks/new'
+    | '/projects/$projectId'
     | '/projects'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/_public'
-    | '/_app/today'
+    | '/_app/_tabs'
     | '/_public/login'
     | '/_public/signup'
-    | '/_app/projects/$projectId'
+    | '/_app/_tabs/today'
     | '/_app/tasks/$taskId'
     | '/_app/tasks/new'
-    | '/_app/projects/'
+    | '/_app/_tabs/projects/$projectId'
+    | '/_app/_tabs/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -181,18 +188,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLoginRouteRouteImport
       parentRoute: typeof PublicRouteRoute
     }
-    '/_app/today': {
-      id: '/_app/today'
-      path: '/today'
-      fullPath: '/today'
-      preLoaderRoute: typeof AppTodayRouteRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/projects/': {
-      id: '/_app/projects/'
-      path: '/projects'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof AppProjectsIndexRouteImport
+    '/_app/_tabs': {
+      id: '/_app/_tabs'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppTabsRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/tasks/new': {
@@ -209,30 +209,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksTaskIdRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/projects/$projectId': {
-      id: '/_app/projects/$projectId'
+    '/_app/_tabs/today': {
+      id: '/_app/_tabs/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AppTabsTodayRouteRouteImport
+      parentRoute: typeof AppTabsRouteRoute
+    }
+    '/_app/_tabs/projects/': {
+      id: '/_app/_tabs/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AppTabsProjectsIndexRouteImport
+      parentRoute: typeof AppTabsRouteRoute
+    }
+    '/_app/_tabs/projects/$projectId': {
+      id: '/_app/_tabs/projects/$projectId'
       path: '/projects/$projectId'
       fullPath: '/projects/$projectId'
-      preLoaderRoute: typeof AppProjectsProjectIdRouteRouteImport
-      parentRoute: typeof AppRouteRoute
+      preLoaderRoute: typeof AppTabsProjectsProjectIdRouteRouteImport
+      parentRoute: typeof AppTabsRouteRoute
     }
   }
 }
 
+interface AppTabsRouteRouteChildren {
+  AppTabsTodayRouteRoute: typeof AppTabsTodayRouteRoute
+  AppTabsProjectsProjectIdRouteRoute: typeof AppTabsProjectsProjectIdRouteRoute
+  AppTabsProjectsIndexRoute: typeof AppTabsProjectsIndexRoute
+}
+
+const AppTabsRouteRouteChildren: AppTabsRouteRouteChildren = {
+  AppTabsTodayRouteRoute: AppTabsTodayRouteRoute,
+  AppTabsProjectsProjectIdRouteRoute: AppTabsProjectsProjectIdRouteRoute,
+  AppTabsProjectsIndexRoute: AppTabsProjectsIndexRoute,
+}
+
+const AppTabsRouteRouteWithChildren = AppTabsRouteRoute._addFileChildren(
+  AppTabsRouteRouteChildren,
+)
+
 interface AppRouteRouteChildren {
-  AppTodayRouteRoute: typeof AppTodayRouteRoute
-  AppProjectsProjectIdRouteRoute: typeof AppProjectsProjectIdRouteRoute
+  AppTabsRouteRoute: typeof AppTabsRouteRouteWithChildren
   AppTasksTaskIdRouteRoute: typeof AppTasksTaskIdRouteRoute
   AppTasksNewRouteRoute: typeof AppTasksNewRouteRoute
-  AppProjectsIndexRoute: typeof AppProjectsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppTodayRouteRoute: AppTodayRouteRoute,
-  AppProjectsProjectIdRouteRoute: AppProjectsProjectIdRouteRoute,
+  AppTabsRouteRoute: AppTabsRouteRouteWithChildren,
   AppTasksTaskIdRouteRoute: AppTasksTaskIdRouteRoute,
   AppTasksNewRouteRoute: AppTasksNewRouteRoute,
-  AppProjectsIndexRoute: AppProjectsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
