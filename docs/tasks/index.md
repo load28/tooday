@@ -57,3 +57,4 @@
 | T028 | [커밋 컨벤션 신설 — 태스크 단위 + 태스크 번호](T028-commit-convention-task-number.md) | 높음 | ✅ 완료 |
 | T029 | [탭 전환 빈 화면·멈칫 제거 (클라이언트 캐시 수명 정상화)](T029-web-cache-lifetime.md) | 높음 | ✅ 완료 |
 | T030 | [탭바를 레이아웃으로 호이스팅 (탭 전환 시 탭바 유지)](T030-tab-bar-layout-hoist.md) | 중간 | ✅ 완료 |
+| T031 | [블로그 작성: TanStack Query gc/stale 설정 (T029 경험 기반)](T031-blog-tanstack-gc-stale.md) | 낮음 | ✅ 완료 |
