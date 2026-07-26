@@ -82,7 +82,14 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
   const remove = useMutation(
     trpc.task.delete.mutationOptions({
       onSuccess: async () => {
+        // 전략 ④(떠나며 다음 화면 loader가 채움) — loader의 ensureQueryData는 낡음을
+        // 무시하고 캐시를 그대로 주므로, invalidate가 아니라 remove여야 새로 채워진다.
+        queryClient.removeQueries({ queryKey: trpc.task.range.queryKey() });
         await navigate({ to: '/today' });
+        // 이 화면이 구독 중이던 캐시라 언마운트된 뒤에 지운다 — 마운트 상태에서 지우면
+        // useSuspenseQuery가 데이터를 잃고 suspend 해 화면이 빈다. 지우지 않으면 삭제
+        // 직후 뒤로가기가 loader 캐시에서 지워진 태스크를 꺼내 보여준다.
+        queryClient.removeQueries({ queryKey: trpc.task.byId.queryKey({ id: taskId }) });
       },
     }),
   );

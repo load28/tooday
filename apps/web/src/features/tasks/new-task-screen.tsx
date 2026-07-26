@@ -60,7 +60,7 @@ type NewTaskScreenProps = {
 export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc } = useRouteContext({ from: '__root__' });
+  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
 
   const { data } = useSuspenseQuery(trpc.task.projects.queryOptions());
@@ -77,6 +77,9 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
   const create = useMutation(
     trpc.task.create.mutationOptions({
       onSuccess: async () => {
+        // 전략 ④(떠나며 다음 화면 loader가 채움) — loader의 ensureQueryData는 낡음을
+        // 무시하고 캐시를 그대로 주므로, invalidate가 아니라 remove여야 새로 채워진다.
+        queryClient.removeQueries({ queryKey: trpc.task.range.queryKey() });
         await navigate({ to: '/today' });
       },
     }),

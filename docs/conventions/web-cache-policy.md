@@ -11,10 +11,52 @@
 | ① 낙관적 패치 + 롤백 + invalidate | 화면에 **이미 있는 데이터의 부분 수정**이고 즉각 반응이 UX의 일부일 때 (토글, 인라인 편집) | `task.update` (today·task-detail) |
 | ② setQueryData prime | **뮤테이션 응답이 곧 쿼리 데이터**일 때 — 재요청 없이 캐시를 심는다 | `auth.login`·`auth.signup` → `user.me` |
 | ③ invalidate만 | 응답만으로 캐시를 정확히 재구성할 수 없을 때 (서버 몫인 정렬·집계·목록 멤버십) | `task.createProject` → `task.projects` |
-| ④ navigate 후 loader refetch | 뮤테이션 후 **화면을 떠날 때** — 다음 화면 loader가 채우므로 캐시를 만지지 않는다 | `task.create` → `/today` |
+| ④ remove 후 navigate | 뮤테이션 후 **화면을 떠날 때** — 다음 화면 loader가 채우도록 그 캐시를 비운다 | `task.create`·`task.delete` → `/today` |
 
 판단 순서: 화면을 떠나나? → ④. 응답이 쿼리 데이터 전체인가? → ②.
 남아 있는 화면의 일부를 고치고 즉각성이 중요한가? → ①. 그 외 → ③.
+
+## 머물면 `invalidate`, 떠나면 `remove`
+
+①~③(머무름)과 ④(떠남)의 갈림길은 "뮤테이션이 성공했나"가 아니라 **다음에 그
+데이터를 읽는 주체가 누구냐**다. 창구가 둘이고 규칙이 다르다.
+
+| 창구 | 데이터가 있을 때 | 낡음 표시를 보나 |
+| --- | --- | --- |
+| 컴포넌트 `useSuspenseQuery` | 즉시 렌더 + 백그라운드 재검증 | **본다** (refetchOnMount) |
+| 라우트 loader `ensureQueryData` | 즉시 반환, 재요청 없음 | **무시한다** |
+
+- **화면에 머물면 `invalidateQueries`.** 다음에 읽는 건 구독 중인 컴포넌트라
+  낡음 표시만으로 재요청이 걸린다. 데이터는 남아 있어 화면이 안 깨진다.
+  여기서 `removeQueries`를 하면 구독 중인 `useSuspenseQuery`가 데이터를 잃고
+  suspend 해 **화면이 빈다**.
+- **화면을 떠나면 `removeQueries`.** 다음에 읽는 건 다음 화면의 loader인데,
+  `ensureQueryData`는 낡음을 무시하고 캐시를 그대로 준다. 즉 `invalidate`가
+  **안 통한다** — 비워야 loader가 실제로 새로 채운다.
+
+떠나는 화면이 스스로 구독 중인 캐시(예: 삭제한 태스크의 `task.byId`)는
+`navigate`를 await 한 **뒤에** 지운다. 마운트된 상태에서 지우면 위의 suspend가 난다.
+
+## 캐시 수명 — 기본값을 쓰고, 예외는 쿼리 단위로
+
+`QueryClient` 전역 기본값은 React Query 기본(`staleTime` 0 / `gcTime` 5분)을 쓴다.
+`staleTime` 0은 "계속 요청"이 아니라 "재요청 기회가 오면 막지 마라"는 뜻이다 —
+갱신은 트리거(`refetchOnMount` / `refetchOnWindowFocus` / `refetchOnReconnect` /
+`invalidateQueries`)가 일으키고 폴링(`refetchInterval`)은 꺼져 있다. 덕분에 캐시로
+즉시 렌더한 뒤 뒤에서 갱신돼, 과거 데이터를 보는 창이 재요청 왕복 시간으로 묶인다.
+
+수명을 늘려야 하는 쿼리는 **전역이 아니라 그 쿼리에만** 준다
+(`user.me` = 세션 게이트, `app/trpc.ts`의 `fetchSessionUser`).
+
+**구독하는 컴포넌트가 없는 쿼리는 `gcTime > staleTime`이어야 한다.** gc 타이머는
+생성자 / 마지막 관찰자 제거 / **fetch 완료** 시에만 리셋된다. 관찰자가 없으면
+백그라운드 갱신(fetch)만이 타이머를 리셋할 수 있으므로, `gcTime`이 더 짧으면 갱신이
+일어나기 전에 캐시가 삭제돼 다음 진입이 **블로킹 요청**이 된다. `staleTime`의
+`gcTime` 초과분은 언제나 무의미하다.
+
+`ensureQueryData`만 쓰는 쿼리(관찰자 없음)에 재검증이 필요하면
+`revalidateIfStale: true`를 준다 — 캐시는 즉시 반환해 내비게이션을 막지 않고
+백그라운드로만 갱신한다.
 
 ## ① 낙관적 패치는 헬퍼로 배선한다
 

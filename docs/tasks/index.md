@@ -55,3 +55,4 @@
 | T026 | [PGlite 데이터 디렉토리 부모 미생성으로 BFF 기동 실패](T026-pglite-datadir-mkdir.md) | 높음 | ✅ 완료 |
 | T027 | [Panda 커스텀 레시피가 내장 패턴 이름과 충돌 (config 경고)](T027-panda-recipe-pattern-name-collision.md) | 낮음 | ✅ 완료 |
 | T028 | [커밋 컨벤션 신설 — 태스크 단위 + 태스크 번호](T028-commit-convention-task-number.md) | 높음 | ✅ 완료 |
+| T029 | [탭 전환 빈 화면·멈칫 제거 (클라이언트 캐시 수명 정상화)](T029-web-cache-lifetime.md) | 높음 | ✅ 완료 |
