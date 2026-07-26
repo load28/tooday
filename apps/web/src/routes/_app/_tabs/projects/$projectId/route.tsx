@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ProjectDetailScreen } from '@/features/projects/project-detail-screen';
-import { AppTabBar } from '@/routes/-app-tab-bar';
 
-export const Route = createFileRoute('/_app/projects/$projectId')({
+export const Route = createFileRoute('/_app/_tabs/projects/$projectId')({
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(context.trpc.task.project.queryOptions({ projectId: params.projectId }));
   },
@@ -11,5 +10,5 @@ export const Route = createFileRoute('/_app/projects/$projectId')({
 
 function ProjectDetailRoute() {
   const { projectId } = Route.useParams();
-  return <ProjectDetailScreen projectId={projectId} tabBar={<AppTabBar active="projects" />} />;
+  return <ProjectDetailScreen projectId={projectId} />;
 }

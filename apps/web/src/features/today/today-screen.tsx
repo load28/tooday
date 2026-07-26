@@ -2,7 +2,7 @@ import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
 import { Bell, CalendarX2, Plus } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
 import { applyTaskPatch } from '@/entities/task/patch';
@@ -65,11 +65,10 @@ function sectionOf(startAt: string): DaySection {
 type TodayScreenProps = {
   /** 기준 시각(epoch ms). SSR과 하이드레이션이 같은 값을 쓰도록 라우트 loader에서 내려온다. */
   now: number;
-  /** 하단 탭 내비 — feature 간 내비 조립이므로 라우트(배선 층)가 AppTabBar를 주입한다 */
-  tabBar: ReactNode;
 };
 
-export function TodayScreen({ now, tabBar }: TodayScreenProps) {
+/** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
+export function TodayScreen({ now }: TodayScreenProps) {
   const navigate = useNavigate();
   const { trpc, queryClient } = useRouteContext({ from: '__root__' });
   const t = useT();
@@ -124,8 +123,8 @@ export function TodayScreen({ now, tabBar }: TodayScreenProps) {
   };
 
   return (
-    <Screen
-      topBar={
+    <>
+      <Screen.Header>
         <AppBar>
           <AppBar.Title>{t.today.title}</AppBar.Title>
           <AppBar.Trailing>
@@ -137,75 +136,75 @@ export function TodayScreen({ now, tabBar }: TodayScreenProps) {
             </Button>
           </AppBar.Trailing>
         </AppBar>
-      }
-      bottomBar={tabBar}
-    >
-      <div className={pageCls}>
-        <Card radius="2xl" padding="lg" className={heroCls}>
-          <Stack gap="xs">
-            <Text variant="label" tone="brand">
-              {day.isToday ? format(t.today.hero.today, { date: day.label }) : day.label}
-            </Text>
-            <Text as="h1" variant="display">
-              {t.today.hero.remainingPrefix}{' '}
-              <Text as="span" variant="display" tone="brand">
-                {format(t.today.hero.remainingCount, { count: remaining })}
-              </Text>{' '}
-              <Text as="span" variant="display" tone="tertiary">
-                {t.today.hero.remainingSuffix}
+      </Screen.Header>
+      <Screen.Content>
+        <div className={pageCls}>
+          <Card radius="2xl" padding="lg" className={heroCls}>
+            <Stack gap="xs">
+              <Text variant="label" tone="brand">
+                {day.isToday ? format(t.today.hero.today, { date: day.label }) : day.label}
               </Text>
-            </Text>
-          </Stack>
-        </Card>
+              <Text as="h1" variant="display">
+                {t.today.hero.remainingPrefix}{' '}
+                <Text as="span" variant="display" tone="brand">
+                  {format(t.today.hero.remainingCount, { count: remaining })}
+                </Text>{' '}
+                <Text as="span" variant="display" tone="tertiary">
+                  {t.today.hero.remainingSuffix}
+                </Text>
+              </Text>
+            </Stack>
+          </Card>
 
-        <WeekStrip
-          days={days}
-          activeOffset={activeOffset}
-          hasTasks={(cell) => (tasksByDate.get(cell.key) ?? []).length > 0}
-          onSelect={setActiveOffset}
-        />
+          <WeekStrip
+            days={days}
+            activeOffset={activeOffset}
+            hasTasks={(cell) => (tasksByDate.get(cell.key) ?? []).length > 0}
+            onSelect={setActiveOffset}
+          />
 
-        {tasks.length === 0 ? (
-          <Stack gap="sm" align="center" className={emptyCls}>
-            <CalendarX2 size={36} color={token('colors.borderStrong')} />
-            <Text variant="bodyLgStrong" tone="secondary">
-              {t.today.empty.title}
-            </Text>
-            <Text variant="bodySm" tone="tertiary">
-              {t.today.empty.description}
-            </Text>
-          </Stack>
-        ) : (
-          SECTION_ORDER.map((sectionKey) => {
-            const items = tasks.filter((task) => sectionOf(task.startAt) === sectionKey);
-            if (items.length === 0) return null;
-            return (
-              <Section key={sectionKey} title={t.today.section[sectionKey]}>
-                <div className={timelineCls}>
-                  {items.map((task) => (
-                    <div key={task.id} className={rowCls}>
-                      <div className={timeColCls}>
-                        <Text variant="numeric" tone="secondary">
-                          {task.startAt}
-                        </Text>
-                        <Text variant="micro" tone="placeholder">
-                          {formatDuration(t, task.durationMin)}
-                        </Text>
+          {tasks.length === 0 ? (
+            <Stack gap="sm" align="center" className={emptyCls}>
+              <CalendarX2 size={36} color={token('colors.borderStrong')} />
+              <Text variant="bodyLgStrong" tone="secondary">
+                {t.today.empty.title}
+              </Text>
+              <Text variant="bodySm" tone="tertiary">
+                {t.today.empty.description}
+              </Text>
+            </Stack>
+          ) : (
+            SECTION_ORDER.map((sectionKey) => {
+              const items = tasks.filter((task) => sectionOf(task.startAt) === sectionKey);
+              if (items.length === 0) return null;
+              return (
+                <Section key={sectionKey} title={t.today.section[sectionKey]}>
+                  <div className={timelineCls}>
+                    {items.map((task) => (
+                      <div key={task.id} className={rowCls}>
+                        <div className={timeColCls}>
+                          <Text variant="numeric" tone="secondary">
+                            {task.startAt}
+                          </Text>
+                          <Text variant="micro" tone="placeholder">
+                            {formatDuration(t, task.durationMin)}
+                          </Text>
+                        </div>
+                        <TaskCard
+                          task={task}
+                          project={task.projectId !== null ? projectById.get(task.projectId) : undefined}
+                          onToggle={toggleTask}
+                          onClick={() => navigate({ to: '/tasks/$taskId', params: { taskId: task.id } })}
+                        />
                       </div>
-                      <TaskCard
-                        task={task}
-                        project={task.projectId !== null ? projectById.get(task.projectId) : undefined}
-                        onToggle={toggleTask}
-                        onClick={() => navigate({ to: '/tasks/$taskId', params: { taskId: task.id } })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            );
-          })
-        )}
-      </div>
-    </Screen>
+                    ))}
+                  </div>
+                </Section>
+              );
+            })
+          )}
+        </div>
+      </Screen.Content>
+    </>
   );
 }
