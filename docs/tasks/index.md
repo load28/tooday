@@ -59,3 +59,4 @@
 | T030 | [탭바를 레이아웃으로 호이스팅 (탭 전환 시 탭바 유지)](T030-tab-bar-layout-hoist.md) | 중간 | ✅ 완료 |
 | T031 | [세션 프로브(user.me) optional-auth — 익명 200+null, 무효 401](T031-session-probe-optional-auth.md) | 높음 | ✅ 완료 |
 | T032 | [로그아웃 UI (설정 화면 셸) 신설](T032-web-logout-settings.md) | 중간 | ✅ 완료 |
+| T033 | [CLAUDE.md 최신화 + 명령어 인덱스 보강](T033-claude-md-commands-refresh.md) | 낮음 | ✅ 완료 |

@@ -1,6 +1,30 @@
 # CLAUDE.md
 
-이 파일은 인덱스만 둔다. 실제 내용은 각 문서를 읽는다.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+이 파일은 인덱스만 둔다 — 실제 내용은 각 문서를 읽는다. 예외는 명령어 하나뿐이다
+(README 스크립트가 다루지 않는 테스트·경계 검사).
+
+## 명령어
+
+Bun workspaces + Turborepo 모노레포. 루트에서 실행한다. 개발·빌드·타입체크·포맷 등
+기본 스크립트는 [README.md](README.md) "Scripts"에 있고, 아래는 거기 없는 것들이다.
+
+```bash
+bun run test        # 전체 테스트 (turbo run test — bff는 bun test, web/design-guide는 vitest)
+bun run lint:deps   # dependency-cruiser 경계 검사 (CI·pre-commit이 강제하는 의존 방향)
+```
+
+단일 테스트 — 앱별 러너가 다르다:
+
+```bash
+cd apps/bff && bun test src/modules/auth/access-token.test.ts   # bun test (파일)
+cd apps/bff && bun test -t "rotates"                            # bun test (이름 필터)
+cd apps/web && bunx vitest run src/shared/time.test.ts          # vitest (파일)
+cd apps/web && bunx vitest -t "formats"                         # vitest (이름 필터, watch)
+```
+
+커밋 전 lefthook pre-commit이 스테이징 파일에 `biome check --write` + `lint:deps`를 건다.
 
 ## 프로젝트 이해
 
