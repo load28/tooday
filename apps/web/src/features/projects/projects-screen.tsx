@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
-import { LayoutGrid, Plus } from 'lucide-react';
+import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
@@ -47,6 +47,9 @@ export function ProjectsScreen() {
         <AppBar>
           <AppBar.Title>{t.projects.title}</AppBar.Title>
           <AppBar.Trailing>
+            <Button size="icon" shape="square" aria-label={t.settings.open} onClick={() => navigate({ to: '/settings' })}>
+              <UserRound size={20} />
+            </Button>
             <Button size="icon" shape="square" aria-label={t.projects.addProject} onClick={() => setCreateOpen(true)}>
               <Plus size={22} strokeWidth={2.4} />
             </Button>

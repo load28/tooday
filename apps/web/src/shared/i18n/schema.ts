@@ -147,4 +147,19 @@ export interface MessageSchema {
       passwordTooShort: Msg<'min'>;
     };
   };
+  settings: {
+    open: Msg;
+    title: Msg;
+    account: {
+      label: Msg;
+    };
+    logout: {
+      action: Msg;
+      confirmTitle: Msg;
+      confirmDescription: Msg;
+      confirm: Msg;
+      cancel: Msg;
+      error: Msg;
+    };
+  };
 }

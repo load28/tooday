@@ -144,4 +144,19 @@ export const ko = defineMessages<MessageSchema>()({
       passwordTooShort: '비밀번호는 {min}자 이상 입력해 주세요.',
     },
   },
+  settings: {
+    open: '설정',
+    title: '설정',
+    account: {
+      label: '계정',
+    },
+    logout: {
+      action: '로그아웃',
+      confirmTitle: '로그아웃할까요?',
+      confirmDescription: '다시 로그인하려면 이메일과 비밀번호가 필요해요.',
+      confirm: '로그아웃',
+      cancel: '취소',
+      error: '로그아웃에 실패했어요. 잠시 후 다시 시도해 주세요.',
+    },
+  },
 });

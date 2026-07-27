@@ -1,7 +1,7 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
-import { Bell, CalendarX2, Plus } from 'lucide-react';
+import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { css } from 'styled-system/css';
 import { token } from 'styled-system/tokens';
@@ -128,6 +128,9 @@ export function TodayScreen({ now }: TodayScreenProps) {
         <AppBar>
           <AppBar.Title>{t.today.title}</AppBar.Title>
           <AppBar.Trailing>
+            <Button size="icon" shape="square" aria-label={t.settings.open} onClick={() => navigate({ to: '/settings' })}>
+              <UserRound size={20} />
+            </Button>
             <Button size="icon" shape="square" aria-label={t.today.notifications}>
               <Bell size={20} />
             </Button>

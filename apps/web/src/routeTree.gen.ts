@@ -14,6 +14,7 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicSignupRouteRouteImport } from './routes/_public/signup/route'
 import { Route as PublicLoginRouteRouteImport } from './routes/_public/login/route'
+import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
 import { Route as AppTabsRouteRouteImport } from './routes/_app/_tabs/route'
 import { Route as AppTasksNewRouteRouteImport } from './routes/_app/tasks/new/route'
 import { Route as AppTasksTaskIdRouteRouteImport } from './routes/_app/tasks/$taskId/route'
@@ -43,6 +44,11 @@ const PublicLoginRouteRoute = PublicLoginRouteRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => PublicRouteRoute,
+} as any)
+const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppTabsRouteRoute = AppTabsRouteRouteImport.update({
   id: '/_tabs',
@@ -77,6 +83,7 @@ const AppTabsProjectsProjectIdRouteRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRoute
   '/login': typeof PublicLoginRouteRoute
   '/signup': typeof PublicSignupRouteRoute
   '/today': typeof AppTabsTodayRouteRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof AppSettingsRouteRoute
   '/login': typeof PublicLoginRouteRoute
   '/signup': typeof PublicSignupRouteRoute
   '/today': typeof AppTabsTodayRouteRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
   '/_app/_tabs': typeof AppTabsRouteRouteWithChildren
+  '/_app/settings': typeof AppSettingsRouteRoute
   '/_public/login': typeof PublicLoginRouteRoute
   '/_public/signup': typeof PublicSignupRouteRoute
   '/_app/_tabs/today': typeof AppTabsTodayRouteRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/settings'
     | '/login'
     | '/signup'
     | '/today'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/settings'
     | '/login'
     | '/signup'
     | '/today'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_public'
     | '/_app/_tabs'
+    | '/_app/settings'
     | '/_public/login'
     | '/_public/signup'
     | '/_app/_tabs/today'
@@ -187,6 +199,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof PublicLoginRouteRouteImport
       parentRoute: typeof PublicRouteRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_app/_tabs': {
       id: '/_app/_tabs'
@@ -251,12 +270,14 @@ const AppTabsRouteRouteWithChildren = AppTabsRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppTabsRouteRoute: typeof AppTabsRouteRouteWithChildren
+  AppSettingsRouteRoute: typeof AppSettingsRouteRoute
   AppTasksTaskIdRouteRoute: typeof AppTasksTaskIdRouteRoute
   AppTasksNewRouteRoute: typeof AppTasksNewRouteRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppTabsRouteRoute: AppTabsRouteRouteWithChildren,
+  AppSettingsRouteRoute: AppSettingsRouteRoute,
   AppTasksTaskIdRouteRoute: AppTasksTaskIdRouteRoute,
   AppTasksNewRouteRoute: AppTasksNewRouteRoute,
 }
