@@ -111,6 +111,43 @@ SSE 가드(`requireAuth`)는 프로브가 아니라 보호 스트림이므로 40
 > **Claude**: 정확히 그 규칙. 네이티브는 Bearer로 같은 BFF 경로를 타므로 BFF에서 한 번
 > 구분하면 웹/모바일 둘 다 커버된다. 태스크 T031로 착수.
 
+> **Minyoung**: 지금보니깐 퍼블릭으로 프로시저를 변경했던데 그게 맞는변경일까?
+>
+> **Claude**: 기능·보안은 맞다(캐시 오염 없음 — `pub.*` 네임스페이스 기준, 타입 안전).
+> 하지만 `user.me`는 truly public도 protected도 아닌 **optional-auth(세션 프로브)** 라,
+> `publicProcedure`에 얹으면 의도를 덜 표현한다. 게다가 이 저장소는 `pub.*` 캐시로 "public"을
+> 이미 다른 뜻으로 쓴다. 권장: `optionalAuthProcedure`를 세워 "무효 자격증명 → 401"을
+> 미들웨어로 올리고 리졸버는 익명/인증 두 갈래로.
+
+> **Minyoung**: 그래 익명 프로시저로 다루면 좋겠다 그런데 익명프로시저는 이것말고 어떤게
+> 쓰일수있을까? 자격증명없이 요청가능한것이?
+>
+> **Claude**: "자격증명 없이 가능" ≠ optional-auth다. 핵심은 **응답이 요청자에 따라 달라지느냐**.
+> 셋으로 갈린다 — ①truly public(`pub.*`, 모두 동일·공유 캐시) ②optional-auth(요청자마다 다름·
+> private, 무효 자격증명은 401) ③protected(익명 거부). `auth.login/signup`은 자격증명 없이
+> 불리지만 세션을 *만드는* 것이라 optional-auth가 아니다. TooDay에서 맞는 자리: 세션 프로브,
+> 공유 태스크/프로젝트 뷰(task-sharing 문서), 초대 프리뷰.
+
+> **Minyoung**: 아무나 익명으로 하면 퍼블릭이 맞고 익명도 정상으로 처리하지만 공유되는건
+> 아닌 케이스 그리고 완전히 익명은 거부되는 케이스 이렇게 나눠지는거군
+>
+> **Claude**: 정확히 그 3층. 2번의 정체성이 "익명 가능"이 아니라 "요청자에 따라 응답이 달라져
+> 공유 캐시에 못 올라감"이라는 게 핵심이다.
+
+> **Minyoung**: 근데 옵셔널 어스 보다는 옵셔널 프라이빗이 좀 더 어울리는거 아닐까? 한번
+> 고민해보자. 바로 수정말고
+>
+> **Claude**: 두 이름은 다른 축을 가리킨다 — `optionalAuth`(인증 축) vs `optionalPrivate`
+> (인증+캐시 축 혼합). 프로시저가 실제로 지배하는 건 **인증 동작**이고, `private` 캐시는
+> 네임스페이스(`resolveCacheControl`)가 정한다. 이름에 `private`를 넣으면 프로시저가 하지
+> 않는 일을 주장하게 되고(우리가 `public`을 버린 이유와 동형), 게다가 protected도 private라
+> tier 2를 유일하게 구분하지도 못한다. 유지 추천, 대안은 `sessionProcedure`.
+
+> **Minyoung**: 그래 그냥 목적을 명확히 하는게 좋겠다 세션프로시저
+>
+> **Claude**: `sessionProcedure`로 확정. 목적(세션 프로브)을 그대로 이름에 담는다.
+> `optionalAuthProcedure`를 도입한 커밋에 amend하고 태스크·아키텍처 문서를 함께 갱신.
+
 ## 작업 로그
 
 - 2026-07-27: 태스크 생성. `meResponseSchema.user`를 nullable로, 컨텍스트에
@@ -118,3 +155,11 @@ SSE 가드(`requireAuth`)는 프로브가 아니라 보호 스트림이므로 40
   "인증 없음 → 401"을 "→ 200+null"로 교체하고 "리프레시 쿠키만 → 401" 케이스 추가.
   검증: `bun run typecheck` 4/4 통과, `bun test`(@tooday/bff) 96 pass 0 fail,
   변경 파일 biome check 통과.
+- 2026-07-27(후속): `user.me`가 `publicProcedure`에 얹혀 의도를 덜 표현한다는 리뷰
+  지적 반영. `init.ts`에 `sessionProcedure` 신설 — "무효 자격증명 → 401"을 미들웨어로
+  올려 프로시저 3층(public·session·protected)을 이름으로 표현하고, `user.me` 리졸버는
+  익명(userId null → user:null)/인증 두 갈래로 단순화. 동작·응답 불변. 네이밍은
+  optionalAuth→optionalPrivate 검토 끝에 목적을 직접 드러내는 `sessionProcedure`로 확정
+  (프로시저는 인증 동작을 지배하고 private 캐시는 네임스페이스가 정하므로 이름은 목적으로).
+  프로시저 3층을 `docs/authentication-architecture.md`에 문서화. 이 리팩터는 앞선
+  optional-auth 전환 커밋에 amend로 합쳤다. 검증: typecheck 4/4, bff test 96 pass 0 fail.

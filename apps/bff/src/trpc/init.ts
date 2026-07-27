@@ -38,3 +38,16 @@ export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   }
   return next({ ctx: { userId: ctx.userId } });
 });
+
+/**
+ * 세션 프로브 — "너 누구냐"를 인증 강제 없이 묻는다. 무효 자격증명(만료·폐기)은
+ * 401로 거르되, 자격증명이 아예 없으면(익명) userId=null로 통과시킨다. 그래서 리졸버의
+ * `!ctx.userId`는 "무효"가 아니라 "익명"만 뜻한다. 응답이 요청자에 따라 달라지므로
+ * pub.*(공유 캐시)로 두면 안 되고 private 네임스페이스에서만 쓴다.
+ */
+export const sessionProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!ctx.userId && ctx.hasCredential) {
+    throw new DomainError(DOMAIN_ERROR_CODES.UNAUTHENTICATED);
+  }
+  return next();
+});

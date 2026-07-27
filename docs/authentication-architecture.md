@@ -257,6 +257,32 @@ refetchQueries → 즉시 fetch 실행
 - 뮤테이션, 에러 응답, `pub.*` 외 경로가 섞인 배치 요청은 전부 `no-store`
 - 경로별 TTL 오버라이드는 `apps/bff/src/trpc/cache.ts`에서 관리
 
+### 프로시저 3층 (인증 강제 수준)
+
+프로시저는 **인증을 얼마나 강제하는가**로 세 층이다(`apps/bff/src/trpc/init.ts`). 이름은
+프로시저가 *하는 일*(인증 동작)을 가리킨다 — private 캐시는 위 네임스페이스 규칙이 따로
+정하므로 이름에 넣지 않는다.
+
+| 프로시저 | 인증 | userId | 미인증 응답 | 캐시 | 용도 |
+|----------|------|--------|-------------|------|------|
+| `publicProcedure` | 없음(가드 없음) | `null` 허용 | — | `pub.*`면 public, 아니면 private | 공개 리드(`pub.*`) · auth 확립 뮤테이션(login/signup/refresh) |
+| `sessionProcedure` | **선택** | `null` 허용 | 익명 → 통과(200), 무효 자격증명 → 401 | private | 세션 프로브(누구냐를 강제 없이 물음) |
+| `protectedProcedure` | 필수 | `string` 보장 | 미인증 → 401 | private | 유저 데이터/동작 |
+
+**어떤 프로시저를 쓸지 — 판단 규칙**: "응답이 요청자에 따라 달라지는가?"
+
+- 아니오(모두 동일) → `publicProcedure` + `pub.*` 네임스페이스(공유 캐시)
+- 예, 그런데 **익명도 정상 상태** → `sessionProcedure`(private, 무효 자격증명은 401)
+- 예, 그런데 **익명은 거부** → `protectedProcedure`
+
+`sessionProcedure`는 "무효 자격증명(만료·폐기) → 401"을 미들웨어에서 거르고 익명은
+`userId=null`로 통과시킨다. 그래서 리졸버의 `!ctx.userId`는 "무효"가 아니라 "익명"만 뜻하며,
+익명을 401 에러가 아니라 200 + 빈 데이터로 돌릴 수 있다(예: `user.me` → `{ user: null }`).
+이는 게이트가 매 진입마다 부르는 세션 확인이 캐시·SSR dehydrate에 성공으로 남아 재요청이
+폭주하지 않게 한다. 응답이 요청자에 따라 달라지므로 `sessionProcedure`는 절대 `pub.*`(공유
+캐시)에 두지 않는다. 미래의 공유 태스크/프로젝트 뷰(`docs/task-sharing-architecture.md`)가
+같은 자리다 — 익명은 공개 스냅샷, 로그인 협업자는 편집권한까지.
+
 ## 근거 출처
 
 - TanStack Start 공식 문서 (authentication-overview.md, authentication.md, middleware.md, server-functions.md)
