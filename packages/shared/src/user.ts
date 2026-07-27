@@ -6,8 +6,9 @@ export const userSchema = v.object({
   name: v.string(),
 });
 
+// 세션 프로브 — 익명 방문자는 user: null(200). 자격증명이 실렸는데 무효면 BFF가 401을 던진다.
 export const meResponseSchema = v.object({
-  user: userSchema,
+  user: v.nullable(userSchema),
 });
 
 export type User = v.InferOutput<typeof userSchema>;

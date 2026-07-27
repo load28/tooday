@@ -178,7 +178,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     });
     expect(res.status).toBe(200);
     const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
-    expect(user.email).toBe('test@tooday.app');
+    expect(user?.email).toBe('test@tooday.app');
   });
 
   it('Authorization Bearer 헤더 방식으로 접근할 수 있다', async () => {
@@ -190,7 +190,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     });
     expect(res.status).toBe(200);
     const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
-    expect(user.email).toBe('test@tooday.app');
+    expect(user?.email).toBe('test@tooday.app');
   });
 
   it('헤더가 쿠키보다 우선한다', async () => {
@@ -206,9 +206,19 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     expect(res.status).toBe(401);
   });
 
-  it('인증 정보가 없으면 401을 반환한다', async () => {
+  it('자격증명이 전혀 없으면(익명) 200 + user null을 반환한다', async () => {
     const { app } = setup();
     const res = await app.request(trpcPath('user.me'));
+    expect(res.status).toBe(200);
+    const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
+    expect(user).toBeNull();
+  });
+
+  it('리프레시 쿠키만 있고 액세스가 없으면 401을 반환한다(만료 세션 복구 경로)', async () => {
+    const { app, config } = setup();
+    const res = await app.request(trpcPath('user.me'), {
+      headers: { Cookie: `${config.refreshCookieName}=some-refresh-token` },
+    });
     expect(res.status).toBe(401);
   });
 
