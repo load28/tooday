@@ -109,3 +109,7 @@ state layer 색 = **그 요소 자신의 콘텐츠 색**이므로, 같은 표면
   검증: agent-browser 실측(폭 점프 0 + state layer 색 확인), 직접 tsc, 웹 테스트 24 passed,
   biome 클린. styled-system은 gitignored라 커밋 제외.
   참고: 실측용 dev 계정(layout-debug@tooday.app)+프로젝트 잔존 → PGlite 리셋으로 정리 가능.
+- 2026-07-28(후속): 데스크톱 검토 — hover 8%가 큰 카드에서 진하고, 리플이 없어 press(10%)와
+  위계가 거의 안 갈렸다. 기술조사로 대조(MUI 데스크톱 hover 4% vs M3 8%) 후 `stateHover`를
+  8%→**5%**로 낮춤(press 10% 유지). hover는 데스크톱 전용이라 모바일 웹뷰엔 영향 0.
+  브라우저 실측: stateHover=`…/0.05`, statePressed=`…/0.1` 확인. typecheck·biome 통과.
