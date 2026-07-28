@@ -1,8 +1,14 @@
+import { type HTMLMotionProps, motion } from 'framer-motion';
 import { type MouseEvent, type ReactNode, useId } from 'react';
 import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
+import { baseButton } from 'styled-system/recipes';
 import { useT } from '@/shared/i18n';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
+
+// TDS식 press — 눌렀다 뗄 때 살짝 튕기는 스프링(물리). 축소는 Button(진짜 버튼)에만, 리스트/카드엔 안 준다.
+const PRESS_SPRING = { type: 'spring', stiffness: 500, damping: 30, mass: 0.6 } as const;
+const PRESS_SCALE = 0.97;
 
 // 버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — cva(utilities)라 baseButton(recipes 층)을 결정적으로 덮는다.
 const buttonStyle = cva({
@@ -13,22 +19,34 @@ const buttonStyle = cva({
     '&:disabled': { opacity: 1, bg: 'disabledSurface', color: 'disabledText' },
   },
   variants: {
+    // hover와 press는 같은 색을 쓰고(TDS식), press가 축소를 더한다. hover는 포인터 기기에서만(_hover 조건).
     tone: {
-      // 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다.
-      ghost: { color: 'text', _press: { bg: 'statePressed' }, '&:disabled': { bg: 'transparent' } },
+      // 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다. 중립이라 hover/press 2단.
+      ghost: { color: 'text', _hover: { bg: 'stateHover' }, _press: { bg: 'statePressed' }, '&:disabled': { bg: 'transparent' } },
       // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
-      brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' }, '&:disabled': { bg: 'transparent' } },
+      brandGhost: {
+        color: 'textBrand',
+        _hover: { bg: 'primarySofter' },
+        _press: { bg: 'primarySofter' },
+        '&:disabled': { bg: 'transparent' },
+      },
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.
       subtle: {
         bg: 'surfaceMuted',
         color: 'textSecondary',
+        _hover: { bg: 'surfaceSoft' },
         _press: { bg: 'surfaceSoft' },
-        _on: { bg: 'primary', color: 'onPrimary', _press: { bg: 'primaryPressed' } },
+        _on: { bg: 'primary', color: 'onPrimary', _hover: { bg: 'primaryPressed' }, _press: { bg: 'primaryPressed' } },
       },
-      brand: { bg: 'primary', color: 'onPrimary', _press: { bg: 'primaryPressed' } },
-      brandSoft: { bg: 'primarySoft', color: 'primary', _press: { bg: 'primarySofter' } },
-      danger: { bg: 'danger', color: 'textInverse', _press: { bg: 'dangerPressed' } },
-      dangerSoft: { bg: 'dangerSoft', color: 'danger', _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' } },
+      brand: { bg: 'primary', color: 'onPrimary', _hover: { bg: 'primaryPressed' }, _press: { bg: 'primaryPressed' } },
+      brandSoft: { bg: 'primarySoft', color: 'primary', _hover: { bg: 'primarySofter' }, _press: { bg: 'primarySofter' } },
+      danger: { bg: 'danger', color: 'textInverse', _hover: { bg: 'dangerPressed' }, _press: { bg: 'dangerPressed' } },
+      dangerSoft: {
+        bg: 'dangerSoft',
+        color: 'danger',
+        _hover: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
+        _press: { bg: 'dangerSoft', filter: 'brightness(0.96)' },
+      },
     },
     shape: {
       square: { borderRadius: 'md' },
@@ -76,7 +94,7 @@ type ButtonProps = BaseButtonProps &
     spinner?: ReactNode;
   };
 
-export function Button({ loading, loadingText, spinner, className, children, onClick, ...rest }: ButtonProps) {
+export function Button({ loading, loadingText, spinner, className, children, onClick, asChild, type, ...rest }: ButtonProps) {
   const t = useT();
   const [variantProps, baseProps] = buttonStyle.splitVariantProps(rest);
   const labelId = useId();
@@ -92,32 +110,54 @@ export function Button({ loading, loadingText, spinner, className, children, onC
     onClick?.(event);
   };
 
-  return (
-    <BaseButton
-      data-loading={isLoading || undefined}
-      aria-disabled={isLoading || undefined}
-      aria-labelledby={isLoading ? `${labelId} ${loadingLabelId}` : undefined}
-      {...baseProps}
-      onClick={handleClick}
-      className={cx(buttonStyle(variantProps), isLoading && loadingCursorCls, className)}
-    >
-      {isLoading ? (
-        <span className={loadingStackCls}>
-          <span id={labelId} className={cx(loadingLayerCls, loadingHiddenCls)}>
-            {children}
-          </span>
-          <span className={loadingLayerCls}>
-            <span id={loadingLabelId} className={srOnlyCls}>
-              {t.common.loading}
-            </span>
-            {spinner ?? <Spinner aria-hidden />}
-            {loadingText}
-          </span>
+  const content = isLoading ? (
+    <span className={loadingStackCls}>
+      <span id={labelId} className={cx(loadingLayerCls, loadingHiddenCls)}>
+        {children}
+      </span>
+      <span className={loadingLayerCls}>
+        <span id={loadingLabelId} className={srOnlyCls}>
+          {t.common.loading}
         </span>
-      ) : (
-        children
-      )}
-    </BaseButton>
+        {spinner ?? <Spinner aria-hidden />}
+        {loadingText}
+      </span>
+    </span>
+  ) : (
+    children
+  );
+
+  const shared = {
+    'data-loading': isLoading || undefined,
+    'aria-disabled': isLoading || undefined,
+    'aria-labelledby': isLoading ? `${labelId} ${loadingLabelId}` : undefined,
+    onClick: handleClick,
+    className: cx(buttonStyle(variantProps), isLoading && loadingCursorCls, className),
+  } as const;
+
+  // asChild(<Link> 등)는 Ark BaseButton으로 — 링크엔 tap 축소가 부적절하므로 모션 없이 둔다.
+  if (asChild) {
+    return (
+      <BaseButton asChild {...baseProps} {...shared}>
+        {content}
+      </BaseButton>
+    );
+  }
+
+  // 일반 버튼 — Framer Motion으로 tap 시 spring 축소(TDS 방식). baseButton 리셋 클래스를 함께 얹고,
+  // 색·hover/press 틴트는 CSS(:active/_hover)가 그대로 담당한다.
+  return (
+    <motion.button
+      type={type ?? 'button'}
+      data-base-button=""
+      whileTap={isLoading ? undefined : { scale: PRESS_SCALE }}
+      transition={PRESS_SPRING}
+      {...(baseProps as unknown as HTMLMotionProps<'button'>)}
+      {...shared}
+      className={cx(baseButton(), shared.className)}
+    >
+      {content}
+    </motion.button>
   );
 }
 

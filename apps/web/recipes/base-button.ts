@@ -19,14 +19,10 @@ export const baseButton = defineRecipe({
     letterSpacing: 'inherit',
     textAlign: 'left',
     minWidth: 0,
-    transition:
-      'background-color {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
-    _press: { transitionDuration: '0ms' },
+    // 색만 CSS로 트랜지션. press 축소(transform)는 Button이 Framer Motion 스프링으로 애니메이션한다.
+    transition: 'background-color {durations.fast} {easings.exit}, color {durations.fast} {easings.exit}',
     // _disabled는 aria-disabled까지 매칭하므로 네이티브 disabled에만 한정한다
     '&:disabled': { cursor: 'not-allowed', opacity: 0.5 },
     _focusVisible: { outline: 'none', boxShadow: 'focus' },
-  },
-  variants: {
-    pressed: { true: { transform: 'scale(0.96)' } },
   },
 });

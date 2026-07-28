@@ -25,13 +25,22 @@ export const row = defineRecipe({
     },
     interactive: {
       true: {
+        position: 'relative',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
         userSelect: 'none',
-        // Row는 투명 배경이라 state layer를 bg로 바로 얹는다(카드와 달리 오버레이 불필요).
-        _hover: { bg: 'stateHover' },
-        _press: { bg: 'statePressed' },
+        // press 딤 — Row 컴포넌트의 whileTap이 --press-dim으로 opacity를 스프링 구동한다(TDS와 동형).
+        // hover 색은 없음(TDS ListRow, 모바일 우선). 투명 로우 위에 오버레이를 얹는다.
+        _before: {
+          content: '""',
+          position: 'absolute',
+          inset: '0',
+          pointerEvents: 'none',
+          borderRadius: 'inherit',
+          backgroundColor: 'statePressed',
+          opacity: 'var(--press-dim, 0)',
+        },
         _focusVisible: { outline: 'none', boxShadow: 'focus' },
       },
     },

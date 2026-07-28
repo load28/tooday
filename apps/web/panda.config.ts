@@ -87,9 +87,13 @@ export default defineConfig({
 
   conditions: {
     extend: {
-      press: '&:active, &[data-pressed="true"]',
+      // disabled엔 press 색이 뜨면 안 됨(hover와 대칭). :not(:disabled)로 막는다.
+      press: '&:not(:disabled):active, &:not(:disabled)[data-pressed="true"]',
       // Ark 토글 계열(ToggleGroup 등)이 붙이는 선택 상태 — JS 조건부 스타일 대신 이걸 쓴다
       on: '&[data-state="on"]',
+      // hover는 포인터 기기 + 비활성 아님에서만. 터치는 탭 후 hover 잔상, disabled는 hover 색이 뜨면 안 됨.
+      // 배열=중첩: @media(hover) 안에서 :not(:disabled):hover 로 생성(블록 문자열은 :hover가 유실됨).
+      hover: ['@media (hover: hover)', '&:not(:disabled):hover'],
     },
   },
 

@@ -36,18 +36,17 @@ export const card = defineRecipe({
         touchAction: 'manipulation',
         userSelect: 'none',
         _focusVisible: { outline: 'none', boxShadow: 'focus' },
-        // press 피드백은 크기에 비례하는 scale 대신 크기 무관 state layer(불투명도 오버레이)로 준다.
-        // 카드는 불투명 bg라 오버레이를 ::before로 얹는다. base의 overflow:hidden이 라운드로 클리핑.
+        // press 딤 — 크기 무관 state layer 오버레이(::before). 불투명 카드라 색 대신 오버레이를 얹고,
+        // opacity를 Card 컴포넌트의 Framer Motion whileTap이 CSS 변수(--press-dim)로 스프링 구동한다
+        // (TDS의 press-variant 딤과 동형). base overflow:hidden이 라운드로 클리핑. hover 색은 없음.
         _before: {
           content: '""',
           position: 'absolute',
           inset: '0',
           pointerEvents: 'none',
-          backgroundColor: 'transparent',
-          transition: 'background-color {durations.fast} {easings.exit}',
+          backgroundColor: 'statePressed',
+          opacity: 'var(--press-dim, 0)',
         },
-        _hover: { _before: { backgroundColor: 'stateHover' } },
-        _press: { _before: { backgroundColor: 'statePressed' } },
       },
     },
     selected: {
