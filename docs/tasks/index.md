@@ -60,3 +60,4 @@
 | T031 | [세션 프로브(user.me) optional-auth — 익명 200+null, 무효 401](T031-session-probe-optional-auth.md) | 높음 | ✅ 완료 |
 | T032 | [로그아웃 UI (설정 화면 셸) 신설](T032-web-logout-settings.md) | 중간 | ✅ 완료 |
 | T033 | [z-index 매직넘버를 Panda overlay 토큰으로](T033-zindex-overlay-token.md) | 낮음 | ✅ 완료 |
+| T034 | [카드 press 피드백을 scale에서 state-layer로](T034-card-press-state-layer.md) | 중간 | ✅ 완료 |

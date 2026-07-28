@@ -15,7 +15,7 @@ const buttonStyle = cva({
   variants: {
     tone: {
       // 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다.
-      ghost: { color: 'text', _press: { bg: 'pressedStrong' }, '&:disabled': { bg: 'transparent' } },
+      ghost: { color: 'text', _press: { bg: 'statePressed' }, '&:disabled': { bg: 'transparent' } },
       // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
       brandGhost: { color: 'textBrand', _press: { bg: 'primarySofter' }, '&:disabled': { bg: 'transparent' } },
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩. 다른 tone도 토글로 쓰이면 _on을 추가한다.

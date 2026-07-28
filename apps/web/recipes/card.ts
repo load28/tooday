@@ -8,8 +8,7 @@ export const card = defineRecipe({
     overflow: 'hidden',
     minWidth: 0,
     color: 'text',
-    transition: 'box-shadow {durations.fast} {easings.exit}, transform {durations.fast} {easings.exit}',
-    _press: { transitionDuration: '0ms' },
+    transition: 'box-shadow {durations.fast} {easings.exit}',
   },
   variants: {
     elevation: {
@@ -31,12 +30,24 @@ export const card = defineRecipe({
     },
     interactive: {
       true: {
+        position: 'relative',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
         userSelect: 'none',
-        _press: { transform: 'scale(0.99)' },
         _focusVisible: { outline: 'none', boxShadow: 'focus' },
+        // press 피드백은 크기에 비례하는 scale 대신 크기 무관 state layer(불투명도 오버레이)로 준다.
+        // 카드는 불투명 bg라 오버레이를 ::before로 얹는다. base의 overflow:hidden이 라운드로 클리핑.
+        _before: {
+          content: '""',
+          position: 'absolute',
+          inset: '0',
+          pointerEvents: 'none',
+          backgroundColor: 'transparent',
+          transition: 'background-color {durations.fast} {easings.exit}',
+        },
+        _hover: { _before: { backgroundColor: 'stateHover' } },
+        _press: { _before: { backgroundColor: 'statePressed' } },
       },
     },
     selected: {

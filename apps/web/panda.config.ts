@@ -295,8 +295,10 @@ export default defineConfig({
           dangerSoft: { value: '{colors.ruby.100}' },
 
           overlay: { value: 'rgba(15, 19, 36, 0.45)' },
-          pressed: { value: 'rgba(15, 19, 36, 0.06)' },
-          pressedStrong: { value: 'rgba(15, 19, 36, 0.10)' },
+          // 인터랙션 state layer — 콘텐츠 색(text)을 상태별 표준 불투명도로 얹는다(Material 3:
+          // hover 8%, pressed 10%). scale 대신 크기 무관 오버레이라 모바일·데스크톱 모두 일관.
+          stateHover: { value: 'color-mix(in srgb, {colors.text} 8%, transparent)' },
+          statePressed: { value: 'color-mix(in srgb, {colors.text} 10%, transparent)' },
           primaryPressed: { value: '{colors.brand.700}' },
           dangerPressed: { value: '#d63845' },
         },

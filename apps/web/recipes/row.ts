@@ -29,7 +29,9 @@ export const row = defineRecipe({
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
         userSelect: 'none',
-        _press: { bg: 'pressedStrong' },
+        // Row는 투명 배경이라 state layer를 bg로 바로 얹는다(카드와 달리 오버레이 불필요).
+        _hover: { bg: 'stateHover' },
+        _press: { bg: 'statePressed' },
         _focusVisible: { outline: 'none', boxShadow: 'focus' },
       },
     },
