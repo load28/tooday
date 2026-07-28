@@ -2,7 +2,7 @@ import { defineRecipe } from '@pandacss/dev';
 
 export const sheetPositioner = defineRecipe({
   className: 'sheetPositioner',
-  base: { position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },
+  base: { position: 'fixed', inset: 0, zIndex: 'overlay', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' },
 });
 
 export const sheetBackdrop = defineRecipe({
@@ -10,7 +10,7 @@ export const sheetBackdrop = defineRecipe({
   base: {
     position: 'fixed',
     inset: 0,
-    zIndex: 60,
+    zIndex: 'overlay',
     background: 'overlay',
     animation: 'toodayFadeIn {durations.base} {easings.standard}',
   },
