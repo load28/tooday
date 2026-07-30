@@ -8,3 +8,7 @@ pre-commit:
     - name: deps
       glob: "*.{ts,tsx}"
       run: bun run lint:deps
+    # Rust 계약이 바뀌면 valibot TS를 재생성해 함께 스테이징한다 — 드리프트를 원천 차단.
+    - name: contract-codegen
+      glob: "apps/bff-rs/crates/contract/src/**/*.rs"
+      run: bun run codegen:contracts && git add packages/shared/src/generated

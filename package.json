@@ -14,6 +14,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "biome lint",
     "lint:deps": "depcruise --config apps/bff/.dependency-cruiser.cjs apps/bff && depcruise --config apps/web/.dependency-cruiser.cjs apps/web && depcruise --config apps/design-guide/.dependency-cruiser.cjs apps/design-guide && depcruise --config .dependency-cruiser.cjs packages",
+    "codegen:contracts": "cargo run --quiet --manifest-path apps/bff-rs/Cargo.toml --bin contract-codegen -- --out packages/shared/src/generated",
+    "codegen:contracts:check": "cargo run --quiet --manifest-path apps/bff-rs/Cargo.toml --bin contract-codegen -- --out packages/shared/src/generated --check",
     "check": "biome check",
     "format": "biome format",
     "infra:up": "docker compose up -d --wait",

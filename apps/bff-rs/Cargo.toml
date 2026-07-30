@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = ["crates/contract", "crates/codegen"]
+
+[workspace.package]
+edition = "2021"
+version = "0.0.0"
+publish = false
+
+[workspace.dependencies]
+serde_json = "1"

@@ -1,0 +1,12 @@
+[package]
+name = "contract-codegen"
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "contract-codegen"
+path = "src/main.rs"
+
+[dependencies]
+contract = { path = "../contract" }
