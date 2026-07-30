@@ -1,8 +1,14 @@
 import type { Task, TaskPatch } from '@tooday/shared';
+import { pipe } from 'fp-ts/function';
+import * as O from 'fp-ts/Option';
+import * as R from 'fp-ts/Record';
 
-/** patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게) */
+/** undefined만 "미지정" — null은 값 지정(프로젝트 해제)이므로 보존한다 */
+const fromDefined = <T>(value: T | undefined): O.Option<T> => (value === undefined ? O.none : O.some(value));
+
+/** patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게, null은 보존) */
 function definedFields(patch: TaskPatch): Partial<Task> {
-  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)) as Partial<Task>;
+  return pipe(patch as Record<string, string | number | null | undefined>, R.filterMap(fromDefined)) as Partial<Task>;
 }
 
 /**

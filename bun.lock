@@ -20,6 +20,7 @@
         "@hono/trpc-server": "^0.4.2",
         "@tooday/shared": "workspace:*",
         "@trpc/server": "^11.18.0",
+        "fp-ts": "^2.16.11",
         "fractional-indexing": "^4.0.0",
         "hono": "^4.12.27",
         "kysely": "^0.28.7",
@@ -77,6 +78,7 @@
         "@trpc/client": "^11.18.0",
         "@trpc/tanstack-react-query": "^11.18.0",
         "date-fns": "^4.4.0",
+        "fp-ts": "^2.16.11",
         "framer-motion": "12.42.2",
         "lucide-react": "^0.545.0",
         "nitro": "^3.0.260311-beta",
@@ -990,6 +992,8 @@
     "find-up": ["find-up@5.0.0", "", { "dependencies": { "locate-path": "^6.0.0", "path-exists": "^4.0.0" } }, "sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng=="],
 
     "forwarded": ["forwarded@0.2.0", "", {}, "sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow=="],
+
+    "fp-ts": ["fp-ts@2.16.11", "", {}, "sha512-LaI+KaX2NFkfn1ZGHoKCmcfv7yrZsC3b8NtWsTVQeHkq4F27vI5igUuO53sxqDEa2gNQMHFPmpojDw/1zmUK7w=="],
 
     "fractional-indexing": ["fractional-indexing@4.0.0", "", {}, "sha512-Nr2P1Yyaj2sy1Qdt/wI3GcByxrUdbSKg5+cGvw8f18hT2SkQt6V72iOjBpk7IO3UkzBsdlGRs2a4z6dLrJprgw=="],
 

@@ -1,3 +1,4 @@
+import { attachProjectProgress, nextSyncCursor } from '@bff/modules/task/domain';
 import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
 import { DOMAIN_ERROR_CODES, DomainError } from '@bff/platform/errors';
 import type { SyncBroker } from '@bff/platform/sync-broker';
@@ -87,8 +88,8 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
         tasks.changesSince({ userId: ctx.userId, cursor: input.cursor }),
         projects.changesSince({ userId: ctx.userId, cursor: input.cursor }),
       ]);
-      const maxSeq = Math.max(input.cursor, ...taskChanges.map((c) => c.syncSeq), ...projectChanges.map((c) => c.syncSeq));
-      return { tasks: taskChanges, projects: projectChanges, cursor: maxSeq };
+      const cursor = nextSyncCursor(input.cursor, taskChanges, projectChanges);
+      return { tasks: taskChanges, projects: projectChanges, cursor };
     }),
 
     createProject: protectedProcedure.input(createProjectRequestSchema).mutation(async ({ ctx, input }) => {
@@ -100,13 +101,7 @@ export function createTaskRouter({ tasks, projects, sync }: TaskRouterDeps) {
     /** 프로젝트 목록 화면 — 프로젝트 라벨에 진행률(완료/전체)을 붙여 내려준다 */
     projects: protectedProcedure.query(async ({ ctx }): Promise<ProjectListResponse> => {
       const [projectList, counts] = await Promise.all([projects.listByUser(ctx.userId), tasks.countsByProject(ctx.userId)]);
-      const countById = new Map(counts.map((count) => [count.projectId, count]));
-      return {
-        projects: projectList.map((project) => {
-          const count = countById.get(project.id);
-          return { ...project, totalCount: count?.total ?? 0, doneCount: count?.done ?? 0 };
-        }),
-      };
+      return { projects: attachProjectProgress(projectList, counts) };
     }),
 
     /** 프로젝트 상세(보드) — 프로젝트 라벨과 그 프로젝트의 태스크 전부 */

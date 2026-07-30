@@ -1,3 +1,4 @@
+import { applyPatch } from '@bff/modules/task/domain';
 import type {
   CreateProjectInput,
   CreateTaskInput,
@@ -172,13 +173,7 @@ export class InMemoryTaskStore implements TaskStore {
   async update({ userId, id, patch }: UpdateTaskInput): Promise<Task | null> {
     const record = this.byId.get(id);
     if (!record || record.userId !== userId || record.deleted) return null;
-    if (patch.title !== undefined) record.title = patch.title;
-    if (patch.projectId !== undefined) record.projectId = patch.projectId;
-    if (patch.date !== undefined) record.date = patch.date;
-    if (patch.startAt !== undefined) record.startAt = patch.startAt;
-    if (patch.durationMin !== undefined) record.durationMin = patch.durationMin;
-    if (patch.status !== undefined) record.status = patch.status;
-    record.version += 1;
+    Object.assign(record, applyPatch(toTask(record), patch));
     record.syncSeq = this.counter.next(userId);
     return toTask(record);
   }
