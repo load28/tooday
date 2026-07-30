@@ -66,7 +66,10 @@ export const taskPatchSchema = v.object({
 });
 export const updateTaskRequestSchema = v.object({
   id: v.string(),
-  patch: v.pipe(taskPatchSchema, v.check((patch) => Object.values(patch).some((value) => value !== undefined), 'patch에 바꿀 필드가 최소 하나 필요합니다')),
+  patch: v.pipe(
+    taskPatchSchema,
+    v.check((patch) => Object.values(patch).some((value) => value !== undefined), 'patch에 바꿀 필드가 최소 하나 필요합니다'),
+  ),
 });
 /** 델타 동기화 — 커서(마지막으로 본 sync seq) 이후 바뀐 행을 전부 내려준다. tombstone 포함 */
 export const syncChangesRequestSchema = v.object({

@@ -8,9 +8,9 @@ export const appConfigResponseSchema = v.object({
   version: v.string(),
   minSupportedAppVersion: v.string(),
   features: v.object({
-  projects: v.boolean(),
-  timeline: v.boolean(),
-}),
+    projects: v.boolean(),
+    timeline: v.boolean(),
+  }),
 });
 
 export type AppConfigResponse = v.InferOutput<typeof appConfigResponseSchema>;

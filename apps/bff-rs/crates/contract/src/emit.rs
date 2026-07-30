@@ -153,13 +153,20 @@ pub fn emit_schema(reg: &Registry, schema: &Schema) -> String {
         },
         Schema::Object(obj) => emit_object(reg, obj),
         Schema::Checked(inner, check) => format!(
-            "v.pipe({}, v.check(({}) => {}, '{}'))",
-            emit_schema(reg, inner),
+            "v.pipe(\n  {},\n  v.check(({}) => {}, '{}'),\n)",
+            indent(&emit_schema(reg, inner)),
             check.param,
             check.body,
             check.message,
         ),
     }
+}
+
+/// Indent the *continuation* lines of a nested expression by one level, so a
+/// child object/pipe lines up under the parent that embeds it. The first line
+/// is left alone — the caller has already placed it after `name: `.
+fn indent(source: &str) -> String {
+    source.replace('\n', "\n  ")
 }
 
 fn emit_object(reg: &Registry, obj: &ObjectSchema) -> String {
@@ -181,7 +188,10 @@ fn emit_object(reg: &Registry, obj: &ObjectSchema) -> String {
                         lines.push_str(&format!("  /** {text} */\n"));
                     }
                 }
-                lines.push_str(&format!("  {name}: {},\n", emit_schema(reg, schema)));
+                lines.push_str(&format!(
+                    "  {name}: {},\n",
+                    indent(&emit_schema(reg, schema))
+                ));
             }
             ObjectItem::Spread(ref_name) => {
                 lines.push_str(&format!("  ...{ref_name}.entries,\n"));
