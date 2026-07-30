@@ -9,7 +9,7 @@ pub fn module() -> Module {
             const_num("MIN_PASSWORD_LENGTH", 8),
             schema_doc(
                 "signupRequestSchema",
-                "스키마는 검증 규칙(계약)만 정의한다. 사용자향 문구는 각 화면이 발생 가능한\nissue 타입(v.InferIssue)으로 매핑해 소유한다.",
+                "스키마는 검증 규칙(계약)만 정의한다. 사용자향 문구는 각 화면이 발생 가능한\nissue 타입(v.InferIssue)으로 매핑해 소유한다 — docs/research/2026-07-04-validation-message-separation.md",
                 "SignupRequest",
                 object(vec![
                     field("email", string().trim().email()),
@@ -30,7 +30,7 @@ pub fn module() -> Module {
             ),
             schema_doc(
                 "tokenPairSchema",
-                "토큰 쌍. 웹은 이 값을 무시하고 httpOnly 쿠키로 인증하지만, 네이티브/웹뷰\n브릿지는 쿠키를 못 쓰므로 body로 받아 Authorization 헤더에 싣는다.",
+                "토큰 쌍. 웹은 이 값을 무시하고 httpOnly 쿠키(Set-Cookie)로 인증하지만,\n네이티브/웹뷰 브릿지는 쿠키를 못 쓰므로 body로 받아 Authorization 헤더에 싣는다.\n- accessToken: 무상태 JWT(짧음). 매 요청 서명 검증만으로 인증.\n- refreshToken: 불투명 문자열(김). 액세스 만료 시 재발급받는 용도.",
                 "TokenPair",
                 object(vec![
                     field("accessToken", string()),
