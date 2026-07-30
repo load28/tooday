@@ -1,10 +1,6 @@
 import type { ProjectTaskCounts } from '@bff/modules/task/ports';
 import type { Project, ProjectSummary, Task, TaskPatch } from '@tooday/shared';
-import * as A from 'fp-ts/Array';
-import { pipe } from 'fp-ts/function';
-import * as N from 'fp-ts/number';
-import * as O from 'fp-ts/Option';
-import { max } from 'fp-ts/Ord';
+import { match, P } from 'ts-pattern';
 
 /**
  * 태스크 도메인 순수 함수 — I/O·저장소·트랜스포트에 의존하지 않는 비즈니스 규칙만 둔다.
@@ -40,29 +36,22 @@ export function applyPatch(task: Task, patch: TaskPatch): Task {
   return { ...task, ...definedPatchFields(patch), version: task.version + 1 };
 }
 
-/** 델타 동기화 다음 커서 — 요청 커서와 반환된 모든 변경 seq의 최댓값 */
+/** 델타 동기화 다음 커서 — 요청 커서와 반환된 모든 변경 seq의 최댓값 (매칭이 아니라 산술) */
 export function nextSyncCursor(cursor: number, ...changeLists: { syncSeq: number }[][]): number {
-  return pipe(
-    changeLists,
-    A.flatten,
-    A.map((change) => change.syncSeq),
-    A.reduce(cursor, max(N.Ord)),
-  );
+  return changeLists.flat().reduce((max, change) => Math.max(max, change.syncSeq), cursor);
 }
 
-/** 프로젝트 목록에 진행률(완료/전체)을 조인한다 — 집계가 없는 프로젝트는 0/0 */
+/**
+ * 프로젝트 목록에 진행률(완료/전체)을 조인한다 — 집계가 없는 프로젝트는 0/0.
+ *
+ * 집계 유무를 ts-pattern으로 매칭한다 — `.exhaustive()`가 `ProjectTaskCounts | undefined`의
+ * 모든 경우(있음/없음)가 처리됐음을 컴파일 타임에 보증한다.
+ */
 export function attachProjectProgress(projects: Project[], counts: ProjectTaskCounts[]): ProjectSummary[] {
-  return pipe(
-    projects,
-    A.map((project) =>
-      pipe(
-        counts,
-        A.findFirst((count) => count.projectId === project.id),
-        O.match(
-          () => ({ ...project, totalCount: 0, doneCount: 0 }),
-          (count) => ({ ...project, totalCount: count.total, doneCount: count.done }),
-        ),
-      ),
-    ),
+  return projects.map((project) =>
+    match(counts.find((count) => count.projectId === project.id))
+      .with(P.nonNullable, ({ total, done }) => ({ ...project, totalCount: total, doneCount: done }))
+      .with(P.nullish, () => ({ ...project, totalCount: 0, doneCount: 0 }))
+      .exhaustive(),
   );
 }
