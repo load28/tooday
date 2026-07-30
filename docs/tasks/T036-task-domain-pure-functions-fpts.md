@@ -66,6 +66,19 @@ TDD로 순수 함수부터 테스트를 쓰고, 그린이 되면 호출부를 �
 > 태스크(T036)로 착수한다. TDD로 도메인 순수 함수의 테스트를 먼저 쓰고, 그린이 되면
 > 호출부(memory 어댑터·라우터·web patch)를 갈아끼운다.
 
+> **사용자**: 지금 fpts쓰면서 as가 적용된곳이 있던데 as옶이 개선하고싶어
+
+> **Claude**: `as`가 쓰인 곳은 `definedPatchFields`(bff)·`definedFields`(web)의 두 곳으로,
+> 근본 원인은 fp-ts `R.filterMap`이 동종 `Record<string, A>`를 요구해 이종 구조체 `TaskPatch`를
+> 넣을 때 입력·출력 양쪽 캐스팅을 강제한다는 점이다. 스크래치로 `as` 없이 컴파일되는 fp-ts
+> 버전을 만들어 tsc 프로브로 검사해 보니, 그 버전의 추론 타입은 인덱스 시그니처를 가진
+> `Record<string, string | number | null | undefined>`였다 — 즉 `as`만 사라졌을 뿐 값 타입을
+> 오히려 더 넓혀(예: `status`에 `number` 대입도 통과) 불건전함을 그대로 숨긴다. 따라서 `as`
+> 없이 진짜로 건전한 방법은 각 필드를 명시 복사해 컴파일러가 Task의 필드 타입으로 검증하게
+> 하는 것뿐이라, `definedPatchFields`/`definedFields`를 명시 빌더로 바꿨다. 건전하게 fp-ts가
+> 쓰이는 곳(`nextSyncCursor`·`attachProjectProgress`)은 그대로 뒀다. web은 이 파일이 유일한
+> fp-ts 사용처였으므로 미사용이 된 fp-ts 의존성을 web 패키지에서 제거했다.
+
 ## 작업 로그
 
 - 2026-07-30: 태스크 착수. 코드베이스 조사 후 T036 문서 작성.
@@ -76,3 +89,9 @@ TDD로 순수 함수부터 테스트를 쓰고, 그린이 되면 호출부를 �
   비즈니스 규칙을 걷어냈다. web `entities/task/patch.ts`도 같은 LWW 개념을 fp-ts로 리팩토링했다.
   fp-ts 2.16.11을 apps/bff·apps/web에 추가. 검증: bff `bun test` 111 pass·0 fail,
   web vitest 24 pass, `bun run typecheck`·`bun run check`·`bun run lint:deps` 모두 그린.
+- 2026-07-30: `definedPatchFields`(bff)·`definedFields`(web)의 `as` 두 곳을 제거했다.
+  fp-ts `R.filterMap`이 이종 구조체에서 강제하던 캐스팅은 값 타입을 넓혀 불건전함을 숨길
+  뿐이라(tsc 프로브로 확인), 두 헬퍼를 컴파일러가 필드별로 검증하는 명시 빌더로 교체했다.
+  건전한 fp-ts 사용처(`nextSyncCursor`·`attachProjectProgress`)는 유지. web의 유일한 fp-ts
+  사용처였으므로 web 패키지에서 fp-ts 의존성을 제거했다. 기존 `domain.test.ts`·`patch.test.ts`가
+  동작 불변을 보증(bff 111 pass, web 24 pass), typecheck·check·lint:deps 그린.

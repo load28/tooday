@@ -5,19 +5,28 @@ import { pipe } from 'fp-ts/function';
 import * as N from 'fp-ts/number';
 import * as O from 'fp-ts/Option';
 import { max } from 'fp-ts/Ord';
-import * as R from 'fp-ts/Record';
 
 /**
  * 태스크 도메인 순수 함수 — I/O·저장소·트랜스포트에 의존하지 않는 비즈니스 규칙만 둔다.
  * 어댑터(memory/sql)와 라우터는 이 함수들을 호출해 같은 규칙을 공유한다.
  */
 
-/** undefined만 "미지정" — null은 값 지정(프로젝트 해제)이므로 보존한다 */
-const fromDefined = <T>(value: T | undefined): O.Option<T> => (value === undefined ? O.none : O.some(value));
-
-/** patch에서 값이 지정된 필드만 남긴다 (undefined 제거, null 보존) — 필드 단위 LWW의 적용 대상 */
+/**
+ * patch에서 값이 지정된 필드만 남긴다 (undefined 제거, null 보존) — 필드 단위 LWW의 적용 대상.
+ *
+ * 이종 구조체를 필드별로 명시 복사한다 — 제네릭 map(fp-ts `filterMap` 등)은 값 타입을
+ * 단일 유니온으로 뭉개 캐스팅을 강제하지만, 여기선 각 대입을 컴파일러가 Task의 필드 타입으로
+ * 검증하므로 `as` 없이 건전하다.
+ */
 export function definedPatchFields(patch: TaskPatch): Partial<Task> {
-  return pipe(patch as Record<string, string | number | null | undefined>, R.filterMap(fromDefined)) as Partial<Task>;
+  const fields: Partial<Task> = {};
+  if (patch.title !== undefined) fields.title = patch.title;
+  if (patch.projectId !== undefined) fields.projectId = patch.projectId;
+  if (patch.date !== undefined) fields.date = patch.date;
+  if (patch.startAt !== undefined) fields.startAt = patch.startAt;
+  if (patch.durationMin !== undefined) fields.durationMin = patch.durationMin;
+  if (patch.status !== undefined) fields.status = patch.status;
+  return fields;
 }
 
 /**

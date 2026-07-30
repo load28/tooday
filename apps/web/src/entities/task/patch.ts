@@ -1,14 +1,20 @@
 import type { Task, TaskPatch } from '@tooday/shared';
-import { pipe } from 'fp-ts/function';
-import * as O from 'fp-ts/Option';
-import * as R from 'fp-ts/Record';
 
-/** undefined만 "미지정" — null은 값 지정(프로젝트 해제)이므로 보존한다 */
-const fromDefined = <T>(value: T | undefined): O.Option<T> => (value === undefined ? O.none : O.some(value));
-
-/** patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게, null은 보존) */
+/**
+ * patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게, null은 보존).
+ *
+ * 이종 구조체를 필드별로 명시 복사한다 — 각 대입을 컴파일러가 Task의 필드 타입으로 검증하므로
+ * `as` 없이 건전하다 (제네릭 map은 값 타입을 단일 유니온으로 뭉개 캐스팅을 강제한다).
+ */
 function definedFields(patch: TaskPatch): Partial<Task> {
-  return pipe(patch as Record<string, string | number | null | undefined>, R.filterMap(fromDefined)) as Partial<Task>;
+  const fields: Partial<Task> = {};
+  if (patch.title !== undefined) fields.title = patch.title;
+  if (patch.projectId !== undefined) fields.projectId = patch.projectId;
+  if (patch.date !== undefined) fields.date = patch.date;
+  if (patch.startAt !== undefined) fields.startAt = patch.startAt;
+  if (patch.durationMin !== undefined) fields.durationMin = patch.durationMin;
+  if (patch.status !== undefined) fields.status = patch.status;
+  return fields;
 }
 
 /**
