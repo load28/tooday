@@ -1,0 +1,13 @@
+[package]
+name = "bff-rs"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "TooDay BFF task 슬라이스의 Rust 포팅 — TypeScript 대비 타입 추론 비교용 (T036)"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lib]
+path = "src/lib.rs"

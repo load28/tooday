@@ -62,3 +62,4 @@
 | T033 | [z-index 매직넘버를 Panda overlay 토큰으로](T033-zindex-overlay-token.md) | 낮음 | ✅ 완료 |
 | T034 | [카드 press 피드백을 scale에서 state-layer로](T034-card-press-state-layer.md) | 중간 | ✅ 완료 |
 | T035 | [버튼 TDS식 hover/press (framer-motion 스프링)](T035-button-tds-press-hover.md) | 중간 | ✅ 완료 |
+| T036 | [BFF task 슬라이스 Rust 포팅 + 타입 추론 비교](T036-bff-rust-typescript-comparison.md) | 낮음 | ✅ 완료 |
