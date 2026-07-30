@@ -64,3 +64,4 @@
 | T035 | [버튼 TDS식 hover/press (framer-motion 스프링)](T035-button-tds-press-hover.md) | 중간 | ✅ 완료 |
 | T036 | [태스크 비즈니스 로직 순수 함수 추출 + fp-ts 리팩토링 (TDD)](T036-task-domain-pure-functions-fpts.md) | 중간 | ✅ 완료 |
 | T037 | [태스크 도메인 매칭 로직을 ts-pattern으로 마이그레이션](T037-ts-pattern-migration.md) | 중간 | ✅ 완료 |
+| T038 | [도메인 분기를 전부 ts-pattern으로 통일 (함수형 스타일)](T038-domain-fully-functional-ts-pattern.md) | 낮음 | ✅ 완료 |

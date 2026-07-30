@@ -13,18 +13,30 @@ export type DefinedPatchFields = { [K in keyof TaskPatch]?: Exclude<TaskPatch[K]
 /**
  * patch에서 값이 지정된 필드만 남긴다 (undefined 제거, null 보존) — 필드 단위 LWW의 적용 대상.
  *
- * 조건부 스프레드로 필드별 타입을 그대로 흘려보낸다 — 각 조각(`{ status: TaskStatus }` 등)이
- * 정확히 추론돼 결과 타입도 계약에서 파생되고, 제네릭 map처럼 값 타입을 유니온으로 뭉개지
- * 않으므로 `as` 없이 건전하다.
+ * 필드마다 ts-pattern으로 매칭한다 — literal `undefined`면 빈 조각, 그 외엔 그 필드 하나짜리
+ * 조각을 스프레드한다. `null`은 `undefined`에 안 걸려 값으로 보존된다. 각 조각이 정확히 추론돼
+ * 결과 타입이 계약에서 파생되고, 값 타입을 유니온으로 뭉개지 않으므로 `as` 없이 건전하다.
  */
 export function definedPatchFields(patch: TaskPatch): DefinedPatchFields {
   return {
-    ...(patch.title !== undefined ? { title: patch.title } : {}),
-    ...(patch.projectId !== undefined ? { projectId: patch.projectId } : {}),
-    ...(patch.date !== undefined ? { date: patch.date } : {}),
-    ...(patch.startAt !== undefined ? { startAt: patch.startAt } : {}),
-    ...(patch.durationMin !== undefined ? { durationMin: patch.durationMin } : {}),
-    ...(patch.status !== undefined ? { status: patch.status } : {}),
+    ...match(patch.title)
+      .with(undefined, () => ({}))
+      .otherwise((title) => ({ title })),
+    ...match(patch.projectId)
+      .with(undefined, () => ({}))
+      .otherwise((projectId) => ({ projectId })),
+    ...match(patch.date)
+      .with(undefined, () => ({}))
+      .otherwise((date) => ({ date })),
+    ...match(patch.startAt)
+      .with(undefined, () => ({}))
+      .otherwise((startAt) => ({ startAt })),
+    ...match(patch.durationMin)
+      .with(undefined, () => ({}))
+      .otherwise((durationMin) => ({ durationMin })),
+    ...match(patch.status)
+      .with(undefined, () => ({}))
+      .otherwise((status) => ({ status })),
   };
 }
 
