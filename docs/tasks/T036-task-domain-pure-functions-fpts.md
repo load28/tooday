@@ -79,6 +79,17 @@ TDD로 순수 함수부터 테스트를 쓰고, 그린이 되면 호출부를 �
 > 쓰이는 곳(`nextSyncCursor`·`attachProjectProgress`)은 그대로 뒀다. web은 이 파일이 유일한
 > fp-ts 사용처였으므로 미사용이 된 fp-ts 의존성을 web 패키지에서 제거했다.
 
+> **사용자**: 단순히 없애는게 아니라 정확히 추론되어야함
+
+> **Claude**: 명시 빌더는 건전하나 반환 타입을 손으로 `Partial<Task>`로 넓혀 계약에서
+> 파생된 정확한 타입이 아니었다. 조건부 스프레드(`...(cond ? { field } : {})`)로 바꾸면 각
+> 조각이 정확히 추론돼(projectId의 `| null` 보존, status는 TaskStatus로 유지) 결과 타입도
+> 계약에서 파생되고 `as`도 없다. tsc 프로브로 추론 타입에 인덱스 시그니처가 없음(정확)과
+> projectId·status의 정밀도를 확인했다. 반환 타입을 계약에서 파생하는 `DefinedPatchFields`
+> = `{ [K in keyof TaskPatch]?: Exclude<TaskPatch[K], undefined> }`로 명시하고, domain.test.ts에
+> `Expect<Equal<…>>` 타입 수준 단언을 넣어 정밀도가 깨지면 `bun run typecheck`가 실패하도록
+> 잠갔다(음성 테스트로 가드 동작 확인).
+
 ## 작업 로그
 
 - 2026-07-30: 태스크 착수. 코드베이스 조사 후 T036 문서 작성.
@@ -95,3 +106,9 @@ TDD로 순수 함수부터 테스트를 쓰고, 그린이 되면 호출부를 �
   건전한 fp-ts 사용처(`nextSyncCursor`·`attachProjectProgress`)는 유지. web의 유일한 fp-ts
   사용처였으므로 web 패키지에서 fp-ts 의존성을 제거했다. 기존 `domain.test.ts`·`patch.test.ts`가
   동작 불변을 보증(bff 111 pass, web 24 pass), typecheck·check·lint:deps 그린.
+- 2026-07-30: 명시 빌더의 반환 타입이 손으로 넓힌 `Partial<Task>`라 계약에서 파생된 정확한
+  타입이 아니던 것을, 조건부 스프레드 + 계약 파생 타입 `DefinedPatchFields`
+  (`{ [K in keyof TaskPatch]?: Exclude<TaskPatch[K], undefined> }`)로 바꿔 필드별 타입이
+  정확히 추론되게 했다(projectId `| null` 보존, status는 TaskStatus 유지, `as` 없음).
+  domain.test.ts에 `Expect<Equal<…>>` 타입 수준 단언을 추가해 정밀도 회귀를 typecheck가
+  잡도록 잠갔다(음성 테스트로 가드 확인). bff 111 pass, web 24 pass, typecheck·check·lint:deps 그린.

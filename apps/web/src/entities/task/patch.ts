@@ -1,20 +1,23 @@
 import type { Task, TaskPatch } from '@tooday/shared';
 
+/** patch에서 undefined를 걷어낸 필드 집합 — 계약(TaskPatch)에서 필드별 타입을 그대로 파생한다 (projectId의 `| null` 보존) */
+type DefinedFields = { [K in keyof TaskPatch]?: Exclude<TaskPatch[K], undefined> };
+
 /**
  * patch에서 값이 지정된 필드만 (undefined 스프레드로 기존 값을 지우지 않게, null은 보존).
  *
- * 이종 구조체를 필드별로 명시 복사한다 — 각 대입을 컴파일러가 Task의 필드 타입으로 검증하므로
- * `as` 없이 건전하다 (제네릭 map은 값 타입을 단일 유니온으로 뭉개 캐스팅을 강제한다).
+ * 조건부 스프레드로 필드별 타입을 그대로 흘려보낸다 — 각 조각이 정확히 추론돼 결과 타입도
+ * 계약에서 파생되고, `as` 없이 건전하다.
  */
-function definedFields(patch: TaskPatch): Partial<Task> {
-  const fields: Partial<Task> = {};
-  if (patch.title !== undefined) fields.title = patch.title;
-  if (patch.projectId !== undefined) fields.projectId = patch.projectId;
-  if (patch.date !== undefined) fields.date = patch.date;
-  if (patch.startAt !== undefined) fields.startAt = patch.startAt;
-  if (patch.durationMin !== undefined) fields.durationMin = patch.durationMin;
-  if (patch.status !== undefined) fields.status = patch.status;
-  return fields;
+function definedFields(patch: TaskPatch): DefinedFields {
+  return {
+    ...(patch.title !== undefined ? { title: patch.title } : {}),
+    ...(patch.projectId !== undefined ? { projectId: patch.projectId } : {}),
+    ...(patch.date !== undefined ? { date: patch.date } : {}),
+    ...(patch.startAt !== undefined ? { startAt: patch.startAt } : {}),
+    ...(patch.durationMin !== undefined ? { durationMin: patch.durationMin } : {}),
+    ...(patch.status !== undefined ? { status: patch.status } : {}),
+  };
 }
 
 /**

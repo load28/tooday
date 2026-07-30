@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'bun:test';
-import { applyPatch, attachProjectProgress, definedPatchFields, nextSyncCursor } from '@bff/modules/task/domain';
+import {
+  applyPatch,
+  attachProjectProgress,
+  type DefinedPatchFields,
+  definedPatchFields,
+  nextSyncCursor,
+} from '@bff/modules/task/domain';
 import type { ProjectTaskCounts } from '@bff/modules/task/ports';
-import type { Project, Task } from '@tooday/shared';
+import type { Project, Task, TaskStatus } from '@tooday/shared';
+
+/**
+ * 타입 수준 보증 — DefinedPatchFields가 계약(TaskPatch)에서 정확히 파생됨을 컴파일 타임에 잠근다.
+ * (런타임이 아니라 `bun run typecheck`가 검사한다. Equal이 false면 Expect<false>가 에러.)
+ */
+type Expect<T extends true> = T;
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+export type _TypeChecks = [
+  // projectId는 undefined만 제거하고 null은 값으로 보존한다 — string으로 뭉개지지 않는다
+  Expect<Equal<DefinedPatchFields['projectId'], string | null | undefined>>,
+  // status는 TaskStatus로 좁게 유지된다 — string으로 넓혀지지 않는다
+  Expect<Equal<DefinedPatchFields['status'], TaskStatus | undefined>>,
+];
 
 const task: Task = {
   id: 't1',
