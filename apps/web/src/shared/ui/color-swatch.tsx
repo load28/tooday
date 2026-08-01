@@ -1,50 +1,13 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import type { ReactNode } from 'react';
-import { css, cva, cx, type RecipeVariantProps } from 'styled-system/css';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
+import { indicatorCls, rootCls, type SwatchItemVariantProps, swatchItem } from '@/shared/ui/color-swatch.css';
+import { cx } from '@/styles/cx';
 
 // 팔레트 색 단일 선택 그룹 — 상태·접근성은 Ark ToggleGroup, 클릭 엘리먼트는
 // BaseButton(asChild), 스와치 고유 스타일(치수·색)은 cva 오버레이 (docs/conventions/ui-composition.md).
 
-const rootCls = css({ display: 'flex', flexWrap: 'wrap', gap: 'md' });
-
-const swatchItem = cva({
-  base: {
-    width: 'tap',
-    height: 'tap',
-    borderRadius: 'full',
-    // 배경·선택 링이 같은 색을 공유하도록 tone은 CSS 변수 하나만 바꾼다
-    background: 'var(--swatch-color)',
-    color: 'textInverse',
-    transition: 'transform {durations.fast} {easings.standard}, box-shadow {durations.fast} {easings.standard}',
-    _on: {
-      boxShadow: '0 0 0 2px {colors.surface}, 0 0 0 4px var(--swatch-color)',
-      transform: 'scale(1.04)',
-    },
-  },
-  variants: {
-    // 팔레트 accent 색(도메인 무관) — Dot의 accent tone·프로젝트 색 이름과 1:1로 일치한다
-    tone: {
-      blue: { '--swatch-color': 'token(colors.brand.500)' },
-      mint: { '--swatch-color': 'token(colors.mint.500)' },
-      violet: { '--swatch-color': 'token(colors.violet.500)' },
-      amber: { '--swatch-color': 'token(colors.amber.500)' },
-      pink: { '--swatch-color': 'token(colors.rose.500)' },
-      gray: { '--swatch-color': 'token(colors.cool.500)' },
-    },
-  },
-  defaultVariants: { tone: 'gray' },
-});
-
-// 선택된 아이템에서만 드러나는 표시 슬롯 — 상태는 aria-pressed가 전달하므로 시각 전용이다
-const indicatorCls = css({
-  display: 'inline-flex',
-  opacity: 0,
-  transition: 'opacity {durations.fast} {easings.standard}',
-  '[data-state="on"] &': { opacity: 1 },
-});
-
-type SwatchTone = NonNullable<RecipeVariantProps<typeof swatchItem>>['tone'];
+type SwatchTone = NonNullable<SwatchItemVariantProps>['tone'];
 
 type ColorSwatchGroupProps<V extends string> = {
   value: V | null;

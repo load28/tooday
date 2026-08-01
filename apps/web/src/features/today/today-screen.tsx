@@ -3,10 +3,9 @@ import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
 import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { css } from 'styled-system/css';
-import { token } from 'styled-system/tokens';
 import { applyTaskPatch } from '@/entities/task/patch';
 import { TaskCard } from '@/features/today/task-card';
+import { emptyCls, heroCls, pageCls, rowCls, timeColCls, timelineCls } from '@/features/today/today-screen.css';
 import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
@@ -14,43 +13,7 @@ import { format, useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
-
-const pageCls = css({ paddingBottom: '4xl' });
-
-// 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
-const heroCls = css({
-  marginTop: 'xs',
-  marginInline: 'pageX',
-  marginBottom: '2xl',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'xl',
-});
-
-const timelineCls = css({
-  paddingX: '2xl',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'lg',
-});
-
-const rowCls = css({
-  display: 'grid',
-  gridTemplateColumns: '{sizes.timeCol} 1fr',
-  gap: 'xl',
-  alignItems: 'stretch',
-});
-
-const timeColCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: '2xs',
-  // 카드 패딩(cardPadMd)에서 numeric(18px)·subtitle(22px) lineHeight 차의 절반을 당겨 첫 줄을 광학 정렬한다
-  paddingTop: 'calc({spacing.cardPadMd} - 2px)',
-});
-
-const emptyCls = css({ paddingY: 'emptyStateY', paddingX: '4xl' });
+import { vars } from '@/styles/theme.css';
 
 type DaySection = 'morning' | 'afternoon' | 'evening';
 const SECTION_ORDER: DaySection[] = ['morning', 'afternoon', 'evening'];
@@ -168,7 +131,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
 
           {tasks.length === 0 ? (
             <Stack gap="sm" align="center" className={emptyCls}>
-              <CalendarX2 size={36} color={token('colors.borderStrong')} />
+              <CalendarX2 size={36} color={vars.color.borderStrong} />
               <Text variant="bodyLgStrong" tone="secondary">
                 {t.today.empty.title}
               </Text>

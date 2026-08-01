@@ -3,9 +3,9 @@ import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router'
 import type { Task, TaskPatch, TaskStatus, UpdateTaskRequest } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { css } from 'styled-system/css';
 import { applyTaskPatch } from '@/entities/task/patch';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
+import { pageCls, statusButtonCls } from '@/features/tasks/task-detail-screen.css';
 import {
   MetaList,
   MetaRow,
@@ -20,21 +20,6 @@ import { useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
 import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
-
-const pageCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '2xl',
-  paddingInline: 'pageX',
-  paddingTop: 'lg',
-  paddingBottom: '4xl',
-});
-
-// 상태 알약을 감싸는 탭 타깃 — 리셋·포커스 링은 BaseButton이, 색은 Chip이 tone으로 관리한다
-const statusButtonCls = css({
-  alignSelf: 'flex-start',
-  borderRadius: 'pill',
-});
 
 type TaskDetailScreenProps = {
   taskId: string;

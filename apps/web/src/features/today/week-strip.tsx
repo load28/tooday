@@ -1,52 +1,7 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
-import { css, cva } from 'styled-system/css';
 import type { DayCell } from '@/features/today/week';
+import { cellRecipe, dayCls, dotRecipe, dowCls, stripCls } from '@/features/today/week-strip.css';
 import { BaseButton } from '@/shared/ui';
-
-const stripCls = css({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(7, 1fr)',
-  gap: 'xs',
-  paddingTop: 'md',
-  paddingBottom: '2xl',
-  paddingX: 'xl',
-});
-
-// 셀 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
-const cellRecipe = cva({
-  base: {
-    flexDirection: 'column',
-    paddingTop: 'md',
-    paddingBottom: 'sm',
-    borderRadius: 'lg',
-    transition: 'background {durations.base} {easings.standard}, color {durations.base} {easings.standard}',
-    _on: { background: 'primary', color: 'onPrimary' },
-  },
-  variants: {
-    tone: {
-      idle: { color: 'textTertiary' },
-      today: { color: 'primary' },
-    },
-  },
-});
-
-const dowCls = css({ textStyle: 'micro', marginBottom: 'xs' });
-const dayCls = css({ textStyle: 'numericLg' });
-
-const dotRecipe = cva({
-  base: {
-    width: 'xs',
-    height: 'xs',
-    borderRadius: 'pill',
-    marginTop: 'xs',
-  },
-  variants: {
-    mark: {
-      none: { background: 'transparent' },
-      tasks: { background: 'primary', '[data-state="on"] &': { background: 'onPrimaryMuted' } },
-    },
-  },
-});
 
 type WeekStripProps = {
   days: DayCell[];

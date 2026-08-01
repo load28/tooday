@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type SurfaceVariantProps, surface } from 'styled-system/recipes';
+import { type SurfaceVariantProps, surface } from '@/shared/ui/surface.css';
+import { cx } from '@/styles/cx';
 
 type SurfaceBase = SurfaceVariantProps & {
   className?: string;

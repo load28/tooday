@@ -1,7 +1,7 @@
 import { type HTMLMotionProps, motion } from 'framer-motion';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type CardVariantProps, card } from 'styled-system/recipes';
+import { type CardVariantProps, card } from '@/shared/ui/card.css';
+import { cx } from '@/styles/cx';
 
 // TDS식 press 딤 — whileTap이 --press-dim(0↔1)을 스프링으로 구동해 ::before 딤 opacity를 애니메이션한다.
 // 색만 바뀌므로 scale은 없다(리스트=축소 X). 색 보간을 피해 opacity로 구동한다.

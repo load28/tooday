@@ -1,8 +1,8 @@
 import { Field as ArkField } from '@ark-ui/react/field';
 import type { ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { fieldRoot } from 'styled-system/recipes';
+import { fieldRoot } from '@/shared/ui/field.css';
 import { Text } from '@/shared/ui/text';
+import { cx } from '@/styles/cx';
 
 type FieldProps = {
   label?: string;

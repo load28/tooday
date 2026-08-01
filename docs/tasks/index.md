@@ -62,3 +62,4 @@
 | T033 | [z-index 매직넘버를 Panda overlay 토큰으로](T033-zindex-overlay-token.md) | 낮음 | ✅ 완료 |
 | T034 | [카드 press 피드백을 scale에서 state-layer로](T034-card-press-state-layer.md) | 중간 | ✅ 완료 |
 | T035 | [버튼 TDS식 hover/press (framer-motion 스프링)](T035-button-tds-press-hover.md) | 중간 | ✅ 완료 |
+| T036 | [Panda CSS → vanilla-extract 마이그레이션](T036-panda-to-vanilla-extract.md) | 중간 | ✅ 완료 |

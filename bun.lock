@@ -93,6 +93,9 @@
         "@types/node": "^22.10.2",
         "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
+        "@vanilla-extract/css": "^1.20.1",
+        "@vanilla-extract/recipes": "^0.5.7",
+        "@vanilla-extract/vite-plugin": "^5.2.2",
         "@vitejs/plugin-react": "^6.0.1",
         "jsdom": "^28.1.0",
         "postcss": "^8.5.3",
@@ -576,6 +579,8 @@
     "@vanilla-extract/integration": ["@vanilla-extract/integration@8.0.10", "", { "dependencies": { "@babel/core": "^7.23.9", "@babel/plugin-syntax-typescript": "^7.23.3", "@vanilla-extract/babel-plugin-debug-ids": "^1.2.2", "@vanilla-extract/css": "^1.20.1", "dedent": "^1.5.3", "esbuild": "npm:esbuild@>=0.17.6 <0.29.0", "eval": "0.1.8", "find-up": "^5.0.0", "javascript-stringify": "^2.0.1", "mlly": "^1.4.2" } }, "sha512-01IB5gbrgTe8IIrtfRXXTmACl5D8Enzqp2cKbCWaMKXmnoilXXVCPbJoA96q88PXkNDXsXepCxUugMvEmL3c7A=="],
 
     "@vanilla-extract/private": ["@vanilla-extract/private@1.0.9", "", {}, "sha512-gT2jbfZuaaCLrAxwXbRgIhGhcXbRZCG3v4TTUnjw0EJ7ArdBRxkq4msNJkbuRkCgfIK5ATmprB5t9ljvLeFDEA=="],
+
+    "@vanilla-extract/recipes": ["@vanilla-extract/recipes@0.5.7", "", { "peerDependencies": { "@vanilla-extract/css": "^1.0.0" } }, "sha512-Fvr+htdyb6LVUu+PhH61UFPhwkjgDEk8L4Zq9oIdte42sntpKrgFy90MyTRtGwjVALmrJ0pwRUVr8UoByYeW8A=="],
 
     "@vanilla-extract/vite-plugin": ["@vanilla-extract/vite-plugin@5.2.2", "", { "dependencies": { "@vanilla-extract/compiler": "^0.7.0", "@vanilla-extract/integration": "^8.0.9" }, "peerDependencies": { "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-AUyB4fDR2b/Mo0lcXhhlf6RxnDPYwFMyKKopalJ4BwQNKYzZSoTwHJ1PLPO9SKhpz7lzXc0Z18GHQZOewzl3YA=="],
 

@@ -6,7 +6,6 @@ module.exports = {
     alias: {
       '@': path.join(__dirname, 'src'),
       '@bff': path.join(__dirname, '../bff/src'),
-      'styled-system': path.join(__dirname, 'styled-system'),
     },
   },
 };

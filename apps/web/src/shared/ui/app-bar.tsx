@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from 'styled-system/recipes';
+import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from '@/shared/ui/app-bar.css';
+import { cx } from '@/styles/cx';
 
 type AppBarRootProps = {
   children?: ReactNode;

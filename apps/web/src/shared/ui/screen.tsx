@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from 'styled-system/recipes';
+import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from '@/shared/ui/screen.css';
+import { cx } from '@/styles/cx';
 
 type ScreenSlotProps = {
   children?: ReactNode;
@@ -9,24 +9,24 @@ type ScreenSlotProps = {
 
 /** 화면 뷰포트(세로 flex 컨테이너). 헤더·본문·푸터를 이 순서로 담는다. */
 function ScreenRoot({ children, className }: ScreenSlotProps) {
-  return <div className={cx(screenViewport(), className)}>{children}</div>;
+  return <div className={cx(screenViewport, className)}>{children}</div>;
 }
 
 function ScreenHeader({ children, className }: ScreenSlotProps) {
-  return <header className={cx(screenHeader(), className)}>{children}</header>;
+  return <header className={cx(screenHeader, className)}>{children}</header>;
 }
 
 /** 유일한 스크롤 영역. 화면 단위 스크롤 위치를 갖는다. */
 function ScreenContent({ children, className }: ScreenSlotProps) {
-  return <main className={cx(screenContent(), className)}>{children}</main>;
+  return <main className={cx(screenContent, className)}>{children}</main>;
 }
 
 function ScreenOverlay({ children, className }: ScreenSlotProps) {
-  return <div className={cx(screenOverlay(), className)}>{children}</div>;
+  return <div className={cx(screenOverlay, className)}>{children}</div>;
 }
 
 function ScreenFooter({ children, className }: ScreenSlotProps) {
-  return <footer className={cx(screenFooter(), className)}>{children}</footer>;
+  return <footer className={cx(screenFooter, className)}>{children}</footer>;
 }
 
 type ScreenProps = {

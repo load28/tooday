@@ -1,5 +1,5 @@
-import { cx } from 'styled-system/css';
-import { type DotVariantProps, dot } from 'styled-system/recipes';
+import { type DotVariantProps, dot } from '@/shared/ui/dot.css';
+import { cx } from '@/styles/cx';
 
 type DotProps = DotVariantProps & {
   className?: string;

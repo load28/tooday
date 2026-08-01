@@ -3,8 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
-import { css } from 'styled-system/css';
 import * as v from 'valibot';
+import { colorRowCls } from '@/features/projects/new-project-sheet.css';
 import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { BottomSheet, Button, ColorSwatchGroup, Stack, Text, TextField } from '@/shared/ui';
@@ -18,8 +18,6 @@ type ProjectFormValues = v.InferInput<typeof projectFormSchema>;
 function toCreateProjectRequest({ name, color }: ProjectFormValues): CreateProjectRequest {
   return { name: name.trim(), color };
 }
-
-const colorRowCls = css({ paddingBlock: '2xs', paddingInline: '2xs' });
 
 type NewProjectSheetProps = {
   open: boolean;

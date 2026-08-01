@@ -2,24 +2,9 @@ import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
-import { css } from 'styled-system/css';
+import { logoutSlotCls, pageCls, sheetActionsCls } from '@/features/auth/settings-screen.css';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
-
-const pageCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: '100%',
-  paddingX: 'pageX',
-  paddingTop: '2xl',
-  paddingBottom: '4xl',
-  gap: '2xl',
-});
-
-// 파괴적 로그아웃은 하단(엄지 도달)에 둔다 — 계정 정보는 위, 버튼은 뷰포트 바닥으로 민다.
-const logoutSlotCls = css({ marginTop: 'auto' });
-
-const sheetActionsCls = css({ paddingTop: 'lg' });
 
 export function SettingsScreen() {
   const navigate = useNavigate();

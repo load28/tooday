@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef } from 'react';
-import { cx } from 'styled-system/css';
-import { type ProgressFillVariantProps, progressFill, progressTrack } from 'styled-system/recipes';
+import { type ProgressFillVariantProps, progressFill, progressTrack } from '@/shared/ui/progress-bar.css';
+import { cx } from '@/styles/cx';
 
 export type ProgressBarTone = NonNullable<ProgressFillVariantProps['tone']>;
 

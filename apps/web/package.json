@@ -8,8 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "prepare": "panda codegen"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ark-ui/react": "^5.36.2",
@@ -39,9 +38,11 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.10.2",
-    "@pandacss/dev": "^1.11.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@vanilla-extract/css": "^1.20.1",
+    "@vanilla-extract/recipes": "^0.5.7",
+    "@vanilla-extract/vite-plugin": "^5.2.2",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^28.1.0",
     "postcss": "^8.5.3",

@@ -4,9 +4,8 @@
     "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-      "styled-system/*": ["./styled-system/*"],
       "@bff/*": ["../bff/src/*"]
     }
   },
-  "include": ["src", "vite.config.ts", "panda.config.ts", "styled-system"]
+  "include": ["src", "vite.config.ts"]
 }

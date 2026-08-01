@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type ChipVariantProps, chip } from 'styled-system/recipes';
+import { type ChipVariantProps, chip } from '@/shared/ui/chip.css';
+import { cx } from '@/styles/cx';
 
 type ChipProps = ChipVariantProps & {
   leading?: ReactNode;
