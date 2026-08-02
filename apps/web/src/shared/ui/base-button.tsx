@@ -1,7 +1,8 @@
 import { ark } from '@ark-ui/react/factory';
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type BaseButtonVariantProps, baseButton } from 'styled-system/recipes';
+import { type BaseButtonVariantProps, baseButton } from '@/shared/ui/base-button.css';
+import { cx } from '@/styles/cx';
+import { splitVariantProps } from '@/styles/split';
 
 type BaseButtonProps = BaseButtonVariantProps &
   Omit<ComponentPropsWithoutRef<'button'>, keyof BaseButtonVariantProps> & {
@@ -16,7 +17,7 @@ type BaseButtonProps = BaseButtonVariantProps &
 
 /** 모든 클릭 가능한 엘리먼트의 토대 — 리셋 + 인터랙션만. 버튼처럼 보여야 하면 Button을 쓴다. */
 export function BaseButton({ asChild, className, children, type, ...rest }: BaseButtonProps) {
-  const [variantProps, htmlProps] = baseButton.splitVariantProps(rest);
+  const [variantProps, htmlProps] = splitVariantProps(baseButton, rest);
   return (
     <ark.button
       asChild={asChild}

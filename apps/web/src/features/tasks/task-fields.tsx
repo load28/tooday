@@ -2,11 +2,11 @@ import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import type { Project, ProjectColor } from '@tooday/shared';
 import { Check, ChevronRight, Plus } from 'lucide-react';
 import { Children, Fragment, type ReactNode, useState } from 'react';
-import { css } from 'styled-system/css';
-import { token } from 'styled-system/tokens';
+import { checkCls, durationRowCls, valueCls } from '@/features/tasks/task-fields.css';
 import { useT } from '@/shared/i18n';
 import { endTime, formatDuration } from '@/shared/time';
 import { BottomSheet, Button, Card, Divider, Dot, HStack, Input, Row, Stack, Text } from '@/shared/ui';
+import { vars } from '@/styles/theme.css';
 
 /** 프로젝트 선택 시트의 '없음' 옵션 키 — 태스크의 projectId=null에 대응 (UUID와 충돌하지 않는 sentinel) */
 export const NO_PROJECT_KEY = '__none__';
@@ -27,10 +27,6 @@ export function useProjectOptions(projects: Project[]): SheetOption<string>[] {
 /** 스케줄 시트에서 고를 수 있는 기간(분) 프리셋 */
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120] as const;
 
-const valueCls = css({ display: 'inline-flex', alignItems: 'center', gap: 'sm', minWidth: 0 });
-const checkCls = css({ color: 'primary', flex: '0 0 auto' });
-const durationRowCls = css({ display: 'flex', flexWrap: 'wrap', gap: 'sm' });
-
 type MetaRowProps = {
   label: string;
   /** 이미 스타일이 입혀진 값 노드 (Dot·Text 조합 등) */
@@ -49,7 +45,7 @@ export function MetaRow({ label, value, onClick }: MetaRowProps) {
       trailing={
         <>
           <span className={valueCls}>{value}</span>
-          {interactive ? <ChevronRight size={16} color={token('colors.textPlaceholder')} /> : null}
+          {interactive ? <ChevronRight size={16} color={vars.color.textPlaceholder} /> : null}
         </>
       }
     >

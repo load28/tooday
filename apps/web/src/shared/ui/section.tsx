@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { sectionHeader, sectionHeaderTrailing } from 'styled-system/recipes';
+import { sectionHeader, sectionHeaderTrailing } from '@/shared/ui/section.css';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
 

@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { tSpacer, tStack } from 'styled-system/recipes';
+import { tSpacer, tStack } from '@/shared/ui/stack.css';
+import { cx } from '@/styles/cx';
 
 type AlignToken = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
 type JustifyToken = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';

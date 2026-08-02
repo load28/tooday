@@ -4,8 +4,8 @@ import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router'
 import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
-import { css } from 'styled-system/css';
 import * as v from 'valibot';
+import { pageCls } from '@/features/tasks/new-task-screen.css';
 import {
   MetaList,
   MetaRow,
@@ -30,15 +30,6 @@ type TaskFormValues = v.InferInput<typeof taskFormSchema>;
 function toCreateTaskRequest({ title, projectId, date, startAt, durationMin }: TaskFormValues): CreateTaskRequest {
   return { title: title.trim(), projectId: projectId ?? null, date, startAt, durationMin };
 }
-
-const pageCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '2xl',
-  paddingInline: 'pageX',
-  paddingTop: 'lg',
-  paddingBottom: '4xl',
-});
 
 const DEFAULT_START = '09:00';
 const DEFAULT_DURATION = 30;

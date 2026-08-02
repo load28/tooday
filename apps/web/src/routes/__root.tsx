@@ -42,8 +42,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
     links: [
       // Pretendard는 CDN 대신 pretendard 패키지를 번들해 자체 오리진에서 서빙한다.
-      // global.css의 @import로 두면 panda가 생성 규칙을 주입해 @import가
-      // 선두 규칙이 아니게 되어 무시되므로 link로 분리해 로드한다.
+      // 폰트는 별도 stylesheet link로 로드한다 (global.css는 레이어 선언·리셋 전용).
       {
         rel: 'stylesheet',
         href: pretendardCss,
@@ -70,6 +69,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
+        {/* 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < recipes < 레이어 없음(1회성 css).
+            (스타일시트 <link> 주입 순서와 무관하게 baseButton이 컴포넌트 recipe에 지고, 1회성 css가 recipe를 이긴다) */}
+        <style>{'@layer reset, base, base-recipe, recipes;'}</style>
         <HeadContent />
       </head>
       <body>

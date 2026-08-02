@@ -1,7 +1,7 @@
 import { type HTMLMotionProps, motion } from 'framer-motion';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type RowVariantProps, row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from 'styled-system/recipes';
+import { type RowVariantProps, row, rowSlotContent, rowSlotLeading, rowSlotTrailing } from '@/shared/ui/row.css';
+import { cx } from '@/styles/cx';
 
 // TDS식 press 딤 — whileTap이 --press-dim(0↔1)을 스프링 구동해 ::before 딤 opacity를 애니메이션한다.
 const PRESS_DIM = { type: 'spring', stiffness: 700, damping: 42, mass: 0.5 } as const;

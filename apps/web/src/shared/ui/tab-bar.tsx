@@ -1,23 +1,7 @@
 import type { ReactNode } from 'react';
-import { cva, cx } from 'styled-system/css';
-import { tabBarIconWrap, tabBarInner, tabBarNav } from 'styled-system/recipes';
 import { BaseButton } from '@/shared/ui/base-button';
-
-// 탭 고유 레이아웃·활성 색만 — 리셋·포커스 링은 BaseButton이 제공한다.
-const tabBarItem = cva({
-  base: {
-    flexDirection: 'column',
-    gap: '2xs',
-    textStyle: 'micro',
-    transition: 'color {durations.base} {easings.standard}',
-  },
-  variants: {
-    active: {
-      true: { color: 'primary', fontWeight: 700 },
-      false: { color: 'textTertiary' },
-    },
-  },
-});
+import { tabBarIconWrap, tabBarInner, tabBarItem, tabBarNav } from '@/shared/ui/tab-bar.css';
+import { cx } from '@/styles/cx';
 
 type TabBarItem<K extends string> = {
   key: K;

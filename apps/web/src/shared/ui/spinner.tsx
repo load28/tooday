@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef } from 'react';
-import { cx } from 'styled-system/css';
-import { spinner } from 'styled-system/recipes';
 import { useT } from '@/shared/i18n';
+import { spinner } from '@/shared/ui/spinner.css';
+import { cx } from '@/styles/cx';
 
 type SpinnerProps = ComponentPropsWithoutRef<'output'> & {
   label?: string;

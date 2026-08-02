@@ -2,8 +2,8 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
-import { css } from 'styled-system/css';
 import * as v from 'valibot';
+import { formCls } from '@/features/auth/signup-screen.css';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { format, useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -17,19 +17,6 @@ type SignupFormValues = v.InferInput<typeof signupFormSchema>;
 function toSignupRequest({ name, email, password }: SignupFormValues): SignupRequest {
   return { name, email, password };
 }
-
-const formCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  maxWidth: '420px',
-  minHeight: '100%',
-  marginX: 'auto',
-  paddingX: 'pageX',
-  paddingTop: 'clamp(48px, 16dvh, 140px)',
-  paddingBottom: '4xl',
-  gap: '4xl',
-});
 
 export function SignupScreen() {
   const navigate = useNavigate();

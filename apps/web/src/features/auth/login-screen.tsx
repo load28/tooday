@@ -2,8 +2,8 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
-import { css } from 'styled-system/css';
 import * as v from 'valibot';
+import { formCls } from '@/features/auth/login-screen.css';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -17,19 +17,6 @@ type LoginFormValues = v.InferInput<typeof loginFormSchema>;
 function toLoginRequest({ email, password }: LoginFormValues): LoginRequest {
   return { email, password };
 }
-
-const formCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  maxWidth: '420px',
-  minHeight: '100%',
-  marginX: 'auto',
-  paddingX: 'pageX',
-  paddingTop: 'clamp(48px, 16dvh, 140px)',
-  paddingBottom: '4xl',
-  gap: '4xl',
-});
 
 export function LoginScreen() {
   const navigate = useNavigate();

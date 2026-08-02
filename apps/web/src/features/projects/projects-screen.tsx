@@ -2,32 +2,11 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
-import { css } from 'styled-system/css';
-import { token } from 'styled-system/tokens';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
+import { cardCls, emptyCls, heroCls, listCls } from '@/features/projects/projects-screen.css';
 import { format, useT } from '@/shared/i18n';
 import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } from '@/shared/ui';
-
-const heroCls = css({
-  paddingInline: 'pageX',
-  paddingTop: 'md',
-  paddingBottom: 'lg',
-});
-
-const listCls = css({
-  paddingInline: 'pageX',
-  paddingBottom: '4xl',
-});
-
-const cardCls = css({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'md',
-  width: '100%',
-  textAlign: 'left',
-});
-
-const emptyCls = css({ paddingY: 'emptyStateY', paddingInline: '4xl' });
+import { vars } from '@/styles/theme.css';
 
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function ProjectsScreen() {
@@ -70,7 +49,7 @@ export function ProjectsScreen() {
 
         {projects.length === 0 ? (
           <Stack gap="sm" align="center" className={emptyCls}>
-            <LayoutGrid size={36} color={token('colors.borderStrong')} />
+            <LayoutGrid size={36} color={vars.color.borderStrong} />
             <Text variant="bodyLgStrong" tone="secondary">
               {t.projects.empty}
             </Text>

@@ -1,7 +1,7 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import type { ReactNode } from 'react';
-import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from 'styled-system/recipes';
+import { sheetBackdrop, sheetHandle, sheetPositioner, sheetSurface } from '@/shared/ui/bottom-sheet.css';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
 

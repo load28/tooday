@@ -4,42 +4,10 @@ import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router'
 import type { Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { css } from 'styled-system/css';
 import { STATUS_ORDER } from '@/entities/task/status';
+import { emptyCls, listCls, rowCls, segmentButtonCls, segmentCls } from '@/features/projects/project-detail-screen.css';
 import { useT } from '@/shared/i18n';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, Text } from '@/shared/ui';
-
-const segmentCls = css({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 'xs',
-  bg: 'surfaceSoft',
-  borderRadius: 'lg',
-  padding: 'xs',
-  marginInline: 'pageX',
-  marginTop: 'md',
-  marginBottom: 'lg',
-});
-
-// 세그먼트 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
-const segmentButtonCls = css({
-  gap: 'sm',
-  height: 'controlMd',
-  borderRadius: 'md',
-  color: 'textTertiary',
-  textStyle: 'bodySm',
-  transition: 'color {durations.base} {easings.standard}, background {durations.base} {easings.standard}',
-  _on: { bg: 'surface', color: 'text', boxShadow: 'sm', fontWeight: '700' },
-});
-
-const listCls = css({
-  paddingInline: 'pageX',
-  paddingBottom: '4xl',
-});
-
-const emptyCls = css({ paddingY: 'emptyStateY', paddingInline: '2xl' });
-
-const rowCls = css({ width: '100%' });
 
 type ProjectDetailScreenProps = {
   projectId: string;

@@ -1,5 +1,6 @@
 import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
@@ -16,9 +17,14 @@ const config = defineConfig({
     devtools(),
     nitro(),
     tanstackStart({
-      router: { basepath },
+      router: {
+        // .css.ts(vanilla-extract)는 라우트 파일이 아니므로 라우트 스캔에서 제외한다
+        routeFileIgnorePattern: '\\.css\\.ts$',
+        basepath,
+      },
     }),
     viteReact(),
+    vanillaExtractPlugin(),
   ],
 });
 

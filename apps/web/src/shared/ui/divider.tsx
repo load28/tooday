@@ -1,5 +1,5 @@
-import { cx } from 'styled-system/css';
-import { type TDividerVariantProps, tDivider } from 'styled-system/recipes';
+import { type TDividerVariantProps, tDivider } from '@/shared/ui/divider.css';
+import { cx } from '@/styles/cx';
 
 type DividerProps = TDividerVariantProps & {
   className?: string;

@@ -1,44 +1,8 @@
 import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
-import { css, cva } from 'styled-system/css';
+import { bodyCls, cardCls, checkRecipe } from '@/features/today/task-card.css';
 import { useT } from '@/shared/i18n';
 import { BaseButton, Card, Dot, HStack, Text } from '@/shared/ui';
-
-// 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
-const cardCls = css({
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 'xl',
-});
-
-// 리셋·포커스 링은 BaseButton이 제공 — 여기는 본문 레이아웃만 얹는다.
-const bodyCls = css({
-  flex: 1,
-  minWidth: 0,
-  flexDirection: 'column',
-  alignItems: 'stretch',
-  gap: 'sm',
-  _focusVisible: { borderRadius: 'xs' },
-});
-
-const checkRecipe = cva({
-  base: {
-    width: '4xl',
-    height: '4xl',
-    borderRadius: 'sm',
-    border: '1.5px solid {colors.borderStrong}',
-    background: 'surface',
-    flex: '0 0 auto',
-    transition: 'all {durations.base} {easings.standard}',
-  },
-  variants: {
-    status: {
-      todo: {},
-      doing: { background: 'primarySoft', borderColor: 'primary', color: 'primary' },
-      done: { background: 'success', borderColor: 'success', color: 'textInverse' },
-    },
-  },
-});
 
 type TaskCardProps = {
   task: Task;

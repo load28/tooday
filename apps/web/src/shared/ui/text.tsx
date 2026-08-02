@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { cx } from 'styled-system/css';
-import { type TextVariantProps, text } from 'styled-system/recipes';
+import { type TextVariantProps, text } from '@/shared/ui/text.css';
+import { cx } from '@/styles/cx';
 
 type TextVariant = TextVariantProps['variant'];
 type TextTone = TextVariantProps['tone'];
