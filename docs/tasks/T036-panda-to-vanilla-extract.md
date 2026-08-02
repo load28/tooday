@@ -71,4 +71,8 @@ Panda 구성을 **동작이 동일한** vanilla-extract 구성으로 이관한�
     styled-system·postcss.config.cjs·`@pandacss/dev`·`prepare` 스크립트 제거, tsconfig/webpack.depcruise
     별칭 정리.
   - 검증: typecheck(4패키지)·build·test(24)·biome check·lint:deps 모두 통과.
-    globalLayer는 rolldown-vite에서 fileScope 오류가 나 문자열 레이어명으로 우회.
+- 2026-08-01: 캐스케이드를 VE 네이티브 방식으로 재정비.
+  - 문자열 레이어명 + `<head>` 인라인 `<style>` 우회를 제거하고 `globalLayer`로 대체 —
+    VE가 `@layer reset,base,tokens,…`를 번들 최상단에 방출해 순서를 소유한다(로드 순서 무관).
+    (초기 fileScope 오류는 `layer.ts`(.ts) 경유 왕복이 원인이었고, 제거 후 clean 빌드 6/6 안정.)
+  - global.css는 reset/base 블록 + keyframes만 남겨 VE가 선언한 레이어를 이름으로 채운다.

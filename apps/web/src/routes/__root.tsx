@@ -69,9 +69,6 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        {/* 레이어 순서를 어떤 스타일시트보다 먼저 확정한다 — utilities가 recipes를 결정적으로 이긴다.
-            (스타일시트 <link> 주입 순서와 무관하게 캐스케이드 순서를 고정) */}
-        <style>{'@layer reset, base, tokens, recipes, utilities;'}</style>
         <HeadContent />
       </head>
       <body>

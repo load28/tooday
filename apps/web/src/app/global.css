@@ -1,6 +1,6 @@
-/* Panda 스택을 vanilla-extract로 이관 — 레이어 순서 선언 + preflight(reset) + globalCss(base) + keyframes.
-   토큰 CSS 변수는 styles/theme.css.ts가 :root에 방출한다. 여기 값은 그 토큰의 최종 리터럴과 같다. */
-@layer reset, base, tokens, recipes, utilities;
+/* preflight(reset 레이어) + globalCss(base 레이어) + keyframes.
+   레이어 순서는 styles/layers.css.ts의 globalLayer가 확정한다(VE가 번들 최상단에 방출).
+   여기 reset/base 블록은 그 레이어를 이름으로 채운다. 토큰 CSS 변수는 theme.css.ts가 :root에 방출한다. */
 
 /* ── reset (Panda preflight) ───────────────────────────────────────────── */
 @layer reset {
