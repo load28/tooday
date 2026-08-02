@@ -1,6 +1,7 @@
 import type { StyleRule } from '@vanilla-extract/css';
 
-// Panda의 textStyles를 그대로 스타일 객체로 옮긴다. 사용처에서 `...textStyles.body`로 펼친다.
+// 타이포 스케일 — 이름 하나가 fontSize·weight·letterSpacing·lineHeight 한 벌을 묶는다.
+// 사용처에서 `...textStyles.body`로 스타일 객체에 펼친다.
 export const textStyles = {
   display: { fontSize: '24px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: '30px' },
   title: { fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '24px' },

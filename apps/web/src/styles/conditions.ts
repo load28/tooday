@@ -1,6 +1,6 @@
 import type { StyleRule } from '@vanilla-extract/css';
 
-// Panda conditions를 vanilla-extract selector로 옮긴다.
+// 인터랙션 상태 셀렉터를 한 곳에 모은다 — 각 recipe가 :hover/:active 조합을 제각기 쓰지 않게.
 // hover는 포인터 기기 + 비활성 아님, press는 :active/data-pressed(비활성 제외), on은 Ark 토글 선택 상태.
 
 type Selectors = NonNullable<StyleRule['selectors']>;
@@ -8,12 +8,12 @@ type Rule = StyleRule;
 
 export const HOVER_MEDIA = '(hover: hover)';
 
-/** _hover — @media (hover: hover) 안의 :not(:disabled):hover. base로 프리픽스를 합성한다(예: 토글 _on 위의 hover). */
+/** @media (hover: hover) 안의 :not(:disabled):hover. base로 프리픽스를 합성한다(예: 토글 ON 위의 hover). */
 export function hover(styles: Rule, base = '&'): Rule {
   return { '@media': { [HOVER_MEDIA]: { selectors: { [`${base}:not(:disabled):hover`]: styles } } } };
 }
 
-/** _press — :active와 data-pressed(비활성 제외). selectors에 펼쳐 넣는다. */
+/** :active와 data-pressed(비활성 제외). selectors에 펼쳐 넣는다. */
 export function press(styles: Rule, base = '&'): Selectors {
   return {
     [`${base}:not(:disabled):active`]: styles,
@@ -21,7 +21,7 @@ export function press(styles: Rule, base = '&'): Selectors {
   };
 }
 
-/** _on — Ark ToggleGroup 등이 붙이는 data-state="on". */
+/** Ark ToggleGroup 등이 붙이는 선택 상태 data-state="on". */
 export const ON = '&[data-state="on"]';
 
 export const FOCUS_VISIBLE = '&:is(:focus-visible, [data-focus-visible])';

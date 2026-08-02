@@ -14,7 +14,7 @@ export const stripCls = style({
   paddingInline: vars.space.xl,
 });
 
-// 셀 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(_on)가 처리한다.
+// 셀 고유 스타일만 — 리셋·포커스 링은 BaseButton이, 선택 룩은 Ark data-state(ON)가 처리한다.
 export const cellRecipe = recipe({
   base: rec({
     flexDirection: 'column',

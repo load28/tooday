@@ -81,7 +81,7 @@ export function Button({ loading, loadingText, spinner, className, children, onC
   }
 
   // 일반 버튼 — Framer Motion으로 tap 시 spring 축소(TDS 방식). baseButton 리셋 클래스를 함께 얹고,
-  // 색·hover/press 틴트는 CSS(:active/_hover)가 그대로 담당한다.
+  // 색·hover/press 틴트는 CSS(:active/:hover)가 그대로 담당한다.
   return (
     <motion.button
       type={type ?? 'button'}

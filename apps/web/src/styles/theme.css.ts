@@ -1,7 +1,8 @@
 import { createGlobalTheme } from '@vanilla-extract/css';
 
-// Panda 토큰 + semanticTokens를 CSS 변수 계약으로 방출한다. semanticTokens는 참조를
-// 최종 리터럴 값으로 해석해 단일 계약으로 평탄화한다(다크모드 등 조건 분기가 없어 동작 동일).
+// 디자인 토큰을 :root의 CSS 변수 계약으로 방출한다 — 스타일은 리터럴이 아니라 여기 `vars`만 참조한다.
+// 팔레트(brand.500 …)와 semantic(primary, surface …)이 한 계약에 평탄하게 있고, semantic은 팔레트를
+// 참조하는 대신 최종 리터럴로 적혀 있다(조건 분기가 없어 동작은 같다 — 다크 테마를 넣는다면 여기가 갈림길).
 export const vars = createGlobalTheme(':root', {
   color: {
     white: '#ffffff',

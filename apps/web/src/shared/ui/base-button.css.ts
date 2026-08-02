@@ -23,7 +23,7 @@ export const baseButton = recipe({
     // 색만 CSS로 트랜지션. press 축소(transform)는 Button이 Framer Motion 스프링으로 애니메이션한다.
     transition: `background-color ${vars.duration.fast} ${vars.easing.exit}, color ${vars.duration.fast} ${vars.easing.exit}`,
     selectors: {
-      // _disabled는 aria-disabled까지 매칭하므로 네이티브 disabled에만 한정한다
+      // 공용 DISABLED 셀렉터는 aria-disabled까지 매칭하므로 여기선 네이티브 disabled에만 한정한다
       '&:disabled': { cursor: 'not-allowed', opacity: 0.5 },
       [FOCUS_VISIBLE]: { outline: 'none', boxShadow: vars.shadow.focus },
     },

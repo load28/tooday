@@ -58,6 +58,8 @@ apps/web/src/
   entities/<domain>/  # 도메인 공용 모델·표시 상수 (task/) — FSD entities만
                       #   부분 채택 (docs/conventions/web-entities.md)
   app/                # 앱 셸 — tRPC 클라이언트, global.css
+  styles/             # 스타일 계약 — theme.css.ts(토큰→CSS 변수), layers.css.ts
+                      #   (캐스케이드 레이어), conditions.ts, text-styles.ts, cx/split
   shared/ui/          # 도메인 무관 디자인 시스템 프리미티브
                       # 의존 방향: routes → features → entities → app/shared (역방향 금지)
 
@@ -72,6 +74,9 @@ packages/shared/src/  # web ↔ bff 계약만 — 도메인별 파일 (auth, use
 
 - Bun workspaces + Turborepo
 - TypeScript, React 19, TanStack Router/Start
+- vanilla-extract (빌드타임 CSS-in-TS) + Ark UI — 스타일은 컴포넌트 옆
+  `*.css.ts`에 콜로케이션하고, 토큰·레이어·조건은 `src/styles/`가 소유한다.
+  override 규칙은 [docs/conventions/ui-styling.md](docs/conventions/ui-styling.md).
 - Biome (lint + format)
 
 ## Scripts

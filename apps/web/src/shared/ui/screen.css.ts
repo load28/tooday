@@ -5,7 +5,7 @@ import { vars } from '@/styles/theme.css';
 export const screenViewport = style(
   rec({
     width: '100%',
-    // Panda 배열값(반응형): base 100vh, sm(≥640px)부터 100dvh
+    // 반응형: base 100vh, sm(≥640px)부터 100dvh
     height: '100vh',
     '@media': { 'screen and (min-width: 640px)': { height: '100dvh' } },
     background: vars.color.bg,

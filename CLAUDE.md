@@ -21,10 +21,11 @@
 ## 컨벤션 (docs/conventions/)
 
 - [ui-styling.md](docs/conventions/ui-styling.md) — shared/ui recipe가 관리하는 속성은
-  className `css()`로 덮지 않고 variant prop으로 지정한다.
+  className으로 덮지 않고 variant prop으로 지정한다. vanilla-extract 캐스케이드
+  (`base-recipe < recipes < 무레이어`)와 `rec`/`baseRec` 배치 규칙도 여기.
 - [ui-composition.md](docs/conventions/ui-composition.md) — 새 인터랙티브 컴포넌트는
   Ark 프리미티브(상태·a11y) + 베이스 버튼 `BaseButton`(asChild) + 슬롯 오버레이
-  (utilities 층)로 조립한다.
+  (recipes 레이어)로 조립한다.
 - [type-safety.md](docs/conventions/type-safety.md) — 계약을 한 곳에 선언하고 타입이
   정확히 추론되게 설계해 어긋남을 컴파일 타임에 잡는다 (예: i18n 스키마, satisfies 라우트 경로).
 - [web-entities.md](docs/conventions/web-entities.md) — FSD는 전면 도입이 아니라 단위별

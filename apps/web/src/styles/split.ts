@@ -1,4 +1,5 @@
-// Panda recipe의 splitVariantProps 대체 — recipe.variants()로 variant 키를 갈라 [variantProps, rest]를 돌려준다.
+// props를 recipe.variants() 기준으로 갈라 [variantProps, rest]를 돌려준다 —
+// variant는 recipe로, 나머지는 DOM으로 흘려보내는 컴포넌트에서 쓴다.
 // biome-ignore lint/suspicious/noExplicitAny: recipe 런타임 함수 시그니처는 recipe마다 달라 옵션 타입을 any로 바운드한다
 type AnyRecipeFn = ((options?: any) => string) & { variants: () => string[] };
 

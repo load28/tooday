@@ -5,7 +5,7 @@ import { indicatorCls, rootCls, type SwatchItemVariantProps, swatchItem } from '
 import { cx } from '@/styles/cx';
 
 // 팔레트 색 단일 선택 그룹 — 상태·접근성은 Ark ToggleGroup, 클릭 엘리먼트는
-// BaseButton(asChild), 스와치 고유 스타일(치수·색)은 cva 오버레이 (docs/conventions/ui-composition.md).
+// BaseButton(asChild), 스와치 고유 스타일(치수·색)은 recipes 레이어 오버레이 (docs/conventions/ui-composition.md).
 
 type SwatchTone = NonNullable<SwatchItemVariantProps>['tone'];
 

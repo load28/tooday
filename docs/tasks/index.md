@@ -50,7 +50,7 @@
 | T021 | [계약 단일 선언 잔여 (드리프트 봉인)](T021-contract-single-declaration.md) | 중간 | ⬜ 대기 |
 | T022 | [계약·동기화 테스트 공백](T022-contract-test-gaps.md) | 중간 | ⬜ 대기 |
 | T023 | [웹 잔여 공통화·정리 (폼 조각·중복 레이아웃)](T023-web-shared-scaffolds.md) | 낮음 | ⬜ 대기 |
-| T024 | [디자인 토큰 위생 (panda.config 정합)](T024-design-token-hygiene.md) | 낮음 | ⬜ 대기 |
+| T024 | [디자인 토큰 위생 (토큰 계층 정합·잔여 매직 값)](T024-design-token-hygiene.md) | 낮음 | ⬜ 대기 |
 | T025 | [비활성 룩을 opacity에서 전용 중립 토큰으로 교체](T025-disabled-token-neutralize.md) | 중간 | ✅ 완료 |
 | T026 | [PGlite 데이터 디렉토리 부모 미생성으로 BFF 기동 실패](T026-pglite-datadir-mkdir.md) | 높음 | ✅ 완료 |
 | T027 | [Panda 커스텀 레시피가 내장 패턴 이름과 충돌 (config 경고)](T027-panda-recipe-pattern-name-collision.md) | 낮음 | ✅ 완료 |
@@ -63,3 +63,4 @@
 | T034 | [카드 press 피드백을 scale에서 state-layer로](T034-card-press-state-layer.md) | 중간 | ✅ 완료 |
 | T035 | [버튼 TDS식 hover/press (framer-motion 스프링)](T035-button-tds-press-hover.md) | 중간 | ✅ 완료 |
 | T036 | [Panda CSS → vanilla-extract 마이그레이션](T036-panda-to-vanilla-extract.md) | 중간 | ✅ 완료 |
+| T037 | [vanilla-extract 전환에 맞춰 문서·주석 정합](T037-ve-docs-alignment.md) | 중간 | ✅ 완료 |

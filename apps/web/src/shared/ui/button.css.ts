@@ -6,7 +6,7 @@ import { textStyles } from '@/styles/text-styles';
 import { vars } from '@/styles/theme.css';
 
 const hoverKey = (base = '&') => `${base}:not(:disabled):hover`;
-// @media (hover: hover) 안에 하나 이상의 hover selector를 묶는다(키 충돌 없이 _on 위 hover까지 합성).
+// @media (hover: hover) 안에 하나 이상의 hover selector를 묶는다(키 충돌 없이 ON 위 hover까지 합성).
 const mediaHover = (...pairs: Array<[string, Record<string, unknown>]>) => ({
   '@media': { [HOVER_MEDIA]: { selectors: Object.fromEntries(pairs) } },
 });
@@ -33,7 +33,7 @@ export const buttonStyle = recipe({
         ...mediaHover([hoverKey(), { background: vars.color.primarySofter }]),
         selectors: { ...press({ background: vars.color.primarySofter }), '&:disabled': { background: 'transparent' } },
       }),
-      // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩.
+      // ON = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩.
       subtle: rec({
         background: vars.color.surfaceMuted,
         color: vars.color.textSecondary,
