@@ -69,9 +69,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        {/* 캐스케이드 레이어 순서 확정 — reset < base < recipes < 레이어 없음(오버레이).
-            (스타일시트 <link> 주입 순서와 무관하게 recipe가 reset/base를 이기고, 오버레이가 recipe를 이긴다) */}
-        <style>{'@layer reset, base, recipes;'}</style>
+        {/* 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < recipes < 레이어 없음(1회성 css).
+            (스타일시트 <link> 주입 순서와 무관하게 baseButton이 컴포넌트 recipe에 지고, 1회성 css가 recipe를 이긴다) */}
+        <style>{'@layer reset, base, base-recipe, recipes;'}</style>
         <HeadContent />
       </head>
       <body>

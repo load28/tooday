@@ -1,12 +1,15 @@
 import { style } from '@vanilla-extract/css';
 import { type RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ON } from '@/styles/conditions';
+import { rec } from '@/styles/layers.css';
 import { vars } from '@/styles/theme.css';
 
+// 1회성 레이아웃 css → 무레이어
 export const rootCls = style({ display: 'flex', flexWrap: 'wrap', gap: vars.space.md });
 
+// 스와치는 recipe → recipes 레이어 (BaseButton을 덮는다)
 export const swatchItem = recipe({
-  base: {
+  base: rec({
     width: vars.size.tap,
     height: vars.size.tap,
     borderRadius: vars.radii.full,
@@ -20,16 +23,16 @@ export const swatchItem = recipe({
         transform: 'scale(1.04)',
       },
     },
-  },
+  }),
   variants: {
     // 팔레트 accent 색(도메인 무관) — Dot의 accent tone·프로젝트 색 이름과 1:1로 일치한다
     tone: {
-      blue: { vars: { '--swatch-color': vars.color.brand[500] } },
-      mint: { vars: { '--swatch-color': vars.color.mint[500] } },
-      violet: { vars: { '--swatch-color': vars.color.violet[500] } },
-      amber: { vars: { '--swatch-color': vars.color.amber[500] } },
-      pink: { vars: { '--swatch-color': vars.color.rose[500] } },
-      gray: { vars: { '--swatch-color': vars.color.cool[500] } },
+      blue: rec({ vars: { '--swatch-color': vars.color.brand[500] } }),
+      mint: rec({ vars: { '--swatch-color': vars.color.mint[500] } }),
+      violet: rec({ vars: { '--swatch-color': vars.color.violet[500] } }),
+      amber: rec({ vars: { '--swatch-color': vars.color.amber[500] } }),
+      pink: rec({ vars: { '--swatch-color': vars.color.rose[500] } }),
+      gray: rec({ vars: { '--swatch-color': vars.color.cool[500] } }),
     },
   },
   defaultVariants: { tone: 'gray' },

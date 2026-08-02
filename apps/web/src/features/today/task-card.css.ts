@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { type RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { FOCUS_VISIBLE } from '@/styles/conditions';
+import { rec } from '@/styles/layers.css';
 import { vars } from '@/styles/theme.css';
 
 // 패딩은 Card의 padding variant로 준다 — 여기서 padding을 덮으면 recipe 기본값(p_0)과 충돌한다
@@ -17,7 +18,7 @@ export const bodyCls = style({
 });
 
 export const checkRecipe = recipe({
-  base: {
+  base: rec({
     width: vars.size['4xl'],
     height: vars.size['4xl'],
     borderRadius: vars.radii.sm,
@@ -25,12 +26,12 @@ export const checkRecipe = recipe({
     background: vars.color.surface,
     flex: '0 0 auto',
     transition: `all ${vars.duration.base} ${vars.easing.standard}`,
-  },
+  }),
   variants: {
     status: {
-      todo: {},
-      doing: { background: vars.color.primarySoft, borderColor: vars.color.primary, color: vars.color.primary },
-      done: { background: vars.color.success, borderColor: vars.color.success, color: vars.color.textInverse },
+      todo: rec({}),
+      doing: rec({ background: vars.color.primarySoft, borderColor: vars.color.primary, color: vars.color.primary }),
+      done: rec({ background: vars.color.success, borderColor: vars.color.success, color: vars.color.textInverse }),
     },
   },
 });

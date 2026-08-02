@@ -79,3 +79,10 @@ Panda 구성을 **동작이 동일한** vanilla-extract 구성으로 이관한�
   - `globalLayer`(VE 네이티브)로도 시도했으나 이 rolldown-vite + VE compiler 조합에서
     공유 `.css.ts`의 globalLayer가 fileScope 오류를 간헐/재현적으로 내(빌드 불안정) 포기하고,
     무부작용 문자열 레이어명 + head 선언(clean 빌드 4/4 안정)을 택한다.
+- 2026-08-01: 레이어를 base-recipe < recipes로 정리 (오분류 해소).
+  - `buttonStyle`·`tabBarItem`·`swatchItem`·`checkRecipe`·`cellRecipe`는 사실 `recipe()`인데
+    무레이어 오버레이 취급받던 것을 → `recipes` 레이어(`rec`)로 올려 제자리 분류.
+  - 합성돼 덮이는 베이스인 `baseButton`은 `base-recipe` 레이어(`baseRec`, recipes보다 아래)로 내림.
+  - 1회성 style()(heroCls·loading*·segment* 등)은 무레이어 유지 → recipes를 덮는다.
+  - head 선언 `@layer reset, base, base-recipe, recipes;`. clean 빌드 3/3, 산출 CSS에서
+    base-recipe(baseButton) < recipes(전 컴포넌트 recipe) 확인.

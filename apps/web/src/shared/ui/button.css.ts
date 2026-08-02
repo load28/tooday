@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { type RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { HOVER_MEDIA, ON, press } from '@/styles/conditions';
+import { rec } from '@/styles/layers.css';
 import { textStyles } from '@/styles/text-styles';
 import { vars } from '@/styles/theme.css';
 
@@ -10,30 +11,30 @@ const mediaHover = (...pairs: Array<[string, Record<string, unknown>]>) => ({
   '@media': { [HOVER_MEDIA]: { selectors: Object.fromEntries(pairs) } },
 });
 
-// 버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — 레이어 없는 오버레이라 baseButton(recipes 레이어)을 결정적으로 덮는다.
+// 버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — recipe(recipes 레이어)라 baseButton(base-recipe 레이어)을 결정적으로 덮는다.
 export const buttonStyle = recipe({
-  base: {
+  base: rec({
     gap: vars.space.md,
-    // 비활성 = tone 무관 중립 채움으로 collapse. 레이어 없는 오버레이라 baseButton의 &:disabled opacity를 덮는다 — opacity는 1로 되돌린다.
+    // 비활성 = tone 무관 중립 채움으로 collapse. recipes 레이어라 baseButton의 &:disabled opacity를 덮는다 — opacity는 1로 되돌린다.
     selectors: { '&:disabled': { opacity: 1, background: vars.color.disabledSurface, color: vars.color.disabledText } },
-  },
+  }),
   variants: {
     // hover와 press는 같은 색을 쓰고(TDS식), press가 축소를 더한다. hover는 포인터 기기에서만.
     tone: {
       // 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다. 중립이라 hover/press 2단.
-      ghost: {
+      ghost: rec({
         color: vars.color.text,
         ...mediaHover([hoverKey(), { background: vars.color.stateHover }]),
         selectors: { ...press({ background: vars.color.statePressed }), '&:disabled': { background: 'transparent' } },
-      },
+      }),
       // 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
-      brandGhost: {
+      brandGhost: rec({
         color: vars.color.textBrand,
         ...mediaHover([hoverKey(), { background: vars.color.primarySofter }]),
         selectors: { ...press({ background: vars.color.primarySofter }), '&:disabled': { background: 'transparent' } },
-      },
+      }),
       // _on = ToggleGroup.Item asChild로 꽂혔을 때의 선택 룩.
-      subtle: {
+      subtle: rec({
         background: vars.color.surfaceMuted,
         color: vars.color.textSecondary,
         ...mediaHover(
@@ -45,48 +46,48 @@ export const buttonStyle = recipe({
           [ON]: { background: vars.color.primary, color: vars.color.onPrimary },
           ...press({ background: vars.color.primaryPressed }, ON),
         },
-      },
-      brand: {
+      }),
+      brand: rec({
         background: vars.color.primary,
         color: vars.color.onPrimary,
         ...mediaHover([hoverKey(), { background: vars.color.primaryPressed }]),
         selectors: press({ background: vars.color.primaryPressed }),
-      },
-      brandSoft: {
+      }),
+      brandSoft: rec({
         background: vars.color.primarySoft,
         color: vars.color.primary,
         ...mediaHover([hoverKey(), { background: vars.color.primarySofter }]),
         selectors: press({ background: vars.color.primarySofter }),
-      },
-      danger: {
+      }),
+      danger: rec({
         background: vars.color.danger,
         color: vars.color.textInverse,
         ...mediaHover([hoverKey(), { background: vars.color.dangerPressed }]),
         selectors: press({ background: vars.color.dangerPressed }),
-      },
-      dangerSoft: {
+      }),
+      dangerSoft: rec({
         background: vars.color.dangerSoft,
         color: vars.color.danger,
         ...mediaHover([hoverKey(), { background: vars.color.dangerSoft, filter: 'brightness(0.96)' }]),
         selectors: press({ background: vars.color.dangerSoft, filter: 'brightness(0.96)' }),
-      },
+      }),
     },
     shape: {
-      square: { borderRadius: vars.radii.md },
-      rounded: { borderRadius: vars.radii.lg },
-      pill: { borderRadius: vars.radii.pill },
-      circle: { borderRadius: vars.radii.full, aspectRatio: '1 / 1' },
+      square: rec({ borderRadius: vars.radii.md }),
+      rounded: rec({ borderRadius: vars.radii.lg }),
+      pill: rec({ borderRadius: vars.radii.pill }),
+      circle: rec({ borderRadius: vars.radii.full, aspectRatio: '1 / 1' }),
     },
     size: {
-      sm: { height: vars.size.controlSm, paddingInline: vars.space.xl, ...textStyles.bodySm },
-      md: { height: vars.size.tap, paddingInline: vars.space['2xl'], ...textStyles.body },
-      lg: { height: vars.size.tapLg, paddingInline: vars.space['3xl'], ...textStyles.bodyLg },
-      xl: { height: vars.size.tapXl, paddingInline: vars.space['3xl'], ...textStyles.bodyLgStrong },
-      icon: { height: vars.size.tap, width: vars.size.tap, paddingInline: '0' },
-      iconLg: { height: vars.size.tapLg, width: vars.size.tapLg, paddingInline: '0' },
+      sm: rec({ height: vars.size.controlSm, paddingInline: vars.space.xl, ...textStyles.bodySm }),
+      md: rec({ height: vars.size.tap, paddingInline: vars.space['2xl'], ...textStyles.body }),
+      lg: rec({ height: vars.size.tapLg, paddingInline: vars.space['3xl'], ...textStyles.bodyLg }),
+      xl: rec({ height: vars.size.tapXl, paddingInline: vars.space['3xl'], ...textStyles.bodyLgStrong }),
+      icon: rec({ height: vars.size.tap, width: vars.size.tap, paddingInline: '0' }),
+      iconLg: rec({ height: vars.size.tapLg, width: vars.size.tapLg, paddingInline: '0' }),
     },
     fullWidth: {
-      true: { width: '100%' },
+      true: rec({ width: '100%' }),
     },
   },
   defaultVariants: { tone: 'ghost', shape: 'rounded', size: 'md' },
@@ -94,7 +95,7 @@ export const buttonStyle = recipe({
 
 export type ButtonVariantProps = NonNullable<RecipeVariants<typeof buttonStyle>>;
 
-// 라벨과 스피너를 같은 grid 셀에 겹쳐 어느 쪽이 크든 버튼 너비가 변하지 않는다.
+// 라벨과 스피너를 같은 grid 셀에 겹쳐 어느 쪽이 크든 버튼 너비가 변하지 않는다. (1회성 css → 무레이어)
 export const loadingStackCls = style({ display: 'inline-grid', placeItems: 'center', minWidth: 0 });
 export const loadingLayerCls = style({
   gridArea: '1 / 1',
