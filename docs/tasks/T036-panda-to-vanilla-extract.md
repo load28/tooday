@@ -71,8 +71,11 @@ Panda 구성을 **동작이 동일한** vanilla-extract 구성으로 이관한�
     styled-system·postcss.config.cjs·`@pandacss/dev`·`prepare` 스크립트 제거, tsconfig/webpack.depcruise
     별칭 정리.
   - 검증: typecheck(4패키지)·build·test(24)·biome check·lint:deps 모두 통과.
-- 2026-08-01: 캐스케이드를 VE 네이티브 방식으로 재정비.
-  - 문자열 레이어명 + `<head>` 인라인 `<style>` 우회를 제거하고 `globalLayer`로 대체 —
-    VE가 `@layer reset,base,tokens,…`를 번들 최상단에 방출해 순서를 소유한다(로드 순서 무관).
-    (초기 fileScope 오류는 `layer.ts`(.ts) 경유 왕복이 원인이었고, 제거 후 clean 빌드 6/6 안정.)
-  - global.css는 reset/base 블록 + keyframes만 남겨 VE가 선언한 레이어를 이름으로 채운다.
+- 2026-08-01: 캐스케이드 단순화 — Panda의 recipes/utilities 2단 레이어를 그대로 복제하던 것을
+  걷어낸다. "레이어 없는 스타일이 어떤 레이어보다 이긴다"는 성질을 이용해:
+  - recipe만 `recipes` 레이어에 두고(`rec`), 그 위에 얹는 오버레이(cva·css·className)는
+    레이어 없이 둔다 → 자동으로 recipe를 덮는다. `util` 래퍼와 78개 호출을 전부 제거.
+  - 순서 선언은 `<head>`의 `@layer reset, base, recipes;` 한 줄로 축소(오버레이는 무레이어라 목록 불요).
+  - `globalLayer`(VE 네이티브)로도 시도했으나 이 rolldown-vite + VE compiler 조합에서
+    공유 `.css.ts`의 globalLayer가 fileScope 오류를 간헐/재현적으로 내(빌드 불안정) 포기하고,
+    무부작용 문자열 레이어명 + head 선언(clean 빌드 4/4 안정)을 택한다.

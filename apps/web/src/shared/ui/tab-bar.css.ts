@@ -1,5 +1,5 @@
 import { type RecipeVariants, recipe } from '@vanilla-extract/recipes';
-import { rec, util } from '@/styles/layers.css';
+import { rec } from '@/styles/layers.css';
 import { textStyles } from '@/styles/text-styles';
 import { vars } from '@/styles/theme.css';
 
@@ -37,18 +37,18 @@ export const tabBarIconWrap = recipe({
 
 export type TabBarIconWrapVariantProps = NonNullable<RecipeVariants<typeof tabBarIconWrap>>;
 
-// 탭 고유 레이아웃·활성 색만 — 리셋·포커스 링은 BaseButton이 제공한다. (utilities 층 = cva)
+// 탭 고유 레이아웃·활성 색만 — 리셋·포커스 링은 BaseButton이 제공한다. (레이어 없는 오버레이 = cva → recipes를 덮는다)
 export const tabBarItem = recipe({
-  base: util({
+  base: {
     flexDirection: 'column',
     gap: vars.space['2xs'],
     ...textStyles.micro,
     transition: `color ${vars.duration.base} ${vars.easing.standard}`,
-  }),
+  },
   variants: {
     active: {
-      true: util({ color: vars.color.primary, fontWeight: 700 }),
-      false: util({ color: vars.color.textTertiary }),
+      true: { color: vars.color.primary, fontWeight: 700 },
+      false: { color: vars.color.textTertiary },
     },
   },
 });

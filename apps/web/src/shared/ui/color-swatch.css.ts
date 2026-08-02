@@ -1,13 +1,12 @@
 import { style } from '@vanilla-extract/css';
 import { type RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ON } from '@/styles/conditions';
-import { util } from '@/styles/layers.css';
 import { vars } from '@/styles/theme.css';
 
-export const rootCls = style(util({ display: 'flex', flexWrap: 'wrap', gap: vars.space.md }));
+export const rootCls = style({ display: 'flex', flexWrap: 'wrap', gap: vars.space.md });
 
 export const swatchItem = recipe({
-  base: util({
+  base: {
     width: vars.size.tap,
     height: vars.size.tap,
     borderRadius: vars.radii.full,
@@ -21,16 +20,16 @@ export const swatchItem = recipe({
         transform: 'scale(1.04)',
       },
     },
-  }),
+  },
   variants: {
     // 팔레트 accent 색(도메인 무관) — Dot의 accent tone·프로젝트 색 이름과 1:1로 일치한다
     tone: {
-      blue: util({ vars: { '--swatch-color': vars.color.brand[500] } }),
-      mint: util({ vars: { '--swatch-color': vars.color.mint[500] } }),
-      violet: util({ vars: { '--swatch-color': vars.color.violet[500] } }),
-      amber: util({ vars: { '--swatch-color': vars.color.amber[500] } }),
-      pink: util({ vars: { '--swatch-color': vars.color.rose[500] } }),
-      gray: util({ vars: { '--swatch-color': vars.color.cool[500] } }),
+      blue: { vars: { '--swatch-color': vars.color.brand[500] } },
+      mint: { vars: { '--swatch-color': vars.color.mint[500] } },
+      violet: { vars: { '--swatch-color': vars.color.violet[500] } },
+      amber: { vars: { '--swatch-color': vars.color.amber[500] } },
+      pink: { vars: { '--swatch-color': vars.color.rose[500] } },
+      gray: { vars: { '--swatch-color': vars.color.cool[500] } },
     },
   },
   defaultVariants: { tone: 'gray' },
@@ -39,11 +38,9 @@ export const swatchItem = recipe({
 export type SwatchItemVariantProps = NonNullable<RecipeVariants<typeof swatchItem>>;
 
 // 선택된 아이템에서만 드러나는 표시 슬롯 — 상태는 aria-pressed가 전달하므로 시각 전용이다
-export const indicatorCls = style(
-  util({
-    display: 'inline-flex',
-    opacity: 0,
-    transition: `opacity ${vars.duration.fast} ${vars.easing.standard}`,
-    selectors: { '[data-state="on"] &': { opacity: 1 } },
-  }),
-);
+export const indicatorCls = style({
+  display: 'inline-flex',
+  opacity: 0,
+  transition: `opacity ${vars.duration.fast} ${vars.easing.standard}`,
+  selectors: { '[data-state="on"] &': { opacity: 1 } },
+});

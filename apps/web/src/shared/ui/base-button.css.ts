@@ -4,7 +4,7 @@ import { rec } from '@/styles/layers.css';
 import { vars } from '@/styles/theme.css';
 
 // 베이스 버튼 — 리셋 + 인터랙션 계약(프레스·포커스 링·disabled)만. 색·크기·모양은
-// 파생(Button의 tone/shape/size, 스와치·탭 등)이 utilities 층 오버레이로 얹는다.
+// 파생(Button의 tone/shape/size, 스와치·탭 등)이 레이어 없는 오버레이로 얹는다(recipes 레이어를 결정적으로 이긴다).
 export const baseButton = recipe({
   base: rec({
     display: 'inline-flex',
