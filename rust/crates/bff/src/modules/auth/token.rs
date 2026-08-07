@@ -26,7 +26,11 @@ mod tests {
 
     #[test]
     fn bearer_헤더가_쿠키보다_우선한다() {
-        let token = extract_access_token(Some("Bearer header-token"), Some("tooday_access=cookie-token"), "tooday_access");
+        let token = extract_access_token(
+            Some("Bearer header-token"),
+            Some("tooday_access=cookie-token"),
+            "tooday_access",
+        );
         assert_eq!(token, Some("header-token".into()));
     }
 

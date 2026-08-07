@@ -120,10 +120,7 @@ mod tests {
     #[test]
     fn 선언된_프로시저만_찾는다() {
         assert_eq!(AppRouter::lookup("pub.appConfig").map(|p| p.kind), Some(ProcedureKind::Query));
-        assert_eq!(
-            AppRouter::lookup("auth.signup").map(|p| p.kind),
-            Some(ProcedureKind::Mutation)
-        );
+        assert_eq!(AppRouter::lookup("auth.signup").map(|p| p.kind), Some(ProcedureKind::Mutation));
         assert_eq!(AppRouter::lookup("pub.doesNotExist"), None);
         assert_eq!(AppRouter::lookup("nope.thing"), None);
         assert_eq!(AppRouter::lookup("noDot"), None);

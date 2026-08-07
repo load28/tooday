@@ -75,11 +75,8 @@ pub fn create_app(deps: AppDeps) -> Router {
     });
 
     // 쿠키 인증에는 credentials CORS가 필수
-    let origins: Vec<HeaderValue> = config
-        .allowed_origins
-        .iter()
-        .filter_map(|origin| HeaderValue::from_str(origin).ok())
-        .collect();
+    let origins: Vec<HeaderValue> =
+        config.allowed_origins.iter().filter_map(|origin| HeaderValue::from_str(origin).ok()).collect();
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list(origins))
         .allow_credentials(true)
@@ -146,11 +143,7 @@ async fn trpc_handler(State(state): State<Arc<AppState>>, request: Request) -> R
     let query = parse_query(uri.query().unwrap_or_default());
     let is_batch = query.iter().any(|(key, value)| key == "batch" && value == "1");
 
-    let path = uri
-        .path()
-        .strip_prefix(&format!("{TRPC_ENDPOINT}/"))
-        .unwrap_or_default()
-        .to_owned();
+    let path = uri.path().strip_prefix(&format!("{TRPC_ENDPOINT}/")).unwrap_or_default().to_owned();
     let paths: Vec<String> = path.split(',').filter(|part| !part.is_empty()).map(str::to_owned).collect();
 
     let headers = request.headers().clone();
@@ -227,10 +220,8 @@ async fn trpc_handler(State(state): State<Arc<AppState>>, request: Request) -> R
 
     let mut response = (status, Json(body)).into_response();
     let response_headers = response.headers_mut();
-    response_headers.insert(
-        header::CACHE_CONTROL,
-        HeaderValue::from_str(&cache_control).expect("cache-control은 ASCII"),
-    );
+    response_headers
+        .insert(header::CACHE_CONTROL, HeaderValue::from_str(&cache_control).expect("cache-control은 ASCII"));
     for cookie in &ctx.set_cookies {
         if let Ok(value) = HeaderValue::from_str(cookie) {
             response_headers.append(header::SET_COOKIE, value);
@@ -289,19 +280,16 @@ async fn sync_events(
         header_str(&headers, header::COOKIE).as_deref(),
         &state.config.access_cookie_name,
     );
-    let user_id = verify_live_session(
-        token.as_deref(),
-        state.access_tokens.as_ref(),
-        state.refresh_tokens.as_ref(),
-    )
-    .await
-    .ok_or_else(|| {
-        error_response(
-            StatusCode::UNAUTHORIZED,
-            DomainErrorCode::Unauthenticated.as_str(),
-            DomainErrorCode::Unauthenticated.message(),
-        )
-    })?;
+    let user_id =
+        verify_live_session(token.as_deref(), state.access_tokens.as_ref(), state.refresh_tokens.as_ref())
+            .await
+            .ok_or_else(|| {
+                error_response(
+                    StatusCode::UNAUTHORIZED,
+                    DomainErrorCode::Unauthenticated.as_str(),
+                    DomainErrorCode::Unauthenticated.message(),
+                )
+            })?;
 
     let (sender, receiver) = mpsc::unbounded_channel::<Result<Event, Infallible>>();
     // 접속(재접속) 직후 한 번 신호 — 끊겨 있던 사이 놓친 변경을 커서로 따라잡게 한다
@@ -318,7 +306,8 @@ async fn sync_events(
         }),
     );
 
-    let stream = SubscribedStream { inner: UnboundedReceiverStream::new(receiver), _subscription: subscription };
+    let stream =
+        SubscribedStream { inner: UnboundedReceiverStream::new(receiver), _subscription: subscription };
     // 프록시 idle timeout 방지 — TS의 25초 ping과 같은 주기
     Ok(Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(25)).text("ping")))
 }

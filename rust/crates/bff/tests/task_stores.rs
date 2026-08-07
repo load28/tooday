@@ -12,8 +12,8 @@ use tooday_bff::modules::task::adapters::memory::{
 };
 use tooday_bff::modules::task::adapters::sql::{SqlProjectStore, SqlTaskStore};
 use tooday_bff::modules::task::ports::{
-    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput,
-    ListTasksRangeInput, ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
+    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput, ListTasksRangeInput,
+    ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
 };
 use tooday_bff::modules::user::adapters::sql::SqlUserReader;
 use tooday_bff::modules::user::ports::UserReader;
@@ -91,11 +91,8 @@ where
 #[tokio::test]
 async fn 프로젝트를_만들고_유저별로_생성_순서로_조회한다() {
     for_each_implementation(|stores, name| async move {
-        let daily = stores
-            .projects
-            .create(project_input(USER_A, "일상", ProjectColor::Mint))
-            .await
-            .expect("생성");
+        let daily =
+            stores.projects.create(project_input(USER_A, "일상", ProjectColor::Mint)).await.expect("생성");
         let tooday = stores
             .projects
             .create(project_input(USER_A, "TooDay 앱", ProjectColor::Blue))
@@ -156,9 +153,7 @@ async fn 태스크를_범위로_조회한다() {
         stores
             .tasks
             .create(CreateTaskInput {
-                user_id: USER_B.into(),
-                title: "남의 태스크".into(),
-                ..task_input()
+                user_id: USER_B.into(), title: "남의 태스크".into(), ..task_input()
             })
             .await
             .expect("생성");
@@ -205,11 +200,8 @@ async fn list_by_project는_그_프로젝트의_살아있는_태스크만_돌려
             .create(project_input(USER_A, "TooDay 앱", ProjectColor::Blue))
             .await
             .expect("생성");
-        let other = stores
-            .projects
-            .create(project_input(USER_A, "일상", ProjectColor::Mint))
-            .await
-            .expect("생성");
+        let other =
+            stores.projects.create(project_input(USER_A, "일상", ProjectColor::Mint)).await.expect("생성");
 
         let afternoon = stores
             .tasks
@@ -263,10 +255,7 @@ async fn list_by_project는_그_프로젝트의_살아있는_태스크만_돌려
 
         let other_user = stores
             .tasks
-            .list_by_project(ListTasksByProjectInput {
-                user_id: USER_B.into(),
-                project_id: project.id,
-            })
+            .list_by_project(ListTasksByProjectInput { user_id: USER_B.into(), project_id: project.id })
             .await
             .expect("조회");
         assert_eq!(other_user, vec![], "{name}");

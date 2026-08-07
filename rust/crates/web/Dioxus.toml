@@ -1,0 +1,13 @@
+[application]
+name = "tooday-web"
+
+[web.app]
+title = "TooDay"
+base_path = "/"
+
+[web.watcher]
+# 개발 서버 포트 — TS 웹(3000)과 같은 자리를 쓴다
+reload_html = true
+
+[web.resource]
+style = ["/assets/app.css"]

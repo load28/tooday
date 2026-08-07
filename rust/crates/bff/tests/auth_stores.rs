@@ -91,30 +91,21 @@ async fn 자격_증명을_검증한다() {
 
         let ok = stores
             .users
-            .verify_credentials(Credentials {
-                email: input().email,
-                password: input().password,
-            })
+            .verify_credentials(Credentials { email: input().email, password: input().password })
             .await
             .expect("검증");
         assert_eq!(ok.as_ref(), Some(&created), "{name}");
 
         let wrong_password = stores
             .users
-            .verify_credentials(Credentials {
-                email: input().email,
-                password: "wrong-password".into(),
-            })
+            .verify_credentials(Credentials { email: input().email, password: "wrong-password".into() })
             .await
             .expect("검증");
         assert_eq!(wrong_password, None, "{name}");
 
         let unknown_email = stores
             .users
-            .verify_credentials(Credentials {
-                email: "nobody@tooday.app".into(),
-                password: input().password,
-            })
+            .verify_credentials(Credentials { email: "nobody@tooday.app".into(), password: input().password })
             .await
             .expect("검증");
         assert_eq!(unknown_email, None, "{name}");
@@ -157,8 +148,7 @@ async fn 회전된_옛_토큰을_재사용하면_세션_전체가_무효화된�
         let user = stores.users.create(input()).await.expect("생성");
         let first = stores.refresh_tokens.issue(&user.id).await.expect("발급");
         // first supersede, second 활성
-        let second =
-            stores.refresh_tokens.rotate(&first.token).await.expect("회전").expect("회전 성공");
+        let second = stores.refresh_tokens.rotate(&first.token).await.expect("회전").expect("회전 성공");
 
         // 옛 토큰 재제시 = 탈취 신호 → 세션 전체 무효화
         assert_eq!(stores.refresh_tokens.rotate(&first.token).await.expect("회전"), None, "{name}");
@@ -173,8 +163,7 @@ async fn revoke는_토큰이_속한_세션_전체를_무효화한다() {
     for_each_implementation(IDLE_LONG, ABSOLUTE_LONG, |stores, name| async move {
         let user = stores.users.create(input()).await.expect("생성");
         let first = stores.refresh_tokens.issue(&user.id).await.expect("발급");
-        let second =
-            stores.refresh_tokens.rotate(&first.token).await.expect("회전").expect("회전 성공");
+        let second = stores.refresh_tokens.rotate(&first.token).await.expect("회전").expect("회전 성공");
 
         // 현재 토큰으로 로그아웃하면 옛·현재 토큰 모두 폐기된다
         stores.refresh_tokens.revoke(&second.token).await.expect("폐기");

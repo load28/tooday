@@ -33,10 +33,8 @@ impl TrpcContext {
         authorization: Option<&str>,
         cookie_header: Option<&str>,
     ) -> Self {
-        let access_token =
-            extract_access_token(authorization, cookie_header, &config.access_cookie_name);
-        let user_id =
-            verify_live_session(access_token.as_deref(), access_tokens, refresh_tokens).await;
+        let access_token = extract_access_token(authorization, cookie_header, &config.access_cookie_name);
+        let user_id = verify_live_session(access_token.as_deref(), access_tokens, refresh_tokens).await;
         let refresh_token = read_cookie(cookie_header, &config.refresh_cookie_name);
 
         Self {

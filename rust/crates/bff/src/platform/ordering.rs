@@ -192,13 +192,15 @@ fn midpoint(a: &str, b: Option<&str>) -> Result<String, OrderKeyError> {
         digit_index(a.as_bytes()[0]).ok_or_else(|| OrderKeyError(format!("invalid digit in {a}")))?
     };
     let digit_b = match b {
-        Some(b) => digit_index(b.as_bytes()[0]).ok_or_else(|| OrderKeyError(format!("invalid digit in {b}")))?,
+        Some(b) => {
+            digit_index(b.as_bytes()[0]).ok_or_else(|| OrderKeyError(format!("invalid digit in {b}")))?
+        }
         None => BASE_62_DIGITS.len(),
     };
 
     if digit_b - digit_a > 1 {
         // JS의 Math.round(0.5 * (a + b)) — 반올림은 항상 위로(.5는 상향)
-        let mid = (digit_a + digit_b + 1) / 2;
+        let mid = (digit_a + digit_b).div_ceil(2);
         return Ok((BASE_62_DIGITS[mid] as char).to_string());
     }
 
@@ -313,11 +315,7 @@ mod tests {
     #[test]
     fn 키는_ascii로만_구성된다() {
         let first = order_key_after(None);
-        let samples = [
-            first.clone(),
-            order_key_between(None, Some(&first)),
-            order_key_after(Some(&first)),
-        ];
+        let samples = [first.clone(), order_key_between(None, Some(&first)), order_key_after(Some(&first))];
         for key in samples {
             assert!(key.bytes().all(|b| (0x21..=0x7e).contains(&b)), "{key}");
         }

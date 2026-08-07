@@ -1,0 +1,2004 @@
+/* TooDay — Dioxus(Rust) 웹의 단일 스타일시트.
+   apps/web(vanilla-extract)의 시각 결과를 손으로 옮긴 플레인 CSS다.
+   - 클래스명 계약: VE 해시 클래스 대신 안정적인 시맨틱 클래스 + data-* variant를 쓴다.
+   - 캐스케이드: reset(preflight) < base(globalCss) < base-recipe(합성 베이스) < recipes(컴포넌트)
+     < 레이어 없음(화면·기능 1회성 스타일). 마지막이 어떤 레이어보다 이긴다.
+   - 모든 값은 :root에 방출한 토큰 var(--…)에서 온다(타이포 스케일의 px/lineHeight는
+     원본 text-styles.ts에서도 토큰이 아니라 리터럴이므로 그대로 둔다). */
+
+@layer reset, base, base-recipe, recipes;
+
+/* ══ 토큰 (styles/theme.css.ts → :root 커스텀 프로퍼티 계약) ═══════════════
+   Panda 토큰 + semanticTokens를 평탄화해 방출한다. semanticTokens는 참조를
+   최종 리터럴 값으로 해석한다(다크모드 등 조건 분기가 없어 동작 동일). */
+:root {
+  /* color */
+  --color-white: #ffffff;
+
+  --color-brand-50: #f4f9ff;
+  --color-brand-100: #e8f3ff;
+  --color-brand-200: #cfe5ff;
+  --color-brand-300: #a8cfff;
+  --color-brand-400: #6ba9fa;
+  --color-brand-500: #3182f6;
+  --color-brand-600: #2272eb;
+  --color-brand-700: #1e63cf;
+  --color-brand-800: #1a52a8;
+  --color-brand-900: #163f80;
+
+  --color-cool-50: #f9fafb;
+  --color-cool-100: #f2f4f6;
+  --color-cool-200: #e5e8eb;
+  --color-cool-300: #d1d6db;
+  --color-cool-400: #b0b8c1;
+  --color-cool-500: #8b95a1;
+  --color-cool-600: #6b7684;
+  --color-cool-700: #4e5968;
+  --color-cool-800: #333d4b;
+  --color-cool-900: #191f28;
+
+  --color-mint-100: #dff7f2;
+  --color-mint-500: #00c2a8;
+  --color-mint-600: #00b8a3;
+  --color-violet-100: #ecebff;
+  --color-violet-500: #6a5af9;
+  --color-amber-100: #fff1de;
+  --color-amber-500: #ff9f43;
+  --color-rose-100: #ffe7ee;
+  --color-rose-500: #ff5d8f;
+  --color-ruby-100: #feeaec;
+  --color-ruby-500: #f04452;
+  --color-sun-100: #fff7e0;
+  --color-sun-500: #f9b811;
+
+  /* semantic (참조를 리터럴로 해석) */
+  --color-bg: #f5f6f8;
+  --color-bg-warm: #f7f8fa;
+
+  --color-surface: #ffffff; /* white */
+  --color-surface-muted: #f9fafb; /* cool.50 */
+  --color-surface-soft: #f2f4f6; /* cool.100 */
+  --color-surface-inverse: #191f28; /* cool.900 */
+
+  --color-border: #e5e8eb; /* cool.200 */
+  --color-border-strong: #d1d6db; /* cool.300 */
+  --color-divider: #f2f4f6; /* cool.100 */
+
+  --color-text: #191f28; /* cool.900 */
+  --color-text-secondary: #4e5968; /* cool.700 */
+  --color-text-tertiary: #8b95a1; /* cool.500 */
+  --color-text-placeholder: #b0b8c1; /* cool.400 */
+  --color-text-inverse: #ffffff; /* white */
+  --color-text-brand: #3182f6; /* brand.500 */
+
+  --color-primary: #3182f6; /* brand.500 */
+  --color-primary-soft: #e8f3ff; /* brand.100 */
+  --color-primary-softer: #f4f9ff; /* brand.50 */
+  --color-on-primary: #ffffff; /* white */
+  --color-on-primary-muted: rgba(255, 255, 255, 0.6);
+
+  --color-disabled-surface: #d1d6db; /* cool.300 (borderStrong) */
+  --color-disabled-text: #8b95a1; /* cool.500 (textTertiary) */
+
+  --color-success: #00b8a3; /* mint.600 */
+  --color-success-soft: #dff7f2; /* mint.100 */
+  --color-warning: #f9b811; /* sun.500 */
+  --color-warning-soft: #fff7e0; /* sun.100 */
+  --color-danger: #f04452; /* ruby.500 */
+  --color-danger-soft: #feeaec; /* ruby.100 */
+
+  --color-overlay: rgba(15, 19, 36, 0.45);
+  --color-state-hover: color-mix(in srgb, #191f28 5%, transparent); /* text 5% */
+  --color-state-pressed: color-mix(in srgb, #191f28 10%, transparent); /* text 10% */
+  --color-primary-pressed: #1e63cf; /* brand.700 */
+  --color-danger-pressed: #d63845;
+
+  /* space */
+  --space-0: 0;
+  --space-2xs: 0.125rem;
+  --space-xs: 0.25rem;
+  --space-sm: 0.375rem;
+  --space-md: 0.5rem;
+  --space-lg: 0.625rem;
+  --space-xl: 0.75rem;
+  --space-2xl: 1rem;
+  --space-3xl: 1.25rem;
+  --space-4xl: 1.5rem;
+
+  /* semantic spacing */
+  --space-page-x: 1rem; /* spacing.2xl */
+  --space-app-bar-pad-x: 0.75rem; /* spacing.xl */
+  --space-app-bar-pad-y: 0.375rem; /* spacing.sm */
+  --space-app-bar-gap: 0.5rem; /* spacing.md */
+  --space-card-pad-sm: 0.75rem; /* spacing.xl */
+  --space-card-pad-md: 1rem; /* spacing.2xl */
+  --space-card-pad-lg: 1.25rem; /* spacing.3xl */
+  --space-sheet-pad-x: 1.25rem; /* spacing.3xl */
+  --space-sheet-pad-bottom: 1.5rem; /* spacing.4xl */
+  --space-sheet-gap: 1rem; /* spacing.2xl */
+  --space-sheet-handle-top: 0.625rem; /* spacing.lg */
+  --space-divider-leading-inset: 3rem;
+  --space-empty-state-y: 60px;
+
+  /* size */
+  --size-0: 0;
+  --size-2xs: 0.125rem;
+  --size-xs: 0.25rem;
+  --size-sm: 0.375rem;
+  --size-md: 0.5rem;
+  --size-lg: 0.625rem;
+  --size-xl: 0.75rem;
+  --size-2xl: 1rem;
+  --size-3xl: 1.25rem;
+  --size-4xl: 1.5rem;
+  --size-control-sm: 32px;
+  --size-control-md: 36px;
+  --size-tap: 40px;
+  --size-tap-lg: 48px;
+  --size-tap-xl: 56px;
+  --size-fab: 56px;
+  --size-handle: 36px;
+  --size-app-bar: 52px;
+  --size-tab-bar: 60px;
+  --size-time-col: 52px;
+  --size-icon: 20px;
+  --size-icon-lg: 24px;
+
+  /* radii */
+  --radii-xs: 6px;
+  --radii-sm: 8px;
+  --radii-md: 12px;
+  --radii-lg: 14px;
+  --radii-xl: 16px;
+  --radii-2xl: 20px;
+  --radii-3xl: 24px;
+  --radii-pill: 999px;
+  --radii-full: 9999px;
+
+  /* shadow */
+  --shadow-xs: 0 1px 2px rgba(15, 19, 36, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 19, 36, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 19, 36, 0.05);
+  --shadow-card: 0 1px 3px rgba(15, 19, 36, 0.04), 0 4px 12px rgba(15, 19, 36, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 19, 36, 0.1);
+  --shadow-sheet: 0 -8px 32px rgba(15, 19, 36, 0.16);
+  --shadow-fab: 0 8px 20px rgba(49, 130, 246, 0.35), 0 2px 6px rgba(49, 130, 246, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(49, 130, 246, 0.3);
+
+  /* duration */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+
+  /* easing */
+  --easing-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* letterSpacing */
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-tighter: -0.02em;
+  --letter-spacing-tightest: -0.03em;
+
+  /* font */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI',
+    Roboto, sans-serif;
+
+  /* zIndex */
+  --z-index-overlay: 60;
+}
+
+/* ══ reset (Panda preflight) ════════════════════════════════════════════ */
+@layer reset {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: currentcolor;
+  }
+
+  html,
+  :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    tab-size: 4;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+
+  abbr:where([title]) {
+    text-decoration: underline dotted;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  b,
+  strong {
+    font-weight: bolder;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    font-size: 1em;
+  }
+
+  small {
+    font-size: 80%;
+  }
+
+  sub,
+  sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+
+  sub {
+    bottom: -0.25em;
+  }
+
+  sup {
+    top: -0.5em;
+  }
+
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+
+  button,
+  input,
+  optgroup,
+  select,
+  textarea {
+    font-family: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-size: 100%;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+  }
+
+  button,
+  select {
+    text-transform: none;
+  }
+
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'] {
+    -webkit-appearance: button;
+    background-color: transparent;
+    background-image: none;
+  }
+
+  :-moz-focusring {
+    outline: auto;
+  }
+
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+
+  progress {
+    vertical-align: baseline;
+  }
+
+  ::-webkit-inner-spin-button,
+  ::-webkit-outer-spin-button {
+    height: auto;
+  }
+
+  [type='search'] {
+    -webkit-appearance: textfield;
+    outline-offset: -2px;
+  }
+
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+
+  ::-webkit-file-upload-button {
+    -webkit-appearance: button;
+    font: inherit;
+  }
+
+  summary {
+    display: list-item;
+  }
+
+  blockquote,
+  dl,
+  dd,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  hr,
+  figure,
+  p,
+  pre {
+    margin: 0;
+  }
+
+  fieldset {
+    margin: 0;
+    padding: 0;
+  }
+
+  legend {
+    padding: 0;
+  }
+
+  ol,
+  ul,
+  menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    opacity: 1;
+    color: var(--color-text-placeholder);
+  }
+
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
+  }
+
+  img,
+  svg,
+  video,
+  canvas,
+  audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+    vertical-align: middle;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ══ base (Panda globalCss) ═════════════════════════════════════════════ */
+@layer base {
+  html,
+  body,
+  #app,
+  #main {
+    /* Dioxus 마운트 노드는 #main인 경우가 있어 함께 잡는다 */
+    min-height: 100%;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    letter-spacing: var(--letter-spacing-tight);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    letter-spacing: inherit;
+  }
+
+  button,
+  a,
+  [role='button'],
+  [data-base-button] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+}
+
+/* ══ keyframes ══════════════════════════════════════════════════════════ */
+@keyframes toodaySpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes toodayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toodaySlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ══ base-recipe — 다른 recipe에 덮이는 합성 베이스 ═════════════════════ */
+@layer base-recipe {
+  /* 베이스 버튼 — 리셋 + 인터랙션 계약(프레스·포커스 링·disabled)만.
+     색·크기·모양은 파생(.button의 tone/shape/size, 스와치·탭 등)이 recipes 레이어에서
+     얹는다 — base-recipe(여기)보다 위라 결정적으로 이긴다. */
+  .base-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    appearance: none;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    letter-spacing: inherit;
+    text-align: left;
+    min-width: 0;
+    /* 색만 CSS로 트랜지션. press 축소(transform)는 Button이 스프링으로 애니메이션한다. */
+    transition: background-color var(--duration-fast) var(--easing-exit),
+      color var(--duration-fast) var(--easing-exit);
+  }
+
+  /* _disabled는 aria-disabled까지 매칭하므로 네이티브 disabled에만 한정한다 */
+  .base-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .base-button:is(:focus-visible, [data-focus-visible]) {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+/* ══ recipes — 컴포넌트 ═════════════════════════════════════════════════ */
+@layer recipes {
+  /* ── Screen (shared/ui/screen.css.ts) ──────────────────────────────── */
+  .screen {
+    width: 100%;
+    /* Panda 배열값(반응형): base 100vh, sm(≥640px)부터 100dvh */
+    height: 100vh;
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  @media screen and (min-width: 640px) {
+    .screen {
+      height: 100dvh;
+    }
+  }
+
+  .screen-header {
+    flex: 0 0 auto;
+    background: var(--color-bg);
+    min-height: var(--size-app-bar);
+  }
+
+  .screen-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .screen-footer {
+    flex: 0 0 auto;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-divider);
+  }
+
+  /* ── AppBar (shared/ui/app-bar.css.ts) ─────────────────────────────── */
+  .app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--space-app-bar-pad-y);
+    padding-inline: var(--space-app-bar-pad-x);
+    gap: var(--space-app-bar-gap);
+    min-height: var(--size-app-bar);
+  }
+
+  .app-bar-leading,
+  .app-bar-trailing {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex: 0 0 auto;
+  }
+
+  .app-bar-title {
+    flex: 1;
+    min-width: 0;
+    /* textStyles.subtitle */
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: 22px;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Button (shared/ui/button.css.ts) ──────────────────────────────────
+     버튼 룩(tone/shape/size)은 베이스가 아니라 여기 산다 — recipes 레이어라
+     base-recipe(.base-button)를 결정적으로 덮는다.
+     기본값: tone=ghost, shape=rounded(= data-shape 미지정/"default"), size=md. */
+  .button {
+    gap: var(--space-md);
+    /* rounded 기본 모양 */
+    border-radius: var(--radii-lg);
+    /* size=md 기본 메트릭 + textStyles.body */
+    height: var(--size-tap);
+    padding-inline: var(--space-2xl);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 22px;
+    /* tone=ghost 기본 색 */
+    color: var(--color-text);
+  }
+
+  /* 비활성 = tone 무관 중립 채움으로 collapse. recipes 레이어라 .base-button의
+     :disabled opacity를 덮는다 — opacity는 1로 되돌린다. */
+  .button:disabled {
+    opacity: 1;
+    background: var(--color-disabled-surface);
+    color: var(--color-disabled-text);
+  }
+
+  /* hover와 press는 같은 색을 쓰고(TDS식), press가 축소를 더한다. hover는 포인터 기기에서만. */
+
+  /* 채움 없는 tone은 비활성에도 배경 없이 텍스트만 저강조로 둔다. 중립이라 hover/press 2단. */
+  .button[data-tone='ghost'] {
+    color: var(--color-text);
+  }
+  @media (hover: hover) {
+    .button[data-tone='ghost']:not(:disabled):hover {
+      background: var(--color-state-hover);
+    }
+  }
+  .button[data-tone='ghost']:not(:disabled):active,
+  .button[data-tone='ghost']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-state-pressed);
+  }
+  .button[data-tone='ghost']:disabled {
+    background: transparent;
+  }
+
+  /* 텍스트 링크 룩 — asChild <Link>에 브랜드 색 + 인터랙션 계약을 입힐 때 쓴다.
+     원본의 tone="brandSoft"(배경 primarySoft + 글자 primary)는 계약 목록에 없고
+     앱에서 미사용이라 가장 가까운 brandGhost로 접었다 — 대기 상태 배경만 차이난다. */
+  .button[data-tone='brandGhost'] {
+    color: var(--color-text-brand);
+  }
+  @media (hover: hover) {
+    .button[data-tone='brandGhost']:not(:disabled):hover {
+      background: var(--color-primary-softer);
+    }
+  }
+  .button[data-tone='brandGhost']:not(:disabled):active,
+  .button[data-tone='brandGhost']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-primary-softer);
+  }
+  .button[data-tone='brandGhost']:disabled {
+    background: transparent;
+  }
+
+  /* _on(= Ark ToggleGroup의 data-state="on") = 선택 룩. data-active/data-selected도 함께 받는다. */
+  .button[data-tone='subtle'] {
+    background: var(--color-surface-muted);
+    color: var(--color-text-secondary);
+  }
+  @media (hover: hover) {
+    .button[data-tone='subtle']:not(:disabled):hover {
+      background: var(--color-surface-soft);
+    }
+    .button[data-tone='subtle'][data-state='on']:not(:disabled):hover,
+    .button[data-tone='subtle'][data-active='true']:not(:disabled):hover,
+    .button[data-tone='subtle'][data-selected='true']:not(:disabled):hover {
+      background: var(--color-primary-pressed);
+    }
+  }
+  .button[data-tone='subtle']:not(:disabled):active,
+  .button[data-tone='subtle']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-surface-soft);
+  }
+  .button[data-tone='subtle'][data-state='on'],
+  .button[data-tone='subtle'][data-active='true'],
+  .button[data-tone='subtle'][data-selected='true'] {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .button[data-tone='subtle'][data-state='on']:not(:disabled):active,
+  .button[data-tone='subtle'][data-state='on']:not(:disabled)[data-pressed='true'],
+  .button[data-tone='subtle'][data-active='true']:not(:disabled):active,
+  .button[data-tone='subtle'][data-active='true']:not(:disabled)[data-pressed='true'],
+  .button[data-tone='subtle'][data-selected='true']:not(:disabled):active,
+  .button[data-tone='subtle'][data-selected='true']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-primary-pressed);
+  }
+
+  .button[data-tone='brand'] {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  @media (hover: hover) {
+    .button[data-tone='brand']:not(:disabled):hover {
+      background: var(--color-primary-pressed);
+    }
+  }
+  .button[data-tone='brand']:not(:disabled):active,
+  .button[data-tone='brand']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-primary-pressed);
+  }
+
+  .button[data-tone='danger'] {
+    background: var(--color-danger);
+    color: var(--color-text-inverse);
+  }
+  @media (hover: hover) {
+    .button[data-tone='danger']:not(:disabled):hover {
+      background: var(--color-danger-pressed);
+    }
+  }
+  .button[data-tone='danger']:not(:disabled):active,
+  .button[data-tone='danger']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-danger-pressed);
+  }
+
+  .button[data-tone='dangerSoft'] {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  @media (hover: hover) {
+    .button[data-tone='dangerSoft']:not(:disabled):hover {
+      background: var(--color-danger-soft);
+      filter: brightness(0.96);
+    }
+  }
+  .button[data-tone='dangerSoft']:not(:disabled):active,
+  .button[data-tone='dangerSoft']:not(:disabled)[data-pressed='true'] {
+    background: var(--color-danger-soft);
+    filter: brightness(0.96);
+  }
+
+  /* plain — 계약에만 있는 tone. 채움·색 지정 없이 상속만 하는 완전 중립 버튼으로 둔다
+     (비활성 중립 채움은 .button:disabled 공통 규칙이 그대로 적용된다). */
+  .button[data-tone='plain'] {
+    background: transparent;
+    color: inherit;
+  }
+  /* ghost/brandGhost와 같은 원칙 — 채움 없는 tone은 비활성에도 배경을 두지 않는다 */
+  .button[data-tone='plain']:disabled {
+    background: transparent;
+    color: var(--color-disabled-text);
+  }
+
+  /* shape — "default"는 원본 기본값 rounded(radii.lg)와 같다.
+     원본의 circle(radii.full + aspect-ratio 1/1)은 계약에 없고 미사용이라 pill로 접었다. */
+  .button[data-shape='default'] {
+    border-radius: var(--radii-lg);
+  }
+  .button[data-shape='square'] {
+    border-radius: var(--radii-md);
+  }
+  .button[data-shape='pill'] {
+    border-radius: var(--radii-pill);
+  }
+
+  /* size — 원본의 iconLg(tapLg 정사각)는 계약에 없고 미사용이라 icon으로 접었다. */
+  .button[data-size='sm'] {
+    height: var(--size-control-sm);
+    padding-inline: var(--space-xl);
+    /* textStyles.bodySm */
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 20px;
+  }
+  .button[data-size='md'] {
+    height: var(--size-tap);
+    padding-inline: var(--space-2xl);
+    /* textStyles.body */
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 22px;
+  }
+  .button[data-size='lg'] {
+    height: var(--size-tap-lg);
+    padding-inline: var(--space-3xl);
+    /* textStyles.bodyLg */
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 24px;
+  }
+  .button[data-size='xl'] {
+    height: var(--size-tap-xl);
+    padding-inline: var(--space-3xl);
+    /* textStyles.bodyLgStrong */
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 24px;
+  }
+  .button[data-size='icon'] {
+    height: var(--size-tap);
+    width: var(--size-tap);
+    padding-inline: 0;
+  }
+
+  .button[data-full-width='true'] {
+    width: 100%;
+  }
+
+  /* 로딩 — 클릭은 차단되지만 네이티브 disabled가 아니라 커서만 바꾼다.
+     라벨/스피너를 같은 grid 셀에 겹쳐 버튼 너비가 변하지 않게 하는 내부 레이어. */
+  .button[data-loading='true'] {
+    cursor: wait;
+  }
+  .button[data-loading='true'] .button-loading-stack {
+    display: inline-grid;
+    place-items: center;
+    min-width: 0;
+  }
+  .button .button-loading-layer {
+    grid-area: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    min-width: 0;
+  }
+  /* visibility/display로 숨기면 접근성 트리에서 빠지므로 opacity로 숨긴다. */
+  .button .button-loading-hidden {
+    opacity: 0;
+  }
+
+  /* ── Card (shared/ui/card.css.ts) ──────────────────────────────────────
+     기본값: elevation=raised(shadow.card), radius=xl, padding=none.
+     elevation flat/floating과 radius lg/xl은 계약에 data-* 슬롯이 없어 방출하지 않는다. */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radii-xl);
+    overflow: hidden;
+    min-width: 0;
+    color: var(--color-text);
+    transition: box-shadow var(--duration-fast) var(--easing-exit);
+    box-shadow: var(--shadow-card);
+    padding: 0;
+  }
+
+  .card[data-radius='md'] {
+    border-radius: var(--radii-md);
+  }
+  .card[data-radius='2xl'] {
+    border-radius: var(--radii-2xl);
+  }
+
+  .card[data-padding='none'] {
+    padding: 0;
+  }
+  .card[data-padding='sm'] {
+    padding: var(--space-card-pad-sm);
+  }
+  .card[data-padding='md'] {
+    padding: var(--space-card-pad-md);
+  }
+  .card[data-padding='lg'] {
+    padding: var(--space-card-pad-lg);
+  }
+
+  .card[data-interactive='true'] {
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .card[data-interactive='true']:is(:focus-visible, [data-focus-visible]) {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+  /* press 딤 — 크기 무관 state layer 오버레이(::before). --press-dim을 탭 애니메이션이 구동한다. */
+  .card[data-interactive='true']::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--color-state-pressed);
+    opacity: var(--press-dim, 0);
+  }
+
+  .card[data-selected='true'] {
+    box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-card);
+  }
+
+  /* ── Text (shared/ui/text.css.ts) ──────────────────────────────────────
+     기본값: variant=body, tone=default.
+     원본의 tone success/warning, align start/end는 계약에 없어 방출하지 않는다. */
+  .text {
+    margin: 0;
+    min-width: 0;
+    /* textStyles.body */
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 22px;
+    color: var(--color-text);
+  }
+
+  .text[data-variant='display'] {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tightest);
+    line-height: 30px;
+  }
+  .text[data-variant='title'] {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: 24px;
+  }
+  .text[data-variant='subtitle'] {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: 22px;
+  }
+  .text[data-variant='bodyLg'] {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 24px;
+  }
+  .text[data-variant='bodyLgStrong'] {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 24px;
+  }
+  .text[data-variant='body'] {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 22px;
+  }
+  .text[data-variant='bodyStrong'] {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 22px;
+  }
+  .text[data-variant='bodySm'] {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 20px;
+  }
+  .text[data-variant='label'] {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 18px;
+  }
+  .text[data-variant='caption'] {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 16px;
+  }
+  .text[data-variant='captionStrong'] {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 16px;
+  }
+  .text[data-variant='micro'] {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0; /* 토큰 없음 — 원본도 리터럴 '0' */
+    line-height: 14px;
+  }
+  .text[data-variant='overline'] {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em; /* 토큰 없음 — 원본도 리터럴 */
+    line-height: 18px;
+    text-transform: uppercase;
+  }
+  .text[data-variant='numeric'] {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 18px;
+    font-feature-settings: 'tnum' 1;
+  }
+  /* numericLg — 원본 text recipe에는 없지만 textStyles에 있고 주 단위 셀이 쓴다. */
+  .text[data-variant='numericLg'] {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 20px;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .text[data-tone='default'] {
+    color: var(--color-text);
+  }
+  .text[data-tone='secondary'] {
+    color: var(--color-text-secondary);
+  }
+  .text[data-tone='tertiary'] {
+    color: var(--color-text-tertiary);
+  }
+  .text[data-tone='placeholder'] {
+    color: var(--color-text-placeholder);
+  }
+  .text[data-tone='inverse'] {
+    color: var(--color-text-inverse);
+  }
+  .text[data-tone='brand'] {
+    color: var(--color-text-brand);
+  }
+  .text[data-tone='danger'] {
+    color: var(--color-danger);
+  }
+
+  .text[data-truncate='true'] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 완료 항목 취소선 — 색은 tone이 관리하므로 여기서는 장식선만 얹는다 */
+  .text[data-strike='true'] {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-border-strong);
+  }
+
+  .text[data-align='center'] {
+    text-align: center;
+  }
+
+  /* ── Stack / HStack (shared/ui/stack.css.ts) ───────────────────────────
+     alignItems 충돌을 피하려 방향은 flex-direction만, 정렬은 data-align만 맡는다.
+     원본의 align start/end/stretch/baseline, justify start/end/between/… 은 계약에 없다. */
+  .stack,
+  .hstack {
+    display: flex;
+    min-width: 0;
+  }
+  .stack {
+    flex-direction: column;
+  }
+  .hstack {
+    flex-direction: row;
+  }
+
+  .stack[data-gap='0'],
+  .hstack[data-gap='0'] {
+    gap: 0;
+  }
+  .stack[data-gap='2xs'],
+  .hstack[data-gap='2xs'] {
+    gap: var(--space-2xs);
+  }
+  .stack[data-gap='xs'],
+  .hstack[data-gap='xs'] {
+    gap: var(--space-xs);
+  }
+  .stack[data-gap='sm'],
+  .hstack[data-gap='sm'] {
+    gap: var(--space-sm);
+  }
+  .stack[data-gap='md'],
+  .hstack[data-gap='md'] {
+    gap: var(--space-md);
+  }
+  .stack[data-gap='lg'],
+  .hstack[data-gap='lg'] {
+    gap: var(--space-lg);
+  }
+  .stack[data-gap='xl'],
+  .hstack[data-gap='xl'] {
+    gap: var(--space-xl);
+  }
+  .stack[data-gap='2xl'],
+  .hstack[data-gap='2xl'] {
+    gap: var(--space-2xl);
+  }
+  .stack[data-gap='3xl'],
+  .hstack[data-gap='3xl'] {
+    gap: var(--space-3xl);
+  }
+  .stack[data-gap='4xl'],
+  .hstack[data-gap='4xl'] {
+    gap: var(--space-4xl);
+  }
+
+  .stack[data-align='center'],
+  .hstack[data-align='center'] {
+    align-items: center;
+  }
+  .stack[data-justify='center'],
+  .hstack[data-justify='center'] {
+    justify-content: center;
+  }
+
+  /* ── Row (shared/ui/row.css.ts) ────────────────────────────────────────
+     기본값: density=comfortable, align=center, inset=none. */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    min-width: 0;
+    width: 100%;
+    color: var(--color-text);
+    text-align: left;
+    transition: background-color var(--duration-fast) var(--easing-exit);
+    /* density=comfortable */
+    padding-inline: var(--space-2xl);
+    padding-block: var(--space-xl);
+    min-height: var(--size-tap-lg);
+  }
+  .row:not(:disabled):active,
+  .row:not(:disabled)[data-pressed='true'] {
+    transition-duration: 0ms;
+  }
+
+  .row[data-interactive='true'] {
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  /* press 딤 — Row의 탭 애니메이션이 --press-dim으로 opacity를 스프링 구동한다(TDS와 동형). */
+  .row[data-interactive='true']::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background-color: var(--color-state-pressed);
+    opacity: var(--press-dim, 0);
+  }
+  .row[data-interactive='true']:is(:focus-visible, [data-focus-visible]) {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  .row[data-inset='flush'] {
+    padding-inline: 0;
+  }
+
+  .row-leading {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    justify-content: center;
+  }
+
+  .row-trailing {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    color: var(--color-text-tertiary);
+  }
+
+  /* ── Divider (shared/ui/divider.css.ts) ────────────────────────────────
+     기본값: orientation=horizontal, tone=subtle, inset=none. */
+  .divider {
+    border: none;
+    background: var(--color-divider);
+    flex-shrink: 0;
+    width: 100%;
+    height: 1px;
+    margin-inline: 0;
+  }
+
+  /* ── Dot (shared/ui/dot.css.ts) ────────────────────────────────────────
+     기본값: size=sm, tone=neutral. 원본의 warning/danger tone은 계약에 없다. */
+  .dot {
+    display: inline-block;
+    flex-shrink: 0;
+    border-radius: var(--radii-full);
+    width: var(--size-sm);
+    height: var(--size-sm);
+    background: var(--color-border-strong);
+  }
+  .dot[data-size='sm'] {
+    width: var(--size-sm);
+    height: var(--size-sm);
+  }
+
+  /* 시맨틱 색 */
+  .dot[data-tone='neutral'] {
+    background: var(--color-border-strong);
+  }
+  .dot[data-tone='primary'] {
+    background: var(--color-primary);
+  }
+  .dot[data-tone='success'] {
+    background: var(--color-success);
+  }
+  .dot[data-tone='muted'] {
+    background: var(--color-border);
+  }
+  /* 팔레트 accent 색(도메인 무관) — 프로젝트 색 이름과 1:1로 일치한다 */
+  .dot[data-tone='blue'] {
+    background: var(--color-brand-500);
+  }
+  .dot[data-tone='mint'] {
+    background: var(--color-mint-500);
+  }
+  .dot[data-tone='violet'] {
+    background: var(--color-violet-500);
+  }
+  .dot[data-tone='amber'] {
+    background: var(--color-amber-500);
+  }
+  .dot[data-tone='pink'] {
+    background: var(--color-rose-500);
+  }
+  .dot[data-tone='gray'] {
+    background: var(--color-cool-500);
+  }
+
+  /* ── Chip (shared/ui/chip.css.ts) ──────────────────────────────────────
+     기본값: tone=neutral, size=md(caption). 원본의 warning/danger/outline tone,
+     size=sm은 계약에 없어 방출하지 않는다. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-inline: var(--space-md);
+    padding-block: var(--space-2xs);
+    border-radius: var(--radii-pill);
+    /* textStyles.caption */
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 16px;
+    white-space: nowrap;
+    min-width: 0;
+    background: var(--color-surface-soft);
+    color: var(--color-text-secondary);
+  }
+
+  .chip[data-tone='neutral'] {
+    background: var(--color-surface-soft);
+    color: var(--color-text-secondary);
+  }
+  .chip[data-tone='brand'] {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+  }
+  .chip[data-tone='success'] {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+
+  .chip[data-size='lg'] {
+    /* textStyles.bodySm */
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 20px;
+    padding-block: var(--space-xs);
+    padding-inline: var(--space-xl);
+  }
+
+  /* 원본에는 전용 클래스가 없다(leading 노드를 그대로 배치) — Rust 슬롯을 위해 재도출한다. */
+  .chip-leading {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  /* ── ProgressBar (shared/ui/progress-bar.css.ts) ───────────────────────
+     fill 기본값: tone=primary. 원본의 success/warning/danger tone은 계약에 없다. */
+  .progress-bar {
+    height: var(--size-xs);
+    border-radius: var(--radii-pill);
+    background: var(--color-surface-soft);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: var(--radii-pill);
+    transition: width var(--duration-slow) var(--easing-standard);
+    background: var(--color-primary);
+  }
+  /* tone 이름은 Dot과 동일하다 — 팔레트 accent는 프로젝트 색 이름과 1:1로 일치한다 */
+  .progress-bar-fill[data-tone='blue'] {
+    background: var(--color-brand-500);
+  }
+  .progress-bar-fill[data-tone='mint'] {
+    background: var(--color-mint-500);
+  }
+  .progress-bar-fill[data-tone='violet'] {
+    background: var(--color-violet-500);
+  }
+  .progress-bar-fill[data-tone='amber'] {
+    background: var(--color-amber-500);
+  }
+  .progress-bar-fill[data-tone='pink'] {
+    background: var(--color-rose-500);
+  }
+  .progress-bar-fill[data-tone='gray'] {
+    background: var(--color-cool-500);
+  }
+
+  /* ── Section (shared/ui/section.css.ts + section.tsx) ──────────────────
+     원본은 Stack(gap=md) 루트 + header(sectionHeader) + Text(overline/tertiary) 조합이다.
+     계약이 .section / .section-title 둘만 두므로 헤더 레이아웃과 오버라인 타이포를
+     .section-title 하나로 합쳤다(header 자리 = 타이틀 줄). */
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-width: 0;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-xl);
+    padding-inline: var(--space-3xl);
+    padding-block: var(--space-md);
+    /* textStyles.overline + tone=tertiary */
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 18px;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  /* ── Field (shared/ui/field.css.ts + field.tsx) ────────────────────────
+     라벨·에러는 원본에서 Text(label/secondary)·Text(caption/danger) 조합이라
+     전용 클래스가 없다 — 계약 슬롯에 맞춰 그 결과를 그대로 굳혔다. */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-width: 0;
+  }
+
+  .field-label {
+    margin: 0;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 18px;
+    color: var(--color-text-secondary);
+  }
+
+  .field-error {
+    margin: 0;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 16px;
+    color: var(--color-danger);
+  }
+
+  /* ── Input (shared/ui/input.css.ts) ────────────────────────────────────
+     기본값: variant=box(= data-variant 미지정/"default"), size=md.
+     원본의 size sm/lg는 계약에 없어 방출하지 않는다. */
+  .input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    appearance: none;
+    color: var(--color-text);
+    font-family: inherit;
+    outline: none;
+    /* 박스형 필드 — 테두리·배경·포커스 링을 갖는 기본 룩 */
+    border: 1.5px solid transparent;
+    border-radius: var(--radii-lg);
+    background: var(--color-surface-soft);
+    letter-spacing: var(--letter-spacing-tight);
+    font-weight: 500;
+    /* 16px 미만이면 iOS 웹뷰가 포커스 시 화면을 자동 확대한다 */
+    font-size: 16px;
+    transition: border-color var(--duration-fast) var(--easing-exit),
+      background-color var(--duration-fast) var(--easing-exit);
+    /* size=md */
+    height: var(--size-tap);
+    padding-inline: var(--space-xl);
+  }
+
+  /* data-variant="default" = 원본 box variant. 베이스가 이미 box 룩이라 값은 같다
+     (상태 규칙보다 앞에 둬야 invalid 테두리색을 되돌리지 않는다). */
+  .input[data-variant='default'] {
+    border: 1.5px solid transparent;
+    border-radius: var(--radii-lg);
+    background: var(--color-surface-soft);
+  }
+
+  .input::placeholder {
+    color: var(--color-text-placeholder);
+  }
+
+  /* 비활성 = 중립 채움으로 교체 (opacity로 흐리지 않는다 — 버튼과 동일 원칙, 테두리 없이). */
+  .input:is(:disabled, [disabled], [data-disabled]) {
+    cursor: not-allowed;
+    background: var(--color-disabled-surface);
+    color: var(--color-disabled-text);
+  }
+
+  .input:is(:focus, [data-focus]) {
+    background: var(--color-surface);
+    border-color: var(--color-primary);
+  }
+
+  .input[data-invalid='true'],
+  .input[data-invalid],
+  .input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+
+  /* 테두리 없는 인라인 입력 — 화면 타이틀을 display 타이포 그대로 편집한다.
+     원본은 &&로 스펙시티를 올려 size가 깐 높이·패딩·radius를 리셋한다.
+     여기서는 베이스가 box 룩을 겸하므로 테두리·배경도 함께 되돌린다. */
+  .input[data-variant='inline'] {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tightest);
+    line-height: 30px;
+    border: none;
+    background: transparent;
+    height: auto;
+    padding-inline: var(--space-2xs);
+    border-radius: 0;
+  }
+
+  .input[data-size='md'] {
+    height: var(--size-tap);
+    padding-inline: var(--space-xl);
+  }
+  .input[data-size='xl'] {
+    height: var(--size-tap-xl);
+    padding-inline: var(--space-2xl);
+  }
+
+  /* ── BottomSheet (shared/ui/bottom-sheet.css.ts + bottom-sheet.tsx) ──── */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-index-overlay);
+    background: var(--color-overlay);
+    animation: toodayFadeIn var(--duration-base) var(--easing-standard);
+  }
+
+  /* 원본의 positioner(fixed + flex-end)를 시트 자체가 겸하도록 합쳤다 —
+     계약에 positioner 슬롯이 없어서다. 시트는 화면 하단에 붙는다. */
+  .sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-index-overlay);
+    width: 100%;
+    background: var(--color-surface);
+    border-top-left-radius: var(--radii-3xl);
+    border-top-right-radius: var(--radii-3xl);
+    padding-top: var(--space-sheet-handle-top);
+    padding-inline: var(--space-sheet-pad-x);
+    padding-bottom: var(--space-sheet-pad-bottom);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sheet-gap);
+    box-shadow: var(--shadow-sheet);
+    animation: toodaySlideUp var(--duration-slow) var(--easing-standard);
+    max-height: 85%;
+    overflow-y: auto;
+  }
+
+  .sheet-handle {
+    width: var(--size-handle);
+    height: var(--size-xs);
+    border-radius: var(--radii-pill);
+    background: var(--color-border-strong);
+    align-self: center;
+    margin-bottom: var(--space-xs);
+    flex: 0 0 auto;
+  }
+
+  /* Header/Title/Description/Body는 원본에서 Stack·Text 조합이라 전용 클래스가 없다 —
+     그 조합 결과를 계약 슬롯으로 굳혔다. */
+  .sheet-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  .sheet-title {
+    margin: 0;
+    min-width: 0;
+    /* textStyles.title */
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: 24px;
+    color: var(--color-text);
+  }
+
+  .sheet-description {
+    margin: 0;
+    min-width: 0;
+    /* textStyles.bodySm + tone=tertiary */
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 20px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* 시트 본문 — 원본 사용처의 Stack(gap=2xl)에 대응한다. */
+  .sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    min-width: 0;
+  }
+
+  /* ── TabBar (shared/ui/tab-bar.css.ts) ─────────────────────────────────
+     원본은 nav(paddingBottom md) > div(grid, height tabBar, paddingTop md) 2단이다.
+     계약에 inner 슬롯이 없어 하나로 합쳤다 — 총 높이(60+8)와 콘텐츠 높이(52)는 동일하다. */
+  .tab-bar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    height: calc(var(--size-tab-bar) + var(--space-md));
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+  }
+
+  /* 탭 고유 레이아웃·활성 색만 — 리셋·포커스 링은 .base-button이 제공한다. */
+  .tab-bar-item {
+    flex-direction: column;
+    gap: var(--space-2xs);
+    /* textStyles.micro */
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 14px;
+    transition: color var(--duration-base) var(--easing-standard);
+    color: var(--color-text-tertiary);
+  }
+  .tab-bar-item[data-active='true'] {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .tab-bar-icon {
+    width: var(--size-tap-xl);
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radii-pill);
+    transition: background var(--duration-slow) var(--easing-standard);
+  }
+  .tab-bar-item[data-active='true'] .tab-bar-icon {
+    background: var(--color-primary-soft);
+  }
+
+  /* 라벨은 원본에서 스타일 없는 <span> — 타이포는 .tab-bar-item이 이미 깐다. */
+  .tab-bar-label {
+    display: block;
+  }
+
+  /* ── ColorSwatch (shared/ui/color-swatch.css.ts) ───────────────────── */
+  .color-swatch-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .color-swatch {
+    width: var(--size-tap);
+    height: var(--size-tap);
+    border-radius: var(--radii-full);
+    /* 배경·선택 링이 같은 색을 공유하도록 tone은 CSS 변수 하나만 바꾼다 */
+    background: var(--swatch-color);
+    color: var(--color-text-inverse);
+    transition: transform var(--duration-fast) var(--easing-standard),
+      box-shadow var(--duration-fast) var(--easing-standard);
+    /* 기본값 tone=gray */
+    --swatch-color: var(--color-cool-500);
+  }
+
+  .color-swatch[data-state='on'],
+  .color-swatch[data-selected='true'] {
+    box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--swatch-color);
+    transform: scale(1.04);
+  }
+
+  /* 팔레트 accent 색(도메인 무관) — Dot의 accent tone·프로젝트 색 이름과 1:1로 일치한다 */
+  .color-swatch[data-tone='blue'] {
+    --swatch-color: var(--color-brand-500);
+  }
+  .color-swatch[data-tone='mint'] {
+    --swatch-color: var(--color-mint-500);
+  }
+  .color-swatch[data-tone='violet'] {
+    --swatch-color: var(--color-violet-500);
+  }
+  .color-swatch[data-tone='amber'] {
+    --swatch-color: var(--color-amber-500);
+  }
+  .color-swatch[data-tone='pink'] {
+    --swatch-color: var(--color-rose-500);
+  }
+  .color-swatch[data-tone='gray'] {
+    --swatch-color: var(--color-cool-500);
+  }
+
+  /* 선택된 아이템에서만 드러나는 표시 슬롯 — 상태는 aria-pressed가 전달하므로 시각 전용이다 */
+  .color-swatch-indicator {
+    display: inline-flex;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--easing-standard);
+  }
+  [data-state='on'] .color-swatch-indicator,
+  [data-selected='true'] .color-swatch-indicator {
+    opacity: 1;
+  }
+
+  /* ── Spinner (shared/ui/spinner.css.ts) ────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+    border-radius: var(--radii-full);
+    border-width: 2px;
+    border-style: solid;
+    border-color: currentcolor;
+    border-bottom-color: transparent;
+    animation: toodaySpin 0.6s linear infinite;
+  }
+
+  /* ── Surface (shared/ui/surface.css.ts) ────────────────────────────────
+     기본값: tone=surface, radius=none, elevation=none, bordered=none.
+     나머지 variant(tone/bordered/radius/elevation/padding/inset)는 계약에
+     data-* 슬롯이 없어 방출하지 않는다. */
+  .surface {
+    min-width: 0;
+    transition: background-color var(--duration-fast) var(--easing-standard);
+    background: var(--color-surface);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* ── 기능 recipe (features/**) — 원본에서도 recipes 레이어다 ───────── */
+
+  /* task-card: 체크 버튼 (features/today/task-card.css.ts) */
+  .task-card-check {
+    width: var(--size-4xl);
+    height: var(--size-4xl);
+    border-radius: var(--radii-sm);
+    border: 1.5px solid var(--color-border-strong);
+    background: var(--color-surface);
+    flex: 0 0 auto;
+    transition: all var(--duration-base) var(--easing-standard);
+  }
+  .task-card-check[data-status='todo'] {
+    /* 기본 룩 그대로 */
+  }
+  .task-card-check[data-status='doing'] {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  .task-card-check[data-status='done'] {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: var(--color-text-inverse);
+  }
+
+  /* week-strip: 셀 고유 스타일만 — 리셋·포커스 링은 .base-button이,
+     선택 룩은 Ark data-state("on")가 처리한다. (features/today/week-strip.css.ts) */
+  .week-cell {
+    flex-direction: column;
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-radius: var(--radii-lg);
+    transition: background var(--duration-base) var(--easing-standard),
+      color var(--duration-base) var(--easing-standard);
+  }
+  .week-cell[data-tone='idle'] {
+    color: var(--color-text-tertiary);
+  }
+  .week-cell[data-tone='today'] {
+    color: var(--color-primary);
+  }
+  .week-cell[data-state='on'],
+  .week-cell[data-active='true'] {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .week-dot {
+    width: var(--size-xs);
+    height: var(--size-xs);
+    border-radius: var(--radii-pill);
+    margin-top: var(--space-xs);
+  }
+  .week-dot[data-mark='none'] {
+    background: transparent;
+  }
+  .week-dot[data-mark='tasks'] {
+    background: var(--color-primary);
+  }
+  [data-state='on'] .week-dot[data-mark='tasks'],
+  [data-active='true'] .week-dot[data-mark='tasks'] {
+    background: var(--color-on-primary-muted);
+  }
+}
+
+/* ══ 레이어 없음 — 화면·기능 1회성 스타일 (어떤 레이어보다 이긴다) ═════ */
+
+/* ── today (features/today/today-screen.css.ts) ─────────────────────── */
+.today-page {
+  padding-bottom: var(--space-4xl);
+}
+
+/* 패딩은 .card의 data-padding으로 준다 — 여기서 padding을 덮으면 기본값과 충돌한다 */
+.today-hero {
+  margin-top: var(--space-xs);
+  margin-inline: var(--space-page-x);
+  margin-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.today-timeline {
+  padding-inline: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.today-row {
+  display: grid;
+  grid-template-columns: var(--size-time-col) 1fr;
+  gap: var(--space-xl);
+  align-items: stretch;
+}
+
+.today-time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2xs);
+  /* 카드 패딩(cardPadMd)에서 numeric(18px)·subtitle(22px) lineHeight 차의 절반을 당겨
+     첫 줄을 광학 정렬한다 */
+  padding-top: calc(var(--space-card-pad-md) - 2px);
+}
+
+.today-empty {
+  padding-block: var(--space-empty-state-y);
+  padding-inline: var(--space-4xl);
+}
+
+/* ── task card (features/today/task-card.css.ts) ────────────────────── */
+/* 패딩은 .card의 data-padding으로 준다 */
+.task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xl);
+}
+
+/* 리셋·포커스 링은 .base-button이 제공 — 여기는 본문 레이아웃만 얹는다. */
+.task-card-body {
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+}
+.task-card-body:is(:focus-visible, [data-focus-visible]) {
+  border-radius: var(--radii-xs);
+}
+
+/* ── week strip (features/today/week-strip.css.ts) ──────────────────── */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+  padding-top: var(--space-md);
+  padding-bottom: var(--space-2xl);
+  padding-inline: var(--space-xl);
+}
+
+.week-dow {
+  /* textStyles.micro */
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 14px;
+  margin-bottom: var(--space-xs);
+}
+
+.week-day {
+  /* textStyles.numericLg */
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 20px;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── projects (features/projects/projects-screen.css.ts) ────────────── */
+.projects-hero {
+  padding-inline: var(--space-page-x);
+  padding-top: var(--space-md);
+  padding-bottom: var(--space-lg);
+}
+
+.projects-list {
+  padding-inline: var(--space-page-x);
+  padding-bottom: var(--space-4xl);
+}
+
+.projects-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  text-align: left;
+}
+
+.projects-empty {
+  padding-block: var(--space-empty-state-y);
+  padding-inline: var(--space-4xl);
+}
+
+/* ── project detail (features/projects/project-detail-screen.css.ts) ── */
+.board-segment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+  background: var(--color-surface-soft);
+  border-radius: var(--radii-lg);
+  padding: var(--space-xs);
+  margin-inline: var(--space-page-x);
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+/* 세그먼트 고유 스타일만 — 리셋·포커스 링은 .base-button이,
+   선택 룩은 Ark data-state("on")가 처리한다. */
+.board-segment-button {
+  gap: var(--space-sm);
+  height: var(--size-control-md);
+  border-radius: var(--radii-md);
+  color: var(--color-text-tertiary);
+  /* textStyles.bodySm */
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 20px;
+  transition: color var(--duration-base) var(--easing-standard),
+    background var(--duration-base) var(--easing-standard);
+}
+.board-segment-button[data-state='on'],
+.board-segment-button[data-active='true'],
+.board-segment-button[data-selected='true'] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+
+.board-list {
+  padding-inline: var(--space-page-x);
+  padding-bottom: var(--space-4xl);
+}
+
+.board-row {
+  width: 100%;
+}
+
+.board-empty {
+  padding-block: var(--space-empty-state-y);
+  padding-inline: var(--space-2xl);
+}
+
+/* ── new project sheet (features/projects/new-project-sheet.css.ts) ─── */
+.color-row {
+  padding-block: var(--space-2xs);
+  padding-inline: var(--space-2xs);
+}
+
+/* ── tasks (features/tasks/*.css.ts) ────────────────────────────────── */
+.task-new-page,
+.task-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  padding-inline: var(--space-page-x);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-4xl);
+}
+
+/* 상태 알약을 감싸는 탭 타깃 — 리셋·포커스 링은 .base-button이, 색은 .chip이 tone으로 관리한다 */
+.task-status-button {
+  align-self: flex-start;
+  border-radius: var(--radii-pill);
+}
+
+.meta-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.check-icon {
+  color: var(--color-primary);
+  flex: 0 0 auto;
+}
+
+.duration-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* ── auth / settings (features/auth/*.css.ts) ───────────────────────── */
+/* login-screen.css.ts와 signup-screen.css.ts는 동일한 규칙이라 한 클래스로 합쳤다 */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  min-height: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-page-x);
+  padding-top: clamp(48px, 16dvh, 140px);
+  padding-bottom: var(--space-4xl);
+  gap: var(--space-4xl);
+}
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-inline: var(--space-page-x);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-4xl);
+  gap: var(--space-2xl);
+}
+
+/* 파괴적 로그아웃은 하단(엄지 도달)에 둔다 — 계정 정보는 위, 버튼은 뷰포트 바닥으로 민다. */
+.settings-logout-slot {
+  margin-top: auto;
+}
+
+.sheet-actions {
+  padding-top: var(--space-lg);
+}

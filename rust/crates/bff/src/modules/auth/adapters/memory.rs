@@ -4,9 +4,7 @@ use std::sync::Mutex;
 use async_trait::async_trait;
 use tooday_shared::User;
 
-use crate::modules::auth::ports::{
-    CreateUserInput, Credentials, RefreshToken, RefreshTokenStore, UserStore,
-};
+use crate::modules::auth::ports::{CreateUserInput, Credentials, RefreshToken, RefreshTokenStore, UserStore};
 use crate::modules::auth::refresh_token::generate_refresh_token;
 use crate::modules::user::ports::UserReader;
 use crate::platform::errors::{domain, DomainErrorCode, StoreResult};

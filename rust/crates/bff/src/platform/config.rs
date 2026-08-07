@@ -49,7 +49,8 @@ pub fn load_config_from(env: &HashMap<String, String>) -> Result<BffConfig, Conf
         return Err(ConfigError::MissingJwtSecret);
     }
 
-    let number = |key: &str, fallback: i64| -> i64 { get(key).and_then(|raw| raw.parse().ok()).unwrap_or(fallback) };
+    let number =
+        |key: &str, fallback: i64| -> i64 { get(key).and_then(|raw| raw.parse().ok()).unwrap_or(fallback) };
 
     Ok(BffConfig {
         port: number("BFF_PORT", 3002) as u16,

@@ -68,10 +68,7 @@ mod tests {
             self.calls.lock().expect("logger mutex").push(LogCall {
                 level,
                 message: message.to_owned(),
-                fields: fields
-                    .into_iter()
-                    .map(|(key, value)| (key.to_owned(), value.to_string()))
-                    .collect(),
+                fields: fields.into_iter().map(|(key, value)| (key.to_owned(), value.to_string())).collect(),
             });
         }
     }
@@ -134,12 +131,8 @@ mod tests {
     #[tokio::test]
     async fn 지운_게_없으면_로그를_남기지_않는다() {
         let (store, logger) = setup(|| Ok(0));
-        let handle = start_refresh_token_sweep(
-            store as Arc<_>,
-            Arc::clone(&logger) as Arc<_>,
-            Some(INTERVAL),
-        )
-        .await;
+        let handle =
+            start_refresh_token_sweep(store as Arc<_>, Arc::clone(&logger) as Arc<_>, Some(INTERVAL)).await;
         handle.abort();
 
         assert!(logger.calls.lock().expect("logger mutex").is_empty());
@@ -148,12 +141,8 @@ mod tests {
     #[tokio::test]
     async fn delete_expired가_실패해도_삼키고_error_로그를_남긴다() {
         let (store, logger) = setup(|| Err(StoreError::Infrastructure("boom".into())));
-        let handle = start_refresh_token_sweep(
-            store as Arc<_>,
-            Arc::clone(&logger) as Arc<_>,
-            Some(INTERVAL),
-        )
-        .await;
+        let handle =
+            start_refresh_token_sweep(store as Arc<_>, Arc::clone(&logger) as Arc<_>, Some(INTERVAL)).await;
         handle.abort();
 
         let calls = logger.calls.lock().expect("logger mutex");

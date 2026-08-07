@@ -47,10 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let applied = migrate_to_latest(&pool).await?;
             logger.info(
                 "database_ready",
-                vec![
-                    ("engine", "postgres".into()),
-                    ("migrationsApplied", applied.len().into()),
-                ],
+                vec![("engine", "postgres".into()), ("migrationsApplied", applied.len().into())],
             );
             Some(pool)
         }
@@ -94,8 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let port = config.port;
-    let access_tokens =
-        Arc::new(AccessTokenService::new(&config.jwt_secret, config.access_ttl_ms));
+    let access_tokens = Arc::new(AccessTokenService::new(&config.jwt_secret, config.access_ttl_ms));
     let app = create_app(AppDeps {
         config,
         users: stores.users,

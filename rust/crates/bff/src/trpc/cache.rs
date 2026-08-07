@@ -53,7 +53,7 @@ pub fn resolve_cache_control(meta: &ResponseMeta<'_>) -> String {
     if !is_publicly_cacheable(meta) {
         return PRIVATE_CACHE_CONTROL.to_owned();
     }
-    let directives = match meta.paths.as_ref() {
+    let directives = match meta.paths {
         [single] => path_directives(single).unwrap_or(DEFAULT_PUBLIC_CACHE_DIRECTIVES),
         _ => DEFAULT_PUBLIC_CACHE_DIRECTIVES,
     };
@@ -100,7 +100,10 @@ mod tests {
     #[test]
     fn 뮤테이션과_에러는_캐시되지_않는다() {
         let list = paths(&["pub.appConfig"]);
-        assert_eq!(resolve_cache_control(&meta(&list, ProcedureKind::Mutation, false)), PRIVATE_CACHE_CONTROL);
+        assert_eq!(
+            resolve_cache_control(&meta(&list, ProcedureKind::Mutation, false)),
+            PRIVATE_CACHE_CONTROL
+        );
         assert_eq!(resolve_cache_control(&meta(&list, ProcedureKind::Query, true)), PRIVATE_CACHE_CONTROL);
     }
 

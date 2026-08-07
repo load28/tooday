@@ -21,7 +21,8 @@ impl TaskStatus {
         }
     }
 
-    pub fn from_str(value: &str) -> Option<Self> {
+    /// 계약 문자열에서 되돌린다 — [`TaskStatus::as_str`]의 역
+    pub fn parse_str(value: &str) -> Option<Self> {
         match value {
             "todo" => Some(TaskStatus::Todo),
             "doing" => Some(TaskStatus::Doing),
@@ -63,7 +64,8 @@ impl ProjectColor {
         }
     }
 
-    pub fn from_str(value: &str) -> Option<Self> {
+    /// 계약 문자열에서 되돌린다 — [`ProjectColor::as_str`]의 역
+    pub fn parse_str(value: &str) -> Option<Self> {
         match value {
             "blue" => Some(ProjectColor::Blue),
             "mint" => Some(ProjectColor::Mint),
@@ -196,17 +198,41 @@ impl<T: Serialize> Serialize for Patch<T> {
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TaskPatch {
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub title: Patch<String>,
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub project_id: Patch<Option<String>>,
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub date: Patch<String>,
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub start_at: Patch<String>,
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub duration_min: Patch<i64>,
-    #[serde(default, deserialize_with = "Patch::deserialize_field", skip_serializing_if = "Patch::is_absent")]
+    #[serde(
+        default,
+        deserialize_with = "Patch::deserialize_field",
+        skip_serializing_if = "Patch::is_absent"
+    )]
     pub status: Patch<TaskStatus>,
 }
 

@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use serde_json::Value;
 use tooday_shared::{
-    AuthResponse, LoginRequest, LogoutResponse, RefreshRequest, RefreshResponse, SignupRequest,
-    TokenPair,
+    AuthResponse, LoginRequest, LogoutResponse, RefreshRequest, RefreshResponse, SignupRequest, TokenPair,
 };
 
 use crate::modules::auth::access_token::{AccessTokenClaims, AccessTokens};
@@ -30,10 +29,9 @@ impl AuthRouterDeps {
     async fn issue_tokens(&self, user_id: &str) -> Result<TokenPair, TrpcError> {
         let refresh = self.refresh_tokens.issue(user_id).await?;
         Ok(TokenPair {
-            access_token: self.access_tokens.sign(&AccessTokenClaims {
-                user_id: user_id.to_owned(),
-                session_id: refresh.session_id,
-            }),
+            access_token: self
+                .access_tokens
+                .sign(&AccessTokenClaims { user_id: user_id.to_owned(), session_id: refresh.session_id }),
             refresh_token: refresh.token,
         })
     }
@@ -71,9 +69,7 @@ pub async fn call(
                 .users
                 .verify_credentials(Credentials { email: request.email, password: request.password })
                 .await?
-                .ok_or_else(|| {
-                    TrpcError::from(DomainError::new(DomainErrorCode::InvalidCredentials))
-                })?;
+                .ok_or_else(|| TrpcError::from(DomainError::new(DomainErrorCode::InvalidCredentials)))?;
             let tokens = deps.issue_tokens(&user.id).await?;
             ctx.set_auth_cookies(&tokens);
             output(AuthResponse {
@@ -97,10 +93,9 @@ pub async fn call(
                 return Err(DomainError::new(DomainErrorCode::Unauthenticated).into());
             };
             let tokens: RefreshResponse = TokenPair {
-                access_token: deps.access_tokens.sign(&AccessTokenClaims {
-                    user_id: rotated.user_id,
-                    session_id: rotated.session_id,
-                }),
+                access_token: deps
+                    .access_tokens
+                    .sign(&AccessTokenClaims { user_id: rotated.user_id, session_id: rotated.session_id }),
                 refresh_token: rotated.token,
             };
             ctx.set_auth_cookies(&tokens);

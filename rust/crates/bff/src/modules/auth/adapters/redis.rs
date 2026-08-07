@@ -61,18 +61,14 @@ impl RedisRefreshTokenStore {
         connection: &mut redis::aio::MultiplexedConnection,
         session_id: &str,
     ) -> StoreResult<()> {
-        let hashes: Vec<String> = connection
-            .smembers(Self::session_key(session_id))
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let hashes: Vec<String> =
+            connection.smembers(Self::session_key(session_id)).await.map_err(StoreError::infrastructure)?;
         let keys: Vec<String> = hashes.into_iter().map(|hash| format!("{TOKEN_PREFIX}{hash}")).collect();
         if !keys.is_empty() {
             let _: () = connection.del(keys).await.map_err(StoreError::infrastructure)?;
         }
-        let _: () = connection
-            .del(Self::session_key(session_id))
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let _: () =
+            connection.del(Self::session_key(session_id)).await.map_err(StoreError::infrastructure)?;
         Ok(())
     }
 
@@ -142,8 +138,7 @@ impl RefreshTokenStore for RedisRefreshTokenStore {
             connection.get(Self::token_key(token)).await.map_err(StoreError::infrastructure)?;
         // 키가 없으면 idle 만료(네이티브 evict)이거나 폐기됨.
         let Some(raw) = raw else { return Ok(None) };
-        let stored: StoredToken =
-            serde_json::from_str(&raw).map_err(StoreError::infrastructure)?;
+        let stored: StoredToken = serde_json::from_str(&raw).map_err(StoreError::infrastructure)?;
 
         // 이미 회전된(supersede된) 토큰의 재제시 = 탈취 신호 → 세션 전체 무효화.
         if stored.superseded || stored.absolute_expires_at <= now {
@@ -165,15 +160,9 @@ impl RefreshTokenStore for RedisRefreshTokenStore {
             .await
             .map_err(StoreError::infrastructure)?;
 
-        self.write(
-            &mut connection,
-            &stored.user_id,
-            &stored.session_id,
-            stored.absolute_expires_at,
-            now,
-        )
-        .await
-        .map(Some)
+        self.write(&mut connection, &stored.user_id, &stored.session_id, stored.absolute_expires_at, now)
+            .await
+            .map(Some)
     }
 
     async fn revoke(&self, token: &str) -> StoreResult<()> {
@@ -181,18 +170,14 @@ impl RefreshTokenStore for RedisRefreshTokenStore {
         let raw: Option<String> =
             connection.get(Self::token_key(token)).await.map_err(StoreError::infrastructure)?;
         let Some(raw) = raw else { return Ok(()) };
-        let stored: StoredToken =
-            serde_json::from_str(&raw).map_err(StoreError::infrastructure)?;
+        let stored: StoredToken = serde_json::from_str(&raw).map_err(StoreError::infrastructure)?;
         Self::revoke_session(&mut connection, &stored.session_id).await
     }
 
     async fn is_session_live(&self, session_id: &str) -> StoreResult<bool> {
         // 세션 SET은 TTL=absolute라 폐기(del) 또는 absolute 만료 시 사라진다 → EXISTS 한 번으로 판정.
         let mut connection = self.connection().await?;
-        connection
-            .exists(Self::session_key(session_id))
-            .await
-            .map_err(StoreError::infrastructure)
+        connection.exists(Self::session_key(session_id)).await.map_err(StoreError::infrastructure)
     }
 
     async fn delete_expired(&self) -> StoreResult<u64> {

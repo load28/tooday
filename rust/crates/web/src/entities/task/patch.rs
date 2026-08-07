@@ -48,31 +48,32 @@ mod tests {
 
     #[test]
     fn 지정된_필드만_반영하고_version을_올린다() {
-        let patched = apply_task_patch(&task(), &TaskPatch {
-            status: Patch::Set(TaskStatus::Done),
-            ..TaskPatch::default()
-        });
+        let patched = apply_task_patch(
+            &task(),
+            &TaskPatch { status: Patch::Set(TaskStatus::Done), ..TaskPatch::default() },
+        );
         assert_eq!(patched, Task { status: TaskStatus::Done, version: 4, ..task() });
     }
 
     #[test]
     fn 미지정_필드는_기존_값을_지우지_않는다() {
         // TS의 `{ title: undefined, status: 'doing' }` — 없는 필드는 Absent다
-        let patched = apply_task_patch(&task(), &TaskPatch {
-            title: Patch::Absent,
-            status: Patch::Set(TaskStatus::Doing),
-            ..TaskPatch::default()
-        });
+        let patched = apply_task_patch(
+            &task(),
+            &TaskPatch {
+                title: Patch::Absent,
+                status: Patch::Set(TaskStatus::Doing),
+                ..TaskPatch::default()
+            },
+        );
         assert_eq!(patched, Task { status: TaskStatus::Doing, version: 4, ..task() });
     }
 
     #[test]
     fn null은_값_지정으로_취급한다() {
         // 프로젝트 해제가 낙관적으로 반영된다
-        let patched = apply_task_patch(&task(), &TaskPatch {
-            project_id: Patch::Set(None),
-            ..TaskPatch::default()
-        });
+        let patched =
+            apply_task_patch(&task(), &TaskPatch { project_id: Patch::Set(None), ..TaskPatch::default() });
         assert_eq!(patched.project_id, None);
     }
 }

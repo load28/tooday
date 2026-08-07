@@ -4,14 +4,13 @@ use std::sync::Arc;
 use serde_json::Value;
 use tooday_shared::{
     CreateProjectRequest, CreateTaskRequest, DeletedTaskResponse, Patch, ProjectDetailRequest,
-    ProjectDetailResponse, ProjectListResponse, ProjectResponse, ProjectSummary,
-    SyncChangesRequest, SyncChangesResponse, TaskIdRequest, TaskRangeRequest, TaskRangeResponse,
-    TaskResponse, UpdateTaskRequest,
+    ProjectDetailResponse, ProjectListResponse, ProjectResponse, ProjectSummary, SyncChangesRequest,
+    SyncChangesResponse, TaskIdRequest, TaskRangeRequest, TaskRangeResponse, TaskResponse, UpdateTaskRequest,
 };
 
 use crate::modules::task::ports::{
-    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput,
-    ListTasksRangeInput, ProjectStore, TaskRefInput, TaskStore, UpdateTaskInput,
+    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput, ListTasksRangeInput,
+    ProjectStore, TaskRefInput, TaskStore, UpdateTaskInput,
 };
 use crate::platform::errors::{DomainError, DomainErrorCode};
 use crate::platform::sync_broker::SyncBroker;
@@ -122,11 +121,7 @@ pub async fn call(
             }
             let task = deps
                 .tasks
-                .update(UpdateTaskInput {
-                    user_id: user_id.clone(),
-                    id: request.id,
-                    patch: request.patch,
-                })
+                .update(UpdateTaskInput { user_id: user_id.clone(), id: request.id, patch: request.patch })
                 .await?
                 .ok_or_else(task_not_found)?;
             deps.sync.notify(&user_id);
@@ -136,10 +131,8 @@ pub async fn call(
         // 소프트 삭제 — tombstone이 델타로 다른 기기에 전파된다
         "delete" => {
             let request: TaskIdRequest = parse_input(input)?;
-            let removed = deps
-                .tasks
-                .remove(&TaskRefInput { user_id: user_id.clone(), id: request.id.clone() })
-                .await?;
+            let removed =
+                deps.tasks.remove(&TaskRefInput { user_id: user_id.clone(), id: request.id.clone() }).await?;
             if !removed {
                 return Err(task_not_found());
             }
@@ -151,14 +144,10 @@ pub async fn call(
         "changes" => {
             let request: SyncChangesRequest = parse_input(input)?;
             let (tasks, projects) = futures::try_join!(
-                deps.tasks.changes_since(ListChangesInput {
-                    user_id: user_id.clone(),
-                    cursor: request.cursor,
-                }),
-                deps.projects.changes_since(ListChangesInput {
-                    user_id: user_id.clone(),
-                    cursor: request.cursor,
-                }),
+                deps.tasks
+                    .changes_since(ListChangesInput { user_id: user_id.clone(), cursor: request.cursor }),
+                deps.projects
+                    .changes_since(ListChangesInput { user_id: user_id.clone(), cursor: request.cursor }),
             )?;
             let cursor = tasks
                 .iter()
@@ -210,18 +199,12 @@ pub async fn call(
             let request: ProjectDetailRequest = parse_input(input)?;
             let project = deps
                 .projects
-                .find_by_id(&TaskRefInput {
-                    user_id: user_id.clone(),
-                    id: request.project_id.clone(),
-                })
+                .find_by_id(&TaskRefInput { user_id: user_id.clone(), id: request.project_id.clone() })
                 .await?
                 .ok_or_else(project_not_found)?;
             let tasks = deps
                 .tasks
-                .list_by_project(ListTasksByProjectInput {
-                    user_id,
-                    project_id: request.project_id,
-                })
+                .list_by_project(ListTasksByProjectInput { user_id, project_id: request.project_id })
                 .await?;
             output(ProjectDetailResponse { project, tasks })
         }

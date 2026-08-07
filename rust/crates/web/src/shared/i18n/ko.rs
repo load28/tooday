@@ -9,7 +9,9 @@ pub fn messages() -> Messages {
     Messages {
         common: Common {
             brand: Msg("TooDay"),
-            error: CommonError { unexpected: Msg("문제가 발생했습니다. 잠시 후 다시 시도해 주세요.") },
+            error: CommonError {
+                unexpected: Msg("문제가 발생했습니다. 잠시 후 다시 시도해 주세요.")
+            },
             duration: Duration {
                 minutes: MsgMin("{min}분"),
                 hours: MsgHour("{hour}시간"),
@@ -32,9 +34,7 @@ pub fn messages() -> Messages {
                 remaining_suffix: Msg("남았어요"),
             },
             section: TodaySection {
-                morning: Msg("오전"),
-                afternoon: Msg("오후"),
-                evening: Msg("저녁"),
+                morning: Msg("오전"), afternoon: Msg("오후"), evening: Msg("저녁")
             },
             empty: TodayEmpty {
                 title: Msg("이 날에는 일정이 없어요"),

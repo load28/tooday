@@ -22,10 +22,7 @@ pub struct QueryKey {
 
 impl QueryKey {
     pub fn new(path: &'static str, input: &impl Serialize) -> Self {
-        Self {
-            path,
-            input: Some(serde_json::to_string(input).unwrap_or_else(|_| "null".into())),
-        }
+        Self { path, input: Some(serde_json::to_string(input).unwrap_or_else(|_| "null".into())) }
     }
 
     /// 입력 없는 프로시저의 키
@@ -94,9 +91,7 @@ impl QueryClient {
 
     fn set_raw(&self, key: &QueryKey, data: Value) {
         let mut state = self.state.borrow_mut();
-        state
-            .entries
-            .insert(key.clone(), CacheEntry { data, updated_at: now_ms(), invalidated: false });
+        state.entries.insert(key.clone(), CacheEntry { data, updated_at: now_ms(), invalidated: false });
     }
 
     /// 캐시가 있으면 그대로, 없으면 fetch로 채운다. 낡음(stale)은 무시한다 —
@@ -226,9 +221,7 @@ mod tests {
         let client = QueryClient::new();
         client.set_query_data(&key(), &Counter { value: 1 });
 
-        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter {
-            value: old.value + 2,
-        });
+        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter { value: old.value + 2 });
 
         assert_eq!(client.get_query_data::<Counter>(&key()), Some(Counter { value: 3 }));
         assert_eq!(patch.previous, Some(Counter { value: 1 }));
@@ -238,9 +231,7 @@ mod tests {
     fn 캐시가_비어_있으면_패치하지_않는다() {
         let client = QueryClient::new();
 
-        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter {
-            value: old.value + 2,
-        });
+        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter { value: old.value + 2 });
 
         assert_eq!(client.get_query_data::<Counter>(&key()), None);
         assert_eq!(patch.previous, None);
@@ -250,9 +241,7 @@ mod tests {
     fn 실패하면_스냅샷으로_롤백한다() {
         let client = QueryClient::new();
         client.set_query_data(&key(), &Counter { value: 1 });
-        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter {
-            value: old.value + 2,
-        });
+        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter { value: old.value + 2 });
 
         patch.rollback();
 
@@ -263,9 +252,7 @@ mod tests {
     fn 정착하면_서버_결과와_수렴하도록_invalidate한다() {
         let client = QueryClient::new();
         client.set_query_data(&key(), &Counter { value: 1 });
-        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter {
-            value: old.value + 2,
-        });
+        let patch = OptimisticPatch::begin(&client, key(), |old: Counter| Counter { value: old.value + 2 });
 
         patch.settle();
 

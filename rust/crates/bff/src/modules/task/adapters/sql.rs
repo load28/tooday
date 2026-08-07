@@ -2,13 +2,11 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
-use tooday_shared::{
-    Patch, Project, ProjectChange, ProjectColor, Task, TaskChange, TaskStatus,
-};
+use tooday_shared::{Patch, Project, ProjectChange, ProjectColor, Task, TaskChange, TaskStatus};
 
 use crate::modules::task::ports::{
-    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput,
-    ListTasksRangeInput, ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
+    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput, ListTasksRangeInput,
+    ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
 };
 use crate::platform::db::sync::{begin_with_sync_seq, current_sync_seq};
 use crate::platform::errors::{StoreError, StoreResult};
@@ -27,7 +25,7 @@ fn to_task(row: &PgRow) -> StoreResult<Task> {
         date: row.try_get("date").map_err(StoreError::infrastructure)?,
         start_at: row.try_get("start_at").map_err(StoreError::infrastructure)?,
         duration_min: row.try_get::<i32, _>("duration_min").map_err(StoreError::infrastructure)? as i64,
-        status: TaskStatus::from_str(&status)
+        status: TaskStatus::parse_str(&status)
             .ok_or_else(|| StoreError::Infrastructure(format!("알 수 없는 status: {status}")))?,
         version: row.try_get::<i32, _>("version").map_err(StoreError::infrastructure)? as i64,
     })
@@ -38,7 +36,7 @@ fn to_project(row: &PgRow) -> StoreResult<Project> {
     Ok(Project {
         id: row.try_get::<uuid::Uuid, _>("id").map_err(StoreError::infrastructure)?.to_string(),
         name: row.try_get("name").map_err(StoreError::infrastructure)?,
-        color: ProjectColor::from_str(&color)
+        color: ProjectColor::parse_str(&color)
             .ok_or_else(|| StoreError::Infrastructure(format!("알 수 없는 color: {color}")))?,
     })
 }
@@ -82,9 +80,8 @@ impl ProjectStore for SqlProjectStore {
     }
 
     async fn create(&self, input: CreateProjectInput) -> StoreResult<Project> {
-        let (mut tx, seq) = begin_with_sync_seq(&self.pool, &input.user_id)
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let (mut tx, seq) =
+            begin_with_sync_seq(&self.pool, &input.user_id).await.map_err(StoreError::infrastructure)?;
         let last: Option<(String,)> = sqlx::query_as(
             "select position from projects where user_id = $1::uuid order by position desc limit 1",
         )
@@ -215,9 +212,8 @@ impl TaskStore for SqlTaskStore {
     }
 
     async fn create(&self, input: CreateTaskInput) -> StoreResult<Task> {
-        let (mut tx, seq) = begin_with_sync_seq(&self.pool, &input.user_id)
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let (mut tx, seq) =
+            begin_with_sync_seq(&self.pool, &input.user_id).await.map_err(StoreError::infrastructure)?;
         let last: Option<(String,)> = sqlx::query_as(
             "select position from tasks where user_id = $1::uuid order by position desc limit 1",
         )
@@ -251,9 +247,8 @@ impl TaskStore for SqlTaskStore {
     }
 
     async fn update(&self, input: UpdateTaskInput) -> StoreResult<Option<Task>> {
-        let (mut tx, seq) = begin_with_sync_seq(&self.pool, &input.user_id)
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let (mut tx, seq) =
+            begin_with_sync_seq(&self.pool, &input.user_id).await.map_err(StoreError::infrastructure)?;
         let now = Utc::now();
 
         // 지정된 필드만 SET 절에 넣는다 — 필드 단위 LWW라 행 전체 덮어쓰기가 없다.
@@ -279,11 +274,8 @@ impl TaskStore for SqlTaskStore {
             columns.push("status");
             columns.push("completed_at");
         }
-        let assignments: Vec<String> = columns
-            .iter()
-            .enumerate()
-            .map(|(index, column)| format!("{column} = ${}", index + 1))
-            .collect();
+        let assignments: Vec<String> =
+            columns.iter().enumerate().map(|(index, column)| format!("{column} = ${}", index + 1)).collect();
 
         let seq_placeholder = columns.len() + 1;
         let updated_at_placeholder = columns.len() + 2;
@@ -329,9 +321,8 @@ impl TaskStore for SqlTaskStore {
     }
 
     async fn remove(&self, input: &TaskRefInput) -> StoreResult<bool> {
-        let (mut tx, seq) = begin_with_sync_seq(&self.pool, &input.user_id)
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let (mut tx, seq) =
+            begin_with_sync_seq(&self.pool, &input.user_id).await.map_err(StoreError::infrastructure)?;
         let now = Utc::now();
         let row: Option<(uuid::Uuid,)> = sqlx::query_as(
             r#"update tasks set deleted_at = $1, updated_at = $1, sync_seq = $2

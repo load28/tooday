@@ -3,9 +3,7 @@ use chrono::{DateTime, TimeZone, Utc};
 use sqlx::PgPool;
 use tooday_shared::User;
 
-use crate::modules::auth::ports::{
-    CreateUserInput, Credentials, RefreshToken, RefreshTokenStore, UserStore,
-};
+use crate::modules::auth::ports::{CreateUserInput, Credentials, RefreshToken, RefreshTokenStore, UserStore};
 use crate::modules::auth::refresh_token::{generate_refresh_token, hash_refresh_token};
 use crate::platform::errors::{domain, DomainErrorCode, StoreError, StoreResult};
 use crate::platform::ids::new_id;
@@ -43,15 +41,14 @@ impl UserStore for SqlUserStore {
         }
 
         let user = User { id: new_id(), email: normalized_email, name: input.name };
-        let inserted = sqlx::query(
-            "insert into users (id, email, name, password_hash) values ($1::uuid, $2, $3, $4)",
-        )
-        .bind(&user.id)
-        .bind(&user.email)
-        .bind(&user.name)
-        .bind(hash_password(&input.password)?)
-        .execute(&self.pool)
-        .await;
+        let inserted =
+            sqlx::query("insert into users (id, email, name, password_hash) values ($1::uuid, $2, $3, $4)")
+                .bind(&user.id)
+                .bind(&user.email)
+                .bind(&user.name)
+                .bind(hash_password(&input.password)?)
+                .execute(&self.pool)
+                .await;
 
         match inserted {
             Ok(_) => Ok(user),
@@ -71,8 +68,11 @@ impl UserStore for SqlUserStore {
                 .await
                 .map_err(StoreError::infrastructure)?;
         let Some((id, email, name, password_hash)) = row else { return Ok(None) };
-        Ok(verify_password(&input.password, &password_hash)?
-            .then(|| User { id: id.to_string(), email, name }))
+        Ok(verify_password(&input.password, &password_hash)?.then(|| User {
+            id: id.to_string(),
+            email,
+            name,
+        }))
     }
 }
 
@@ -224,10 +224,12 @@ impl RefreshTokenStore for SqlRefreshTokenStore {
     }
 
     async fn delete_expired(&self) -> StoreResult<u64> {
-        let result = sqlx::query("delete from refresh_tokens where expires_at <= now() or absolute_expires_at <= now()")
-            .execute(&self.pool)
-            .await
-            .map_err(StoreError::infrastructure)?;
+        let result = sqlx::query(
+            "delete from refresh_tokens where expires_at <= now() or absolute_expires_at <= now()",
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(StoreError::infrastructure)?;
         Ok(result.rows_affected())
     }
 }

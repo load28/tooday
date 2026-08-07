@@ -1,8 +1,8 @@
 # T037 — 전체 스택 러스트 마이그레이션 (rust/ 서브프로젝트)
 
-- 상태: 진행중 <!-- 대기 | 진행중 | 완료 -->
+- 상태: 완료 <!-- 대기 | 진행중 | 완료 -->
 - 생성: 2026-08-07
-- 완료: -
+- 완료: 2026-08-07
 
 ## 배경
 
@@ -41,9 +41,9 @@ rust/
 | Hono | axum 0.8 | 라우팅·미들웨어 |
 | tRPC | 직접 구현 (`trpc/`) | HTTP 와이어 포맷(경로·envelope·에러코드)을 동일하게 |
 | valibot | 직접 구현 (`shared/validate`) | issue 타입 이름까지 계약으로 유지 |
-| Kysely + pg | sqlx 0.9 (postgres) | 타입드 SQL |
+| Kysely + pg | sqlx 0.8 (postgres) | 이력 테이블도 `kysely_migration` 그대로 |
 | PGlite (WASM Postgres) | 대응물 없음 → 인메모리 어댑터 | TS도 테스트는 InMemory* 어댑터로 돈다 (`app.test.ts:42-57`) |
-| hono/jwt | jsonwebtoken 11 | HS256 |
+| hono/jwt | jsonwebtoken 9 | HS256 |
 | Bun.password (bcrypt) | argon2 | 해시 알고리즘은 구현 세부 — 계약 아님 |
 | Bun RedisClient | redis 0.27 | opt-in |
 | React + TanStack Router | Dioxus 0.7 + dioxus-router | |
@@ -60,13 +60,13 @@ rust/
 
 ## 완료 기준
 
-- [ ] `rust/crates/shared` — 계약 타입·검증이 valibot 스키마와 동일 규칙
-- [ ] `rust/crates/bff` — tRPC 프로시저 전부(`pub.*`, `auth.*`, `user.*`, `task.*`)
-- [ ] `rust/crates/web` — 화면 전부(오늘/프로젝트/프로젝트 상세/새 태스크/태스크
+- [x] `rust/crates/shared` — 계약 타입·검증이 valibot 스키마와 동일 규칙
+- [x] `rust/crates/bff` — tRPC 프로시저 전부(`pub.*`, `auth.*`, `user.*`, `task.*`)
+- [x] `rust/crates/web` — 화면 전부(오늘/프로젝트/프로젝트 상세/새 태스크/태스크
       상세/로그인/회원가입/설정) + 라우트 가드
-- [ ] TS 테스트 포팅본이 통과: `cargo test` (특히 `app.test.ts` 591줄 전량)
-- [ ] `cargo build` (bff) + `cargo build --target wasm32-unknown-unknown` (web)
-- [ ] `cargo clippy -- -D warnings`, `cargo fmt --check`
+- [x] TS 테스트 포팅본이 통과: `cargo test --workspace` 166건 (`app.test.ts` 591줄 전량 포함)
+- [x] `cargo build` (bff) + `cargo build --target wasm32-unknown-unknown` (web)
+- [x] `cargo clippy --workspace --all-targets -- -D warnings`, `cargo fmt --all --check`
 
 ## 대화 기록
 
@@ -93,3 +93,28 @@ rust/
 
 - 2026-08-07: 태스크 생성. 기존 스펙 전량 조사(계약 6파일, BFF 30파일, 웹 60파일,
   테스트 14파일). 툴체인 확인 — cargo 1.94.1, axum 0.8.9, dioxus 0.7.10, sqlx 0.9.0.
+
+- 2026-08-07: 구현 완료.
+
+  **shared** — valibot 스키마를 계약 타입 + `Validate` 트레잇으로. issue 종류 이름
+  (`min_length`, `email`, `iso_date` …)을 계약으로 유지해 웹의 문구 매핑이 함께 움직인다.
+  `taskPatchSchema`의 "미지정 vs 명시적 null"은 `Patch<T>` 열거형으로 가른다.
+
+  **bff** — axum 8 + tRPC 와이어 포맷 직접 구현(경로·`?input=`·배치·성공/에러 봉투·
+  JSON-RPC 코드·HTTP 상태). 어댑터는 인메모리 / sqlx(PostgreSQL) / redis.
+  fractional indexing은 `rocicorp/fractional-indexing`을 그대로 옮겨 **같은 키**가
+  나오는 것까지 테스트로 못박았다(기존 데이터 호환). 마이그레이션은 이름·순서·최종
+  스키마를 유지하고 이력 테이블도 `kysely_migration`을 그대로 쓴다 — 두 구현이 같은
+  데이터베이스를 두고 교체 가능하다.
+
+  **web** — Dioxus 0.7 + dioxus-router. TanStack Query/Form은 이 앱이 쓰는 표면만
+  옮겨 직접 구현했다(`shared::query`, `shared::form`). i18n은 파라미터 집합별 전용
+  타입(`MsgMin`, `MsgDoneTotal` …)으로 플레이스홀더 계약을 컴파일 타임에 강제한다.
+  스타일은 34개 `.css.ts`를 `assets/app.css` 한 벌로 옮겼다 — 토큰 값은 동일하고,
+  variant는 `data-*` 속성으로 표현한다.
+
+  검증: `cargo test --workspace` 166건 통과 (PostgreSQL 16 실서버 포함),
+  `cargo clippy --workspace --all-targets -- -D warnings` 무경고,
+  `cargo fmt --all --check` 통과, `cargo build -p tooday-web --target wasm32-unknown-unknown` 성공.
+
+  남긴 것: SSR(현재 CSR), design-guide 앱. 사유는 [rust/README.md](../../rust/README.md) 참고.

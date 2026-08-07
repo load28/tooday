@@ -5,8 +5,8 @@ use async_trait::async_trait;
 use tooday_shared::{Patch, Project, ProjectChange, Task, TaskChange, TaskStatus};
 
 use crate::modules::task::ports::{
-    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput,
-    ListTasksRangeInput, ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
+    CreateProjectInput, CreateTaskInput, ListChangesInput, ListTasksByProjectInput, ListTasksRangeInput,
+    ProjectStore, ProjectTaskCounts, TaskRefInput, TaskStore, UpdateTaskInput,
 };
 use crate::platform::errors::StoreResult;
 use crate::platform::ids::new_id;
@@ -87,13 +87,9 @@ impl InMemoryProjectStore {
 impl ProjectStore for InMemoryProjectStore {
     async fn list_by_user(&self, user_id: &str) -> StoreResult<Vec<Project>> {
         let records = self.by_id.lock().expect("project store mutex");
-        let mut visible: Vec<&ProjectRecord> = records
-            .values()
-            .filter(|record| record.user_id == user_id && !record.deleted)
-            .collect();
-        visible.sort_by(|a, b| {
-            by_position((&a.position, &a.project.id), (&b.position, &b.project.id))
-        });
+        let mut visible: Vec<&ProjectRecord> =
+            records.values().filter(|record| record.user_id == user_id && !record.deleted).collect();
+        visible.sort_by(|a, b| by_position((&a.position, &a.project.id), (&b.position, &b.project.id)));
         Ok(visible.into_iter().map(|record| record.project.clone()).collect())
     }
 

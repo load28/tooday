@@ -122,8 +122,7 @@ impl TestResponse {
             .get("result")
             .and_then(|result| result.get("data"))
             .unwrap_or_else(|| panic!("성공 봉투가 아니다: {}", self.body));
-        serde_json::from_value(data.clone())
-            .unwrap_or_else(|error| panic!("계약 위반: {error} — {data}"))
+        serde_json::from_value(data.clone()).unwrap_or_else(|error| panic!("계약 위반: {error} — {data}"))
     }
 }
 
@@ -137,12 +136,8 @@ impl TestApp {
             Some(value) => Body::from(value.clone()),
             None => Body::empty(),
         };
-        let response = self
-            .router
-            .clone()
-            .oneshot(request.body(body).expect("요청 조립"))
-            .await
-            .expect("응답");
+        let response =
+            self.router.clone().oneshot(request.body(body).expect("요청 조립")).await.expect("응답");
 
         let status = response.status();
         let headers = response.headers().clone();
@@ -157,9 +152,7 @@ impl TestApp {
             drop(response.into_body());
             Value::Null
         } else {
-            let bytes = axum::body::to_bytes(response.into_body(), 8 * 1024 * 1024)
-                .await
-                .unwrap_or_default();
+            let bytes = axum::body::to_bytes(response.into_body(), 8 * 1024 * 1024).await.unwrap_or_default();
             serde_json::from_slice(&bytes).unwrap_or(Value::Null)
         };
         TestResponse { status, headers, body }
@@ -219,9 +212,7 @@ fn percent_encode(value: &str) -> String {
     value
         .bytes()
         .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                (byte as char).to_string()
-            }
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => (byte as char).to_string(),
             _ => format!("%{byte:02X}"),
         })
         .collect()
@@ -243,20 +234,11 @@ async fn signup(app: &TestApp) -> SignedUp {
 async fn signup_as(app: &TestApp, body: Value) -> SignedUp {
     let response = app.request(&trpc_path("auth.signup"), RequestInit::post_json(Some(body))).await;
     let auth: AuthResponse = response.data();
-    SignedUp {
-        response,
-        user: auth.user,
-        token: auth.access_token,
-        refresh_token: auth.refresh_token,
-    }
+    SignedUp { response, user: auth.user, token: auth.access_token, refresh_token: auth.refresh_token }
 }
 
 async fn signup_other(app: &TestApp) -> SignedUp {
-    signup_as(
-        app,
-        json!({ "email": "other@tooday.app", "password": "password123", "name": "아더" }),
-    )
-    .await
+    signup_as(app, json!({ "email": "other@tooday.app", "password": "password123", "name": "아더" })).await
 }
 
 // --- health ------------------------------------------------------------------
@@ -292,8 +274,7 @@ async fn signup_유저를_생성하고_쿠키와_토큰_쌍을_함께_내려준�
 async fn signup_중복_이메일이면_409를_반환한다() {
     let app = setup();
     signup(&app).await;
-    let response =
-        app.request(&trpc_path("auth.signup"), RequestInit::post_json(Some(signup_body()))).await;
+    let response = app.request(&trpc_path("auth.signup"), RequestInit::post_json(Some(signup_body()))).await;
     assert_eq!(response.status, StatusCode::CONFLICT);
 }
 
@@ -315,9 +296,7 @@ async fn login_올바른_자격증명이면_쿠키와_토큰_쌍을_내려준다
     let response = app
         .request(
             &trpc_path("auth.login"),
-            RequestInit::post_json(Some(
-                json!({ "email": SIGNUP_EMAIL, "password": SIGNUP_PASSWORD }),
-            )),
+            RequestInit::post_json(Some(json!({ "email": SIGNUP_EMAIL, "password": SIGNUP_PASSWORD }))),
         )
         .await;
     assert_eq!(response.status, StatusCode::OK);
@@ -336,9 +315,7 @@ async fn login_비밀번호가_틀리면_401을_반환한다() {
     let response = app
         .request(
             &trpc_path("auth.login"),
-            RequestInit::post_json(Some(
-                json!({ "email": SIGNUP_EMAIL, "password": "wrong-password" }),
-            )),
+            RequestInit::post_json(Some(json!({ "email": SIGNUP_EMAIL, "password": "wrong-password" }))),
         )
         .await;
     assert_eq!(response.status, StatusCode::UNAUTHORIZED);
@@ -367,8 +344,7 @@ async fn me_authorization_bearer_헤더_방식으로_접근할_수_있다() {
     let app = setup();
     let signed_up = signup(&app).await;
 
-    let response =
-        app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
+    let response = app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
     assert_eq!(response.status, StatusCode::OK);
     let me: MeResponse = response.data();
     assert_eq!(me.user.map(|user| user.email).as_deref(), Some(SIGNUP_EMAIL));
@@ -405,8 +381,7 @@ async fn me_리프레시_쿠키만_있고_액세스가_없으면_401을_반환�
     let response = app
         .request(
             &trpc_path("user.me"),
-            RequestInit::get()
-                .header("Cookie", refresh_cookie_header(&app.config, "some-refresh-token")),
+            RequestInit::get().header("Cookie", refresh_cookie_header(&app.config, "some-refresh-token")),
         )
         .await;
     assert_eq!(response.status, StatusCode::UNAUTHORIZED);
@@ -417,8 +392,7 @@ async fn me_만료된_액세스_토큰은_401을_반환한다() {
     let app = setup_with(|config| config.access_ttl_ms = -60_000);
     let signed_up = signup(&app).await;
 
-    let response =
-        app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
+    let response = app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
     assert_eq!(response.status, StatusCode::UNAUTHORIZED);
 }
 
@@ -427,8 +401,7 @@ async fn me_프라이빗_응답이므로_캐시되지_않는다() {
     let app = setup();
     let signed_up = signup(&app).await;
 
-    let response =
-        app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
+    let response = app.request(&trpc_path("user.me"), RequestInit::get().auth(&signed_up.token)).await;
     assert_eq!(response.header("cache-control").as_deref(), Some(PRIVATE_CACHE_CONTROL));
 }
 
@@ -445,10 +418,7 @@ async fn 캐시_pub_쿼리는_경로별_public_cache_control을_받는다() {
         .find(|(path, _)| *path == "pub.appConfig")
         .map(|(_, directives)| *directives)
         .expect("pub.appConfig 지시자");
-    assert_eq!(
-        response.header("cache-control"),
-        Some(serialize_public_cache_control(directives))
-    );
+    assert_eq!(response.header("cache-control"), Some(serialize_public_cache_control(directives)));
 
     let config: tooday_shared::AppConfigResponse = response.data();
     assert!(!config.version.is_empty());
@@ -502,9 +472,8 @@ fn task_input_with(overrides: &[(&str, Value)]) -> Value {
 }
 
 async fn fetch_range(app: &TestApp, token: &str) -> (TestResponse, TaskRangeResponse) {
-    let response = app
-        .request(&query_path("task.range", &range_input()), RequestInit::get().auth(token))
-        .await;
+    let response =
+        app.request(&query_path("task.range", &range_input()), RequestInit::get().auth(token)).await;
     let data = response.data();
     (response, data)
 }
@@ -513,8 +482,7 @@ async fn create_project(app: &TestApp, token: &str) -> Project {
     let response = app
         .request(
             &trpc_path("task.createProject"),
-            RequestInit::post_json(Some(json!({ "name": "TooDay 앱", "color": "blue" })))
-                .auth(token),
+            RequestInit::post_json(Some(json!({ "name": "TooDay 앱", "color": "blue" }))).auth(token),
         )
         .await;
     response.data::<ProjectResponse>().project
@@ -554,16 +522,8 @@ async fn task_범위_조회는_범위_밖을_제외하고_날짜_시작시각_�
     let project = create_project(&app, token).await;
 
     for overrides in [
-        vec![
-            ("title", json!("오후 작업")),
-            ("projectId", json!(project.id)),
-            ("startAt", json!("13:30")),
-        ],
-        vec![
-            ("title", json!("아침 작업")),
-            ("projectId", json!(project.id)),
-            ("startAt", json!("07:30")),
-        ],
+        vec![("title", json!("오후 작업")), ("projectId", json!(project.id)), ("startAt", json!("13:30"))],
+        vec![("title", json!("아침 작업")), ("projectId", json!(project.id)), ("startAt", json!("07:30"))],
         vec![("title", json!("전날 작업")), ("date", json!("2026-07-03"))],
         vec![("title", json!("범위 밖 작업")), ("date", json!("2026-07-20"))],
     ] {
@@ -604,10 +564,7 @@ async fn task_update가_patch의_필드만_적용한다() {
     assert_eq!(
         after_title,
         Task {
-            status: TaskStatus::Done,
-            title: "디자인 토큰 정리 v2".into(),
-            version: 3,
-            ..task.clone()
+            status: TaskStatus::Done, title: "디자인 토큰 정리 v2".into(), version: 3, ..task.clone()
         }
     );
 
@@ -672,12 +629,9 @@ async fn task_다른_유저의_프로젝트로는_태스크를_만들_수_없다
 // --- 델타 동기화 --------------------------------------------------------------
 
 async fn fetch_changes(app: &TestApp, token: &str, cursor: i64) -> SyncChangesResponse {
-    app.request(
-        &query_path("task.changes", &json!({ "cursor": cursor })),
-        RequestInit::get().auth(token),
-    )
-    .await
-    .data()
+    app.request(&query_path("task.changes", &json!({ "cursor": cursor })), RequestInit::get().auth(token))
+        .await
+        .data()
 }
 
 #[tokio::test]
@@ -697,10 +651,7 @@ async fn sync_쓰기마다_커서가_전진하고_커서_이후의_변경만_내
 
     // 커서 시점 이후 변경이 없으면 빈 델타
     let empty = fetch_changes(&app, token, range.cursor).await;
-    assert_eq!(
-        empty,
-        SyncChangesResponse { tasks: vec![], projects: vec![], cursor: range.cursor }
-    );
+    assert_eq!(empty, SyncChangesResponse { tasks: vec![], projects: vec![], cursor: range.cursor });
 
     // 다른 기기의 수정 → 그 변경 하나만 내려온다
     update_task(&app, token, json!({ "id": task.id, "patch": { "status": "done" } })).await; // seq 3
@@ -719,10 +670,7 @@ async fn sync_쓰기마다_커서가_전진하고_커서_이후의_변경만_내
     // 처음(커서 0)부터 당기면 전부 내려온다 — 새 기기 시나리오
     let full = fetch_changes(&app, token, 0).await;
     assert_eq!(full.tasks.len(), 1);
-    assert_eq!(
-        full.projects,
-        vec![tooday_shared::ProjectChange { project, sync_seq: 1, deleted: false }]
-    );
+    assert_eq!(full.projects, vec![tooday_shared::ProjectChange { project, sync_seq: 1, deleted: false }]);
 }
 
 #[tokio::test]
@@ -799,8 +747,7 @@ async fn refresh_쿠키를_회전하고_옛_리프레시는_무효화된다() {
 #[tokio::test]
 async fn refresh_토큰이_없으면_401을_반환한다() {
     let app = setup();
-    let response =
-        app.request(&trpc_path("auth.refresh"), RequestInit::post_json(Some(json!({})))).await;
+    let response = app.request(&trpc_path("auth.refresh"), RequestInit::post_json(Some(json!({})))).await;
     assert_eq!(response.status, StatusCode::UNAUTHORIZED);
 }
 
@@ -830,9 +777,8 @@ async fn logout_리프레시를_폐기하고_쿠키를_삭제한다() {
         access_cookie_header(&app.config, &signed_up.token),
         refresh_cookie_header(&app.config, &signed_up.refresh_token)
     );
-    let logout = app
-        .request(&trpc_path("auth.logout"), RequestInit::post_json(None).header("Cookie", cookies))
-        .await;
+    let logout =
+        app.request(&trpc_path("auth.logout"), RequestInit::post_json(None).header("Cookie", cookies)).await;
     assert_eq!(logout.status, StatusCode::OK);
     for removal in serialize_auth_cookie_removals(&app.config) {
         assert!(logout.set_cookies().contains(&removal), "{removal}");
@@ -867,8 +813,7 @@ async fn logout_재사용_탐지가_세션을_죽이면_그_세션의_액세스�
         )
         .await;
     let tokens: TokenPair = rotate.data();
-    let me_ok =
-        app.request(&trpc_path("user.me"), RequestInit::get().auth(&tokens.access_token)).await;
+    let me_ok = app.request(&trpc_path("user.me"), RequestInit::get().auth(&tokens.access_token)).await;
     assert_eq!(me_ok.status, StatusCode::OK);
 
     // 2) 옛 리프레시 재사용 = 탈취 신호 → 세션 전체 무효화

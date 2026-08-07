@@ -16,7 +16,8 @@ pub struct Migration {
     pub up: for<'a, 'c> fn(&'a mut Transaction<'c, Postgres>) -> BoxFuture<'a>,
 }
 
-type BoxFuture<'a> = std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), sqlx::Error>> + Send + 'a>>;
+type BoxFuture<'a> =
+    std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), sqlx::Error>> + Send + 'a>>;
 
 pub fn migrations() -> Vec<Migration> {
     vec![

@@ -12,16 +12,16 @@ pub mod validate;
 
 pub use api::{ApiError, ApiErrorBody, TRPC_ENDPOINT};
 pub use auth::{
-    AuthResponse, LoginRequest, LogoutResponse, RefreshRequest, RefreshResponse, SignupRequest,
-    TokenPair, MIN_PASSWORD_LENGTH,
+    AuthResponse, LoginRequest, LogoutResponse, RefreshRequest, RefreshResponse, SignupRequest, TokenPair,
+    MIN_PASSWORD_LENGTH,
 };
 pub use pub_config::{AppConfigResponse, AppFeatures};
 pub use task::{
     CreateProjectRequest, CreateTaskRequest, DeletedTaskResponse, Patch, Project, ProjectChange,
     ProjectColor, ProjectDetailRequest, ProjectDetailResponse, ProjectListResponse, ProjectResponse,
-    ProjectSummary, SyncChangesRequest, SyncChangesResponse, Task, TaskChange, TaskIdRequest,
-    TaskPatch, TaskRangeRequest, TaskRangeResponse, TaskResponse, TaskStatus, UpdateTaskRequest,
-    PROJECT_COLORS, SYNC_EVENTS_PATH, TASK_STATUSES,
+    ProjectSummary, SyncChangesRequest, SyncChangesResponse, Task, TaskChange, TaskIdRequest, TaskPatch,
+    TaskRangeRequest, TaskRangeResponse, TaskResponse, TaskStatus, UpdateTaskRequest, PROJECT_COLORS,
+    SYNC_EVENTS_PATH, TASK_STATUSES,
 };
 pub use user::{MeResponse, User};
-pub use validate::{Issue, IssueKind, ValidationError, Validate};
+pub use validate::{Issue, IssueKind, Validate, ValidationError};

@@ -45,9 +45,9 @@ impl AccessTokens for AccessTokenService {
     fn sign(&self, claims: &AccessTokenClaims) -> String {
         // TS와 같은 계산 — 밀리초 만료를 초로 내림한다
         let exp = (chrono::Utc::now().timestamp_millis() + self.ttl_ms).div_euclid(1000);
-        let payload =
-            Payload { sub: claims.user_id.clone(), sid: claims.session_id.clone(), exp };
-        encode(&Header::new(Algorithm::HS256), &payload, &self.encoding).expect("HS256 서명은 실패하지 않는다")
+        let payload = Payload { sub: claims.user_id.clone(), sid: claims.session_id.clone(), exp };
+        encode(&Header::new(Algorithm::HS256), &payload, &self.encoding)
+            .expect("HS256 서명은 실패하지 않는다")
     }
 
     fn verify(&self, token: &str) -> Option<AccessTokenClaims> {
