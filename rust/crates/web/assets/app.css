@@ -870,6 +870,16 @@
     padding: 0;
   }
 
+  /* 카드는 button으로도 렌더된다(interactive). 그때 .base-button의 가운데 정렬이
+     따라오면 내용이 가운데로 몰리고, 진행률 바처럼 폭을 늘려야 하는 자식이 0으로
+     수축한다 — 카드 의미(좌측 정렬·꽉 채움)로 되돌린다. recipes 레이어가
+     base-recipe를 이기므로 여기 선언이 베이스를 덮는다. */
+  .card {
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .card[data-radius='md'] {
     border-radius: var(--radii-md);
   }

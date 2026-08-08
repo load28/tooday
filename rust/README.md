@@ -24,7 +24,9 @@ crates/web (Dioxus) ── crates/bff (axum)
   인증은 무상태 액세스 JWT(`sid` 클레임) + 회전 리프레시 토큰 — 매 요청은 서명·만료
   검증 + 세션 라이브니스 체크 1회로 즉시 무효화까지 얻는다. 회전 시 idle 슬라이딩 +
   absolute 하드캡 + 재사용 탐지(세션 무효화)를 건다.
-- **crates/web** — Dioxus 0.7 + dioxus-router. 화면·라우트 가드·쿼리 캐시.
+- **crates/web** — Dioxus 0.7 + dioxus-router로 만든 **CSR** 앱. 화면·라우트 가드·쿼리 캐시.
+  정적 셸(`index.html`)이 먼저 뜨고 wasm이 그 위에 마운트된다 — locale은 `navigator.language`,
+  세션 게이트는 마운트 후 `user.me`로 판정한다.
 
 ## Directory strategy
 
@@ -85,13 +87,28 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 
 cargo run -p tooday-bff     # BFF 기동 (기본 3002, DATABASE_URL 없으면 인메모리)
-dx serve --package tooday-web   # 웹 개발 서버 (dioxus-cli 필요)
-cargo build -p tooday-web --target wasm32-unknown-unknown   # 웹 wasm 빌드
+
+./scripts/build-web.sh      # CSR 번들 → dist/ (wasm-bindgen-cli 필요)
+./scripts/serve-web.py dist 8080   # 정적 서버 (클라이언트 라우트는 index.html 폴백)
+```
+
+웹과 BFF는 **같은 호스트**로 띄운다. 인증 쿠키가 `SameSite=Lax`라 호스트가 갈리면
+(예: 웹 `127.0.0.1`, BFF `localhost`) 교차 사이트가 되어 쿠키가 실리지 않는다:
+
+```bash
+BFF_ALLOWED_ORIGINS=http://localhost:8080 cargo run -p tooday-bff
+./scripts/serve-web.py dist 8080   # → http://localhost:8080
+```
+
+`wasm-bindgen-cli`는 `Cargo.lock`의 `wasm-bindgen`과 같은 버전이어야 한다:
+
+```bash
+cargo install wasm-bindgen-cli --version 0.2.126
 ```
 
 ## Verification
 
-TS 테스트를 포팅해 스펙 동등성을 검증한다. `cargo test --workspace` 기준 **166건**:
+TS 테스트를 포팅해 스펙 동등성을 검증한다. `cargo test --workspace` 기준 **167건**:
 
 | 대상 | 옮긴 원본 | 건수 |
 | --- | --- | --- |
@@ -104,7 +121,7 @@ TS 테스트를 포팅해 스펙 동등성을 검증한다. `cargo test --worksp
 | 시간 포맷 | `shared/time.test.ts` | 11 |
 | 낙관적 패치 | `entities/task/patch.test.ts` | 3 |
 | 쿼리 캐시 | `shared/query.test.ts` | 10 |
-| 그 외 (계약 검증, 토큰, 쿠키, 델타 반영, 주간 창, i18n …) | — | 70 |
+| 그 외 (계약 검증, 토큰, 쿠키, 델타 반영, 주간 창, i18n, 캐시 구독 …) | — | 71 |
 
 포팅 외에 러스트 쪽에서 새로 못박은 것:
 
@@ -112,6 +129,22 @@ TS 테스트를 포팅해 스펙 동등성을 검증한다. `cargo test --worksp
   — 기존 데이터와의 호환 계약.
 - 스토어 포트 계약을 인메모리와 **실제 PostgreSQL 16** 양쪽에 돌린다. 마이그레이션 6개가
   매번 새 데이터베이스에 적용되므로 스키마도 함께 검증된다.
+
+### 브라우저 E2E
+
+`cargo test`는 브라우저에서만 드러나는 문제를 잡지 못한다 — 실제로 실행해 보고서야
+훅 호출 순서 위반, wasm에서 없는 `SystemTime`, 캐시가 리렌더를 못 일으키는 문제,
+버튼 베이스 정렬이 카드로 새는 CSS 계단을 찾았다. 그래서 실제 Chromium으로
+전 화면을 도는 시나리오를 [e2e/](e2e/)에 둔다 — 회원가입 → 검증 문구 → 오늘 화면 →
+태스크 생성 → 완료 토글(낙관적) → 태스크 상세 → 프로젝트 생성 → 보드 → 로그아웃 →
+보호 경로 리다이렉트 → 재로그인 후 데이터 유지, 13단계. 브라우저 콘솔 에러가 하나라도
+있으면 실패로 본다.
+
+```bash
+cd e2e && npm install && npm test
+```
+
+### SQL 어댑터
 
 SQL 경로는 서버가 있을 때만 돈다:
 
@@ -121,9 +154,23 @@ TOODAY_TEST_DATABASE_URL="postgres://postgres@127.0.0.1:5432/postgres" cargo tes
 
 미설정이면 SQL 케이스는 조용히 건너뛰고 인메모리 구현만 검증한다.
 
+## CSR로 정한 것
+
+TS 웹은 TanStack Start의 SSR을 쓰지만, 이 구현은 **CSR을 스펙으로 삼는다**. 관찰 가능한
+계약(가드·리다이렉트·화면·캐시 정책·와이어 포맷)은 그대로 두고, SSR이 서버에서 하던
+일만 클라이언트로 옮겼다:
+
+| SSR이 하던 일 | CSR에서 |
+| --- | --- |
+| `Accept-Language`로 locale 결정 | `navigator.language` (`resolve_locale`) |
+| 요청 쿠키를 BFF로 전달 | 브라우저가 `credentials: include`로 직접 실어 보낸다 |
+| loader가 렌더 전에 쿼리를 채움 | `use_cached_query` — 캐시가 있으면 즉시, 없을 때만 로딩 |
+| 첫 페인트에 마크업 포함 | 정적 셸(`index.html`)이 스타일과 함께 먼저 뜨고 wasm이 마운트 |
+
+대가는 첫 화면에 wasm 로드가 끼는 것(현재 번들 2.0MB, gzip 미적용)이고,
+얻는 것은 서버 런타임이 정적 파일 서빙으로 줄어드는 것이다.
+
 ## 미구현
 
-- **SSR** — TS 웹은 TanStack Start의 SSR을 쓴다. 여기서는 CSR이고, 관찰 가능한 계약
-  (가드·리다이렉트·화면·캐시 정책)은 같지만 첫 페인트 경로가 다르다.
 - **design-guide 앱** — 디자인 프로토타입은 옮기지 않았다. 토큰은
   `crates/web/assets/app.css`가 같은 값으로 들고 있다.

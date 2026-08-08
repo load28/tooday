@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use tooday_shared::MeResponse;
 
 use crate::app::api::me_key;
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::features::today::today_screen::IconButton;
 use crate::shared::ui::icons;
 use crate::shared::ui::{
@@ -20,7 +20,8 @@ pub fn SettingsScreen(onnavigate: EventHandler<String>, onback: EventHandler<()>
     let query =
         use_cached_query::<MeResponse, _, _>(me_key(), move |client| async move { client.me().await });
     let _ = query.read();
-    let email = cached::<MeResponse>(&app.trpc, &me_key())
+    let email = app
+        .cached::<MeResponse>(&me_key())
         .and_then(|response| response.user)
         .map(|user| user.email)
         .unwrap_or_default();

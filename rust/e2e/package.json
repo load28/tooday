@@ -1,0 +1,11 @@
+{
+  "name": "tooday-rust-e2e",
+  "private": true,
+  "description": "CSR 웹을 실제 브라우저로 구동해 스펙대로 도는지 확인한다",
+  "scripts": {
+    "test": "node csr.spec.js"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use tooday_shared::{Patch, Task, TaskPatch, TaskRangeResponse, TaskStatus, UpdateTaskRequest};
 
 use crate::app::api::range_key;
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::entities::task::patch::apply_task_patch;
 use crate::features::today::task_card::TaskCard;
 use crate::features::today::use_task_sync::use_task_sync;
@@ -66,7 +66,7 @@ pub fn TodayScreen(
 
     // 캐시를 진실로 읽는다 — 낙관적 패치와 델타 패치가 모두 캐시에 쓰이기 때문이다
     let data: Option<TaskRangeResponse> = match query.read().as_ref() {
-        Some(Some(Ok(_))) | Some(None) | None => cached(&app.trpc, &key),
+        Some(Some(Ok(_))) | Some(None) | None => app.cached(&key),
         Some(Some(Err(_))) => None,
     };
     let Some(data) = data else {

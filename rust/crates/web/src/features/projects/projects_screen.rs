@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use tooday_shared::ProjectListResponse;
 
 use crate::app::api::projects_key;
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::features::projects::new_project_sheet::NewProjectSheet;
 use crate::features::today::today_screen::IconButton;
 use crate::shared::ui::icons;
@@ -23,7 +23,7 @@ pub fn ProjectsScreen(onnavigate: EventHandler<String>) -> Element {
         client.projects().await
     });
     let _ = query.read();
-    let data: Option<ProjectListResponse> = cached(&app.trpc, &key);
+    let data: Option<ProjectListResponse> = app.cached(&key);
     let projects = data.map(|data| data.projects).unwrap_or_default();
 
     rsx! {

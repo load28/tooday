@@ -4,7 +4,7 @@ use tooday_shared::validate::IssueKind;
 use tooday_shared::{CreateTaskRequest, ProjectListResponse};
 
 use crate::app::api::{projects_key, range_prefix};
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::features::tasks::task_fields::{
     project_options, MetaList, MetaRow, OptionSheet, ProjectValue, ScheduleSheet, ScheduleValue,
     NO_PROJECT_KEY,
@@ -40,7 +40,8 @@ pub fn NewTaskScreen(
         client.projects().await
     });
     let _ = query.read();
-    let projects: Vec<tooday_shared::Project> = cached::<ProjectListResponse>(&app.trpc, &key)
+    let projects: Vec<tooday_shared::Project> = app
+        .cached::<ProjectListResponse>(&key)
         .map(|data| data.projects.into_iter().map(|summary| summary.project).collect())
         .unwrap_or_default();
 

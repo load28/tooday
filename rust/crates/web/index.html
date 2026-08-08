@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no, email=no, address=no" />
+    <title>TooDay</title>
+    <!--
+      캐스케이드 레이어 순서 확정 — reset < base < base-recipe < recipes < 레이어 없음.
+      스타일시트 주입 순서와 무관하게 base-button이 컴포넌트 recipe에 지고,
+      1회성 화면 스타일이 recipe를 이긴다.
+    -->
+    <style>
+      @layer reset, base, base-recipe, recipes;
+    </style>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <div id="main"></div>
+    <script type="module">
+      import init from '/wasm/tooday_web.js';
+      init();
+    </script>
+  </body>
+</html>

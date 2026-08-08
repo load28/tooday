@@ -54,23 +54,32 @@ struct QueryState {
     entries: HashMap<QueryKey, CacheEntry>,
     /// 키별 취소 세대 — `cancel_queries` 시 증가한다
     generations: HashMap<QueryKey, u64>,
+    /// 캐시가 바뀌었을 때 알릴 대상 — UI 계층이 여기에 리렌더 트리거를 건다.
+    /// 이 모듈 자체는 UI를 모른 채로 남는다(테스트가 런타임 없이 돈다).
+    listeners: Vec<CacheListener>,
 }
+
+/// 캐시 변경의 종류. 어떤 키가 바뀌었는지는 싣지 않는다 — 구독자는 자기가 읽던
+/// 키를 다시 읽으면 된다. 다만 "다시 그려라"와 "다시 당겨라"는 구분해야 한다:
+/// 쓰기마다 재조회하면 조회 → 쓰기 → 재조회가 끝없이 돈다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CacheEvent {
+    /// 데이터가 캐시에 쓰였다 — 화면만 다시 그리면 된다
+    Written,
+    /// 캐시가 낡았다고 표시됐거나 지워졌다 — 붙어 있는 쿼리는 다시 당겨야 한다
+    Invalidated,
+}
+
+pub type CacheListener = Rc<dyn Fn(CacheEvent)>;
 
 #[derive(Clone, Default)]
 pub struct QueryClient {
     state: Rc<RefCell<QueryState>>,
 }
 
-/// 현재 시각(ms). wasm에서는 브라우저 시계를, 네이티브 테스트에서는 시스템 시계를 쓴다.
+/// 현재 시각(ms). chrono의 wasmbind가 wasm에서는 JS Date로 내려간다.
 fn now_ms() -> i64 {
-    #[cfg(target_arch = "wasm32")]
-    {
-        js_sys::Date::now() as i64
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        chrono::Utc::now().timestamp_millis()
-    }
+    chrono::Utc::now().timestamp_millis()
 }
 
 impl QueryClient {
@@ -90,8 +99,24 @@ impl QueryClient {
     }
 
     fn set_raw(&self, key: &QueryKey, data: Value) {
-        let mut state = self.state.borrow_mut();
-        state.entries.insert(key.clone(), CacheEntry { data, updated_at: now_ms(), invalidated: false });
+        {
+            let mut state = self.state.borrow_mut();
+            state.entries.insert(key.clone(), CacheEntry { data, updated_at: now_ms(), invalidated: false });
+        }
+        self.notify(CacheEvent::Written);
+    }
+
+    /// 캐시 변경 구독 — UI 계층이 리렌더 트리거를 건다.
+    pub fn subscribe(&self, listener: CacheListener) {
+        self.state.borrow_mut().listeners.push(listener);
+    }
+
+    /// 잠금을 놓은 뒤에 알린다 — 리스너가 다시 캐시를 읽어도 교착되지 않는다.
+    fn notify(&self, event: CacheEvent) {
+        let listeners = self.state.borrow().listeners.clone();
+        for listener in listeners {
+            listener(event);
+        }
     }
 
     /// 캐시가 있으면 그대로, 없으면 fetch로 채운다. 낡음(stale)은 무시한다 —
@@ -136,24 +161,27 @@ impl QueryClient {
 
     /// 낡음 표시 — 다음 구독 시 재검증하게 한다. 캐시 데이터는 남는다.
     pub fn invalidate_queries(&self, filter: &QueryKey) {
-        let mut state = self.state.borrow_mut();
-        for (key, entry) in state.entries.iter_mut() {
-            if key.matches(filter) {
-                entry.invalidated = true;
+        {
+            let mut state = self.state.borrow_mut();
+            for (key, entry) in state.entries.iter_mut() {
+                if key.matches(filter) {
+                    entry.invalidated = true;
+                }
             }
         }
+        self.notify(CacheEvent::Invalidated);
     }
 
     /// 캐시에서 지운다 — 다음 loader가 반드시 새로 채우게 할 때 쓴다(전략 ④).
     pub fn remove_queries(&self, filter: &QueryKey) {
-        let mut state = self.state.borrow_mut();
-        state.entries.retain(|key, _| !key.matches(filter));
+        self.state.borrow_mut().entries.retain(|key, _| !key.matches(filter));
+        self.notify(CacheEvent::Invalidated);
     }
 
     /// 웹뷰는 새로고침으로 리셋되지 않는다 — 로그아웃 시 이전 유저 데이터를 전부 비운다.
     pub fn clear(&self) {
-        let mut state = self.state.borrow_mut();
-        state.entries.clear();
+        self.state.borrow_mut().entries.clear();
+        self.notify(CacheEvent::Invalidated);
     }
 
     pub fn is_invalidated(&self, key: &QueryKey) -> bool {
@@ -313,6 +341,27 @@ mod tests {
         assert_eq!(
             client.get_query_data::<Counter>(&QueryKey::bare("task.projects")),
             Some(Counter { value: 3 })
+        );
+    }
+
+    #[test]
+    fn 캐시가_바뀌면_종류와_함께_알린다() {
+        let client = QueryClient::new();
+        let events: Rc<RefCell<Vec<CacheEvent>>> = Rc::new(RefCell::new(Vec::new()));
+        client.subscribe({
+            let events = Rc::clone(&events);
+            Rc::new(move |event| events.borrow_mut().push(event))
+        });
+
+        client.set_query_data(&key(), &Counter { value: 1 });
+        client.invalidate_queries(&QueryKey::prefix("counter"));
+        client.remove_queries(&QueryKey::prefix("counter"));
+        client.clear();
+
+        // 쓰기는 리렌더만, 무효화·삭제·비움은 재조회까지 부른다
+        assert_eq!(
+            events.borrow().as_slice(),
+            [CacheEvent::Written, CacheEvent::Invalidated, CacheEvent::Invalidated, CacheEvent::Invalidated]
         );
     }
 

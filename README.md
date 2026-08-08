@@ -37,8 +37,8 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
   (`/tasks/$id`), 디자인 토큰 카탈로그 (`/guide`).
 - **packages/shared** — web ↔ bff 간 타입 공유 (TS 소스 직접 익스포트).
 - **rust/** — 같은 스펙을 언어·라이브러리까지 러스트로 옮긴 병렬 구현
-  (Dioxus + axum + sqlx). 이 디렉토리와 독립적으로 빌드·테스트된다 —
-  [rust/README.md](rust/README.md).
+  (Dioxus CSR + axum + sqlx). 이 디렉토리와 독립적으로 빌드·테스트되고,
+  브라우저 E2E까지 갖췄다 — [rust/README.md](rust/README.md).
 
 ## Directory strategy
 

@@ -9,9 +9,10 @@ use tooday_web::app::hooks::AppContext;
 use tooday_web::routes::Route;
 use tooday_web::shared::i18n::{resolve_locale, Locale};
 
-const APP_CSS: Asset = asset!("/assets/app.css");
-
 fn main() {
+    // 패닉을 콘솔에 원문으로 남긴다 — 없으면 wasm에서 `unreachable`로만 보인다
+    #[cfg(target_arch = "wasm32")]
+    console_error_panic_hook::set_once();
     dioxus::launch(App);
 }
 
@@ -20,21 +21,9 @@ fn App() -> Element {
     let locale = use_hook(browser_locale);
     use_context_provider(|| AppContext::new(locale));
 
+    // 스타일시트·메타·레이어 순서는 index.html이 소유한다 — CSR이라 셸이 먼저 뜨고
+    // wasm이 그 위에 마운트되므로, 첫 페인트에 스타일이 이미 붙어 있어야 한다.
     rsx! {
-        document::Link { rel: "stylesheet", href: APP_CSS }
-        // 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < recipes < 레이어 없음.
-        // 스타일시트 주입 순서와 무관하게 base-button이 컴포넌트 recipe에 지고,
-        // 1회성 화면 스타일이 recipe를 이긴다.
-        document::Style { {"@layer reset, base, base-recipe, recipes;"} }
-        document::Meta {
-            name: "viewport",
-            content: "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
-        }
-        document::Meta { name: "apple-mobile-web-app-capable", content: "yes" }
-        document::Meta { name: "mobile-web-app-capable", content: "yes" }
-        document::Meta { name: "apple-mobile-web-app-status-bar-style", content: "default" }
-        document::Meta { name: "format-detection", content: "telephone=no, email=no, address=no" }
-        document::Title { "TooDay" }
         Router::<Route> {}
     }
 }

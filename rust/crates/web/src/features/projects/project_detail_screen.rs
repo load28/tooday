@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use tooday_shared::{ProjectDetailResponse, Task, TaskStatus};
 
 use crate::app::api::project_key;
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::entities::task::status::STATUS_ORDER;
 use crate::features::today::today_screen::IconButton;
 use crate::shared::ui::icons;
@@ -33,7 +33,7 @@ pub fn ProjectDetailScreen(
         }
     });
     let _ = query.read();
-    let Some(data) = cached::<ProjectDetailResponse>(&app.trpc, &key) else {
+    let Some(data) = app.cached::<ProjectDetailResponse>(&key) else {
         return rsx! {
             main { class: "screen-content",
                 Stack { center: true, class: "board-empty",

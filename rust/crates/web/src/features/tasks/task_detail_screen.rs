@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use tooday_shared::{Patch, ProjectListResponse, TaskPatch, TaskResponse, TaskStatus, UpdateTaskRequest};
 
 use crate::app::api::{projects_key, range_prefix, task_key};
-use crate::app::hooks::{cached, use_app, use_cached_query};
+use crate::app::hooks::{use_app, use_cached_query};
 use crate::entities::task::patch::apply_task_patch;
 use crate::entities::task::status::{status_chip_tone, status_dot_tone, STATUS_ORDER};
 use crate::features::tasks::task_fields::{
@@ -43,7 +43,17 @@ pub fn TaskDetailScreen(
     let _ = task_query.read();
     let _ = projects_query.read();
 
-    let Some(task) = cached::<TaskResponse>(&app.trpc, &key).map(|response| response.task) else {
+    // 훅은 조기 반환보다 먼저 전부 부른다 — 렌더마다 훅 호출 순서가 같아야 한다.
+    // 제목 초안은 "아직 안 건드림"(None)과 "사용자가 고친 값"(Some)을 가른다:
+    // 태스크가 도착하기 전에도 훅을 부를 수 있고, 서버 값이 바뀌면 그대로 따라간다.
+    let mut title_draft = use_signal(|| None::<String>);
+    let mut status_sheet_open = use_signal(|| false);
+    let mut project_sheet_open = use_signal(|| false);
+    let mut schedule_sheet_open = use_signal(|| false);
+    let mut deleting = use_signal(|| false);
+    let mut delete_failed = use_signal(|| false);
+
+    let Some(task) = app.cached::<TaskResponse>(&key).map(|response| response.task) else {
         return rsx! {
             main { class: "screen-content",
                 Stack { center: true,
@@ -54,18 +64,14 @@ pub fn TaskDetailScreen(
         };
     };
 
-    let projects: Vec<tooday_shared::Project> = cached::<ProjectListResponse>(&app.trpc, &projects_key())
+    let projects: Vec<tooday_shared::Project> = app
+        .cached::<ProjectListResponse>(&projects_key())
         .map(|data| data.projects.into_iter().map(|summary| summary.project).collect())
         .unwrap_or_default();
     let project =
         task.project_id.as_deref().and_then(|id| projects.iter().find(|project| project.id == id)).cloned();
 
-    let mut title_draft = use_signal(|| task.title.clone());
-    let mut status_sheet_open = use_signal(|| false);
-    let mut project_sheet_open = use_signal(|| false);
-    let mut schedule_sheet_open = use_signal(|| false);
-    let mut deleting = use_signal(|| false);
-    let mut delete_failed = use_signal(|| false);
+    let title_value = title_draft().unwrap_or_else(|| task.title.clone());
 
     let date_label = parse_iso_date(&task.date)
         .map(|date| format_date_label(locale, date, WeekdayStyle::Short))
@@ -96,12 +102,12 @@ pub fn TaskDetailScreen(
         let patch_task = patch_task.clone();
         let current_title = task.title.clone();
         move |_| {
-            let next = title_draft().trim().to_owned();
+            let next = title_draft().unwrap_or_default().trim().to_owned();
             if !next.is_empty() && next != current_title {
                 patch_task(TaskPatch { title: Patch::Set(next), ..TaskPatch::default() });
-            } else {
-                title_draft.set(current_title.clone());
             }
+            // 어느 쪽이든 초안을 놓아 서버 값(또는 방금 보낸 낙관적 값)을 따라가게 한다
+            title_draft.set(None);
         }
     };
 
@@ -158,9 +164,9 @@ pub fn TaskDetailScreen(
                     Stack { gap: Gap::Lg,
                         Input {
                             variant: InputVariant::Inline,
-                            value: title_draft(),
+                            value: title_value,
                             aria_label: t.task_detail.title.as_str().to_owned(),
-                            oninput: move |value| title_draft.set(value),
+                            oninput: move |value| title_draft.set(Some(value)),
                             onblur: commit_title,
                         }
 
