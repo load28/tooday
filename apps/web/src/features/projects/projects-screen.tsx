@@ -4,7 +4,7 @@ import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { cardCls, emptyCls, heroCls, listCls } from '@/features/projects/projects-screen.css';
-import { format, useT } from '@/shared/i18n';
+import { useT } from '@/shared/i18n';
 import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } from '@/shared/ui';
 import { vars } from '@/styles/theme.css';
 
@@ -76,7 +76,7 @@ export function ProjectsScreen() {
                   </HStack>
                   <ProgressBar value={ratio} tone={project.color} />
                   <Text variant="caption" tone="tertiary">
-                    {format(t.projects.progress, { done: project.doneCount, total: project.totalCount })}
+                    {t.projects.progress({ done: project.doneCount, total: project.totalCount })}
                   </Text>
                 </Card>
               );

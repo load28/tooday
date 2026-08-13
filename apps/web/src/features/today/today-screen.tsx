@@ -9,7 +9,7 @@ import { emptyCls, heroCls, pageCls, rowCls, timeColCls, timelineCls } from '@/f
 import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
-import { format, useLocale, useT } from '@/shared/i18n';
+import { useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
@@ -108,12 +108,12 @@ export function TodayScreen({ now }: TodayScreenProps) {
           <Card radius="2xl" padding="lg" className={heroCls}>
             <Stack gap="xs">
               <Text variant="label" tone="brand">
-                {day.isToday ? format(t.today.hero.today, { date: day.label }) : day.label}
+                {day.isToday ? t.today.hero.today({ date: day.label }) : day.label}
               </Text>
               <Text as="h1" variant="display">
                 {t.today.hero.remainingPrefix}{' '}
                 <Text as="span" variant="display" tone="brand">
-                  {format(t.today.hero.remainingCount, { count: remaining })}
+                  {t.today.hero.remainingCount({ count: remaining })}
                 </Text>{' '}
                 <Text as="span" variant="display" tone="tertiary">
                   {t.today.hero.remainingSuffix}

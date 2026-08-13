@@ -1,7 +1,7 @@
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { addMinutes, format as dfFormat, differenceInMinutes, parse, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { format, type Locale, type Messages } from '@/shared/i18n';
+import { type Locale, type Messages } from '@/shared/i18n';
 
 const ISO_DATE = 'yyyy-MM-dd';
 const CLOCK = 'HH:mm';
@@ -65,8 +65,8 @@ export function endTime(startAt: string, durationMin: number): string {
 
 /** 기간(분)을 로컬 문구로 — '30분' / '2시간' / '1시간 30분' */
 export function formatDuration(t: Messages, durationMin: number): string {
-  if (durationMin < 60) return format(t.common.duration.minutes, { min: durationMin });
+  if (durationMin < 60) return t.common.duration.minutes({ min: durationMin });
   const hour = Math.floor(durationMin / 60);
   const min = durationMin % 60;
-  return min === 0 ? format(t.common.duration.hours, { hour }) : format(t.common.duration.hoursMinutes, { hour, min });
+  return min === 0 ? t.common.duration.hours({ hour }) : t.common.duration.hoursMinutes({ hour, min });
 }

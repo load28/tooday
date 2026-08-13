@@ -5,7 +5,7 @@ import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@t
 import * as v from 'valibot';
 import { formCls } from '@/features/auth/signup-screen.css';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
-import { format, useT } from '@/shared/i18n';
+import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
 
 const signupFormSchema = v.object({
@@ -26,7 +26,7 @@ export function SignupScreen() {
   const messages = useFormMessages(signupFormSchema, (t) => ({
     name: { min_length: t.auth.signup.nameRequired },
     email: { email: t.auth.signup.emailInvalid },
-    password: { min_length: format(t.auth.signup.passwordTooShort, { min: MIN_PASSWORD_LENGTH }) },
+    password: { min_length: t.auth.signup.passwordTooShort({ min: MIN_PASSWORD_LENGTH }) },
   }));
 
   const signup = useMutation(

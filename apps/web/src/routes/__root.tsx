@@ -6,10 +6,9 @@ import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynam
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
 import type { RouterAppContext } from '@/app/trpc.ts';
-import { I18nProvider, type Locale, loadDictionary, resolveLocale } from '@/shared/i18n';
+import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
-// locale은 요청 스코프로 결정한다. loader가 선택된 locale의 사전만 로드해 반환하고,
-// SSR 결과가 JSON으로 dehydrate되어 클라이언트도 같은 사전 하나만 갖는다.
+// locale은 요청 스코프로 결정한다. 사전은 함수형 문구를 포함하므로 loader 데이터로 직렬화하지 않는다.
 const resolveRequestLocale = createIsomorphicFn()
   .client((): Locale => resolveLocale(navigator.language))
   .server(async (): Promise<Locale> => {
@@ -20,7 +19,7 @@ const resolveRequestLocale = createIsomorphicFn()
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   loader: async () => {
     const locale = await resolveRequestLocale();
-    return { locale, dictionary: await loadDictionary(locale) };
+    return { locale };
   },
   component: RootComponent,
   head: () => ({
@@ -57,7 +56,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
-  const { locale, dictionary } = Route.useLoaderData();
+  const { locale } = Route.useLoaderData();
+  const dictionary = getDictionary(locale);
   return (
     <I18nProvider value={{ locale, dictionary }}>
       <Outlet />

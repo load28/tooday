@@ -1,8 +1,8 @@
-import { defineMessages } from './message';
+import { defineMessages, msg } from './message';
 import type { MessageSchema } from './schema';
 
-// 순수 문자열 데이터만 둔다 — 구조와 플레이스홀더 계약은 schema.ts가 소유하고,
-// 빌더가 어긋남(파라미터 오타, 선언에 없는 {…}, 키 누락/초과)을 컴파일 에러로 잡는다.
+// 인자가 없는 문구는 문자열, 인자가 필요한 문구는 함수로 둔다.
+// 구조와 함수 인자 계약은 schema.ts가 소유하고, 빌더가 키 누락/초과를 컴파일 에러로 잡는다.
 export const ko = defineMessages<MessageSchema>()({
   common: {
     brand: 'TooDay',
@@ -10,9 +10,9 @@ export const ko = defineMessages<MessageSchema>()({
       unexpected: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
     },
     duration: {
-      minutes: '{min}분',
-      hours: '{hour}시간',
-      hoursMinutes: '{hour}시간 {min}분',
+      minutes: ({ min }) => msg`${min}분`,
+      hours: ({ hour }) => msg`${hour}시간`,
+      hoursMinutes: ({ hour, min }) => msg`${hour}시간 ${min}분`,
     },
     status: {
       todo: '할 일',
@@ -36,9 +36,9 @@ export const ko = defineMessages<MessageSchema>()({
   today: {
     title: '오늘',
     hero: {
-      today: '오늘 · {date}',
+      today: ({ date }) => msg`오늘 · ${date}`,
       remainingPrefix: '할 일',
-      remainingCount: '{count}개',
+      remainingCount: ({ count }) => msg`${count}개`,
       remainingSuffix: '남았어요',
     },
     section: {
@@ -58,7 +58,7 @@ export const ko = defineMessages<MessageSchema>()({
     title: '프로젝트',
     subtitle: '한 곳에서 모아보기',
     empty: '아직 프로젝트가 없어요',
-    progress: '{done}/{total} 완료',
+    progress: ({ done, total }) => msg`${done}/${total} 완료`,
     addProject: '프로젝트 추가',
   },
   projectNew: {
@@ -141,7 +141,7 @@ export const ko = defineMessages<MessageSchema>()({
       nameRequired: '이름을 입력해 주세요.',
       emailInvalid: '올바른 이메일을 입력해 주세요.',
       emailTaken: '이미 가입된 이메일입니다.',
-      passwordTooShort: '비밀번호는 {min}자 이상 입력해 주세요.',
+      passwordTooShort: ({ min }) => msg`비밀번호는 ${min}자 이상 입력해 주세요.`,
     },
   },
   settings: {

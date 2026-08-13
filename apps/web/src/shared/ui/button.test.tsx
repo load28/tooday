@@ -2,12 +2,12 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '@/shared/i18n';
-import { ko } from '@/shared/i18n/ko';
+import { getDictionary, I18nProvider } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 
 // Button은 로딩 라벨을 useT()로 파생하므로 Provider 하위에서 렌더한다.
-const renderWithI18n = (ui: ReactElement) => render(<I18nProvider value={{ locale: 'ko', dictionary: ko }}>{ui}</I18nProvider>);
+const renderWithI18n = (ui: ReactElement) =>
+  render(<I18nProvider value={{ locale: 'ko', dictionary: getDictionary('ko') }}>{ui}</I18nProvider>);
 
 describe('Button', () => {
   afterEach(cleanup);

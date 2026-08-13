@@ -1,6 +1,6 @@
 import type { Msg } from './message';
 
-// 문구의 단일 계약: 구조(키)와 각 문구가 요구하는 플레이스홀더를 여기서 한 번만 선언한다.
+// 문구의 단일 계약: 구조(키)와 각 문구가 요구하는 함수 인자를 여기서 한 번만 선언한다.
 // 모든 locale 사전은 defineMessages<MessageSchema>()로 이 스키마에서 빌드된다.
 export interface MessageSchema {
   common: {

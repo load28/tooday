@@ -1,14 +1,15 @@
 import { createContext, useContext } from 'react';
 import type { MessagesOf, TextsOf } from './message';
+import { ko } from './ko';
 import type { MessageSchema } from './schema';
 
-export { defineMessages, format } from './message';
+export { defineMessages } from './message';
 export type { MessageSchema } from './schema';
 
-/** 클라이언트 뷰 타입 — 스키마에서 파생. 체이닝 자동완성과 format() 파라미터 추론의 원천. */
+/** 클라이언트 뷰 타입 — 스키마에서 파생. 체이닝 자동완성과 함수 인자 추론의 원천. */
 export type Messages = MessagesOf<MessageSchema>;
 
-/** 전달(JSON) 형태 — 잎이 전부 순수 문자열 */
+/** locale 작성용 사전 형태 — 인자가 없는 잎은 문자열, 인자가 있는 잎은 함수 */
 export type Dictionary = TextsOf<MessageSchema>;
 
 export const SUPPORTED_LOCALES = ['ko'] as const;
@@ -17,11 +18,11 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'ko';
 
-/** 선택된 locale의 사전만 동적 import로 로드한다 — 다른 locale은 번들/메모리에 올라오지 않는다 */
-export async function loadDictionary(locale: Locale): Promise<Dictionary> {
+/** 선택된 locale의 사전을 고른다. 함수형 문구가 있어 loader JSON으로 직렬화하지 않는다. */
+export function getDictionary(locale: Locale): Messages {
   switch (locale) {
     case 'ko':
-      return (await import('./ko')).ko;
+      return ko as unknown as Messages;
   }
 }
 
@@ -38,11 +39,11 @@ export function resolveLocale(preference: string | null | undefined): Locale {
 
 interface I18nState {
   locale: Locale;
-  dictionary: Dictionary;
+  dictionary: Messages;
 }
 
-// locale과 사전은 요청 스코프(루트 라우트 loader)에서 결정되어 컨텍스트로 내려온다.
-// 전역 상태가 없어 SSR에서 동시 요청 간 locale이 섞이지 않는다.
+// locale은 요청 스코프(루트 라우트 loader)에서 결정되고, 사전은 렌더 시 locale로 고른다.
+// 함수형 문구를 loader 데이터로 직렬화하지 않아 SSR hydration 경계를 넘지 않는다.
 const I18nContext = createContext<I18nState | null>(null);
 
 export const I18nProvider = I18nContext.Provider;
@@ -58,6 +59,5 @@ export function useLocale(): Locale {
 }
 
 export function useT(): Messages {
-  // 런타임 값은 선택된 locale의 JSON 사전이지만, 타입은 스키마에서 파생된 브랜드 뷰로 본다
-  return useI18n().dictionary as Messages;
+  return useI18n().dictionary;
 }
