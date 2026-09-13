@@ -78,7 +78,7 @@ type SurfaceBase = {
 
 type SurfaceProps<T extends ElementType> = SurfaceBase & { as?: T } & Omit<
     ComponentPropsWithoutRef<T>,
-    keyof SurfaceBase | 'as' | 'className'
+    keyof SurfaceBase | 'as' | 'className' | 'style'
   >;
 
 export function Surface<T extends ElementType = 'div'>(props: SurfaceProps<T>) {

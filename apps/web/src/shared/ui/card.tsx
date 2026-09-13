@@ -71,7 +71,7 @@ type CardBase = {
 
 type CardProps<T extends ElementType> = CardBase & { as?: T } & Omit<
     ComponentPropsWithoutRef<T>,
-    keyof CardBase | 'as' | 'className'
+    keyof CardBase | 'as' | 'className' | 'style'
   >;
 
 export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {

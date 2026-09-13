@@ -94,7 +94,7 @@ type RowBase = {
 
 type RowProps<T extends ElementType> = RowBase & { as?: T } & Omit<
     ComponentPropsWithoutRef<T>,
-    keyof RowBase | 'as' | 'className'
+    keyof RowBase | 'as' | 'className' | 'style'
   >;
 
 export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {

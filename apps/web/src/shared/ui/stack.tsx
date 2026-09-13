@@ -73,7 +73,7 @@ type StackBase = {
 
 type StackProps<T extends ElementType> = StackBase & { as?: T } & Omit<
     ComponentPropsWithoutRef<T>,
-    keyof StackBase | 'as' | 'className'
+    keyof StackBase | 'as' | 'className' | 'style'
   >;
 
 // alignItems 충돌을 피하려 direction은 flexDirection만, alignItems는 align variant만 맡는다.

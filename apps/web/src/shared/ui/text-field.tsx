@@ -10,7 +10,7 @@ type TextFieldBase = {
   size?: InputSize;
 };
 
-type TextFieldProps = TextFieldBase & Omit<ComponentPropsWithRef<'input'>, keyof TextFieldBase | 'className'>;
+type TextFieldProps = TextFieldBase & Omit<ComponentPropsWithRef<'input'>, keyof TextFieldBase | 'className' | 'style'>;
 
 /** Field + Input의 단축 조합. 슬롯 구성이 필요하면 Field와 Input을 직접 조합한다. */
 export function TextField({ label, helper, error, invalid, size, ...inputProps }: TextFieldProps) {

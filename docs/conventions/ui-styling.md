@@ -8,6 +8,9 @@
   flex/grid, gap 등)이 대표적이다.
 - 필요한 variant가 없으면 사용처에서 덮지 말고 `shared/ui` 컴포넌트에 variant를
   추가한 뒤 쓴다.
+- **사용처가 스타일을 넣는 통로는 `sx` 하나다.** `shared/ui` 컴포넌트는 `className`도
+  `style`도 받지 않는다 — 둘 다 타입이 검사할 수 없어 `sx` 가드를 우회하고, 게다가
+  `style`은 컴포넌트가 자기 값으로 덮어써 **넘겨도 조용히 무시된다.**
 
 ## 이유
 
@@ -88,6 +91,9 @@ CSS 레이어는 딱 한 가지 용도로만 남아 있다: `routes/__root.tsx`�
 구현은 `StyleXStylesWithout<T>` — T의 키를 뺀 나머지 CSS 속성만 허용한다
 ([StyleXStyles](https://stylexjs.com/docs/api/types/StyleXStyles/)). 새 variant를 추가해
 컴포넌트가 소유하게 되는 속성이 생기면 `styles/sx.ts`의 해당 그룹에 키를 더한다.
+
+`className`·`style`은 각 props 타입의 `Omit`에서 빼 아예 받지 않는다. 사용처가 스타일을
+넣는 통로를 `sx` 하나로 고정해야 위 금지 집합이 실제로 강제된다.
 
 **예외는 `BaseButton` 하나다.** 파생 컴포넌트(Button·TabBar·ColorSwatch·WeekStrip)가 룩을
 얹는 조립 지점이므로 `sx`를 좁히지 않는다. 사용처가 직접 쓰는 것은 `BaseButton`이 아니라

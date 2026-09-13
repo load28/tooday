@@ -47,7 +47,7 @@ type TextBase = {
 
 type TextProps<T extends ElementType> = TextBase & { as?: T } & Omit<
     ComponentPropsWithoutRef<T>,
-    keyof TextBase | 'as' | 'className'
+    keyof TextBase | 'as' | 'className' | 'style'
   >;
 
 export function Text<T extends ElementType = 'span'>(props: TextProps<T>) {

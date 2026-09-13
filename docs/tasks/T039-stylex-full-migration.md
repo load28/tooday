@@ -121,3 +121,7 @@ today(task-card/today-screen/week-strip).
   사용처가 0이었고, 타입으로 좁힌 `sx`를 우회하는 뒷문이라 남길 이유가 없다.
   네이티브 `className`이 스프레드로 새어 들어오지 않게 각 props 타입의 `Omit`에 `'className'`을 넣었다.
   검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).
+- 2026-09-13: 후속 — 네이티브 `style` prop도 `shared/ui` 전체에서 차단했다(props 타입의 `Omit`).
+  컴포넌트가 `stylex.props()`의 `style`을 뒤에 얹기 때문에 사용처가 넘긴 인라인 스타일이
+  조용히 무시되던 구멍이었다. 이제 사용처가 스타일을 넣는 통로는 `sx` 하나뿐이다.
+  검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).

@@ -14,7 +14,7 @@ type NumberInputOwnProps = {
 };
 
 type NumberInputProps = NumberInputOwnProps &
-  Omit<ComponentPropsWithRef<'input'>, keyof NumberInputOwnProps | 'type' | 'className'>;
+  Omit<ComponentPropsWithRef<'input'>, keyof NumberInputOwnProps | 'type' | 'className' | 'style'>;
 
 function clamp(value: number, min?: number, max?: number): number {
   let result = value;
