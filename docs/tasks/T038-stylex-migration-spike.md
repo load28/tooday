@@ -111,8 +111,9 @@ StyleX(Meta)는 병합 모델이 다르다 — 속성+조건 하나당 원자 �
    `devMode: 'css-only'` + `<link rel="stylesheet" href="/virtual:stylex.css" />` +
    `import('virtual:stylex:css-only')`(HMR)를 직접 넣는다 → `app/stylex-dev.tsx`.
 3. **`textStyles` 스프레드 불가** — `stylex.create` 안에서 객체 스프레드가 금지라
-   `...textStyles.body`를 못 쓴다. 타이포 값을 인라인하거나 토큰으로 승격해야 한다.
-   (전면 전환 시 `text-styles.ts`를 어떻게 옮길지가 유일한 설계 숙제.)
+   `...textStyles.body`를 못 쓴다. 대신 `text-styles.ts`를 `stylex.create` 한 덩어리로 만들고
+   `props(sizes[size], text[...])`처럼 배열에서 합치면 값·결과가 같다. 이번 스파이크에서 값을
+   인라인한 것은 파일 2개만 만지려던 범위 제한 때문이다.
 4. **`transition` 축약 대신 longhand** — `transitionProperty`/`Duration`/`TimingFunction`으로 쪼갰다.
 5. peer 경고 — `@stylexjs/unplugin`은 `unplugin@^2.3.11`을 요구하는데 워크스페이스에 3.0.0이
    올라와 있다. 경고만 나고 동작에는 문제 없었다.
@@ -122,13 +123,11 @@ StyleX(Meta)는 병합 모델이 다르다 — 속성+조건 하나당 원자 �
 - 프로덕션에서는 `__root.tsx`의 `@layer …;` 선언문이 스타일시트 링크들보다 **뒤에** 파싱된다.
   실제 순서(reset, base, stylex.priority1‑5, recipes)는 자산 순서로 이미 맞아떨어졌지만,
   선언문이 순서를 강제하고 있는 것은 아니다.
-- 전환 후에도 `base-button.css.ts` / `button.css.ts`는 디스크에 남아 있다(임포트가 없어 VE가
-  방출하지 않음). 전면 전환에서 제거 대상.
+- 임포트가 사라진 `base-button.css.ts` / `button.css.ts`는 이 태스크에서 삭제했다.
 
 ### 판단
 
-전면 전환의 기술적 장애물은 없다. 남은 것은 34개 파일의 손품과 위 3번(타이포 토큰) 설계 하나다.
-전면 전환은 별도 태스크로 연다.
+전면 전환의 기술적 장애물은 없다. 남은 것은 32개 파일의 손품이다. 전면 전환은 별도 태스크(T039)로 연다.
 
 ## 대화 기록
 
@@ -254,3 +253,4 @@ StyleX(Meta)는 병합 모델이 다르다 — 속성+조건 하나당 원자 �
   `bun run lint:deps` 위반 0 / `bun run check`는 기존 2건(shared/time.ts, shared/i18n/index.ts)만 남음.
   E2E(Playwright, 390×844) — dev·prod(preview) 양쪽에서 `/login`, `/today` 렌더 확인,
   전환 전 스냅샷과 픽셀 차이 0.
+- 2026-09-13: 임포트가 사라진 `base-button.css.ts`·`button.css.ts` 삭제. typecheck/build/test(24) 재통과.
