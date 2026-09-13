@@ -5,6 +5,7 @@ import { createIsomorphicFn } from '@tanstack/react-start';
 import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?url';
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
+import { StylexDevStyles } from '@/app/stylex-dev';
 import type { RouterAppContext } from '@/app/trpc.ts';
 import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
@@ -69,9 +70,12 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        {/* 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < recipes < 레이어 없음(1회성 css).
-            (스타일시트 <link> 주입 순서와 무관하게 baseButton이 컴포넌트 recipe에 지고, 1회성 css가 recipe를 이긴다) */}
-        <style>{'@layer reset, base, base-recipe, recipes;'}</style>
+        {/* 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < stylex < recipes < 레이어 없음(1회성 css).
+            (스타일시트 <link> 주입 순서와 무관하게 baseButton이 컴포넌트 recipe에 지고, 1회성 css가 recipe를 이긴다)
+            stylex는 StyleX가 방출하는 stylex.priorityN의 부모 레이어 — 여기서 자리를 잡아
+            VE recipes가 StyleX 베이스를 덮는 관계를 전환 기간 동안 유지한다. */}
+        <style>{'@layer reset, base, base-recipe, stylex, recipes;'}</style>
+        <StylexDevStyles />
         <HeadContent />
       </head>
       <body>
