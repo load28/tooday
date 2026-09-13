@@ -1,12 +1,35 @@
-import { type TDividerVariantProps, tDivider } from '@/shared/ui/divider.css';
-import { cx } from '@/styles/cx';
+import * as stylex from '@stylexjs/stylex';
+import { color, space } from '@/styles/tokens.stylex';
 
-type DividerProps = TDividerVariantProps & {
+const base = stylex.create({
+  root: { borderStyle: 'none', borderWidth: 0, backgroundColor: color.divider, flexShrink: 0 },
+});
+
+const orientations = stylex.create({
+  horizontal: { width: '100%', height: '1px' },
+  vertical: { height: 'auto', alignSelf: 'stretch', width: '1px' },
+});
+
+const tones = stylex.create({
+  subtle: { backgroundColor: color.divider },
+  strong: { backgroundColor: color.border },
+});
+
+const insets = stylex.create({
+  none: { marginInline: 0 },
+  content: { marginInline: space.pageX },
+  leading: { marginInlineStart: space.dividerLeadingInset },
+});
+
+type DividerProps = {
+  orientation?: keyof typeof orientations;
+  tone?: keyof typeof tones;
+  inset?: keyof typeof insets;
+  sx?: stylex.StyleXStyles;
   className?: string;
 };
 
-export function Divider({ orientation, tone, inset, className }: DividerProps) {
-  // variant prop은 ConditionalValue(반응형)라 문자열일 때만 aria로 넘긴다
-  const ariaOrientation = typeof orientation === 'string' ? orientation : 'horizontal';
-  return <hr aria-orientation={ariaOrientation} className={cx(tDivider({ orientation, tone, inset }), className)} />;
+export function Divider({ orientation = 'horizontal', tone = 'subtle', inset = 'none', sx, className }: DividerProps) {
+  const { className: sxClassName, style } = stylex.props(base.root, orientations[orientation], tones[tone], insets[inset], sx);
+  return <hr aria-orientation={orientation} className={className ? `${sxClassName} ${className}` : sxClassName} style={style} />;
 }

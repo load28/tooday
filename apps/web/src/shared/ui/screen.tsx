@@ -1,32 +1,100 @@
+import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
-import { screenContent, screenFooter, screenHeader, screenOverlay, screenViewport } from '@/shared/ui/screen.css';
-import { cx } from '@/styles/cx';
+import { color, font, size as sizeVars, tracking } from '@/styles/tokens.stylex';
+
+const styles = stylex.create({
+  viewport: {
+    width: '100%',
+    // 반응형: base 100vh, sm(≥640px)부터 100dvh
+    height: { default: '100vh', '@media screen and (min-width: 640px)': '100dvh' },
+    backgroundColor: color.bg,
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+    overflow: 'hidden',
+    color: color.text,
+    fontFamily: font.sans,
+    letterSpacing: tracking.tight,
+  },
+  header: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', backgroundColor: color.bg, minHeight: sizeVars.appBar },
+  content: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '0%',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    WebkitOverflowScrolling: 'touch',
+    overscrollBehavior: 'contain',
+  },
+  footer: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    backgroundColor: color.surface,
+    borderTopWidth: '1px',
+    borderTopStyle: 'solid',
+    borderTopColor: color.divider,
+  },
+  overlay: { position: 'absolute', inset: 0, pointerEvents: 'none' },
+});
 
 type ScreenSlotProps = {
   children?: ReactNode;
+  sx?: stylex.StyleXStyles;
   className?: string;
 };
 
+const merge = (sxClassName: string | undefined, className?: string) => (className ? `${sxClassName} ${className}` : sxClassName);
+
 /** 화면 뷰포트(세로 flex 컨테이너). 헤더·본문·푸터를 이 순서로 담는다. */
-function ScreenRoot({ children, className }: ScreenSlotProps) {
-  return <div className={cx(screenViewport, className)}>{children}</div>;
+function ScreenRoot({ children, sx, className }: ScreenSlotProps) {
+  const { className: c, style } = stylex.props(styles.viewport, sx);
+  return (
+    <div className={merge(c, className)} style={style}>
+      {children}
+    </div>
+  );
 }
 
-function ScreenHeader({ children, className }: ScreenSlotProps) {
-  return <header className={cx(screenHeader, className)}>{children}</header>;
+function ScreenHeader({ children, sx, className }: ScreenSlotProps) {
+  const { className: c, style } = stylex.props(styles.header, sx);
+  return (
+    <header className={merge(c, className)} style={style}>
+      {children}
+    </header>
+  );
 }
 
 /** 유일한 스크롤 영역. 화면 단위 스크롤 위치를 갖는다. */
-function ScreenContent({ children, className }: ScreenSlotProps) {
-  return <main className={cx(screenContent, className)}>{children}</main>;
+function ScreenContent({ children, sx, className }: ScreenSlotProps) {
+  const { className: c, style } = stylex.props(styles.content, sx);
+  return (
+    <main className={merge(c, className)} style={style}>
+      {children}
+    </main>
+  );
 }
 
-function ScreenOverlay({ children, className }: ScreenSlotProps) {
-  return <div className={cx(screenOverlay, className)}>{children}</div>;
+/**
+ * 자식만 클릭을 받는 투명 레이어. 자식의 pointer-events 복구는 StyleX가 다룰 수 없는
+ * 자식 셀렉터라 global.css의 `[data-screen-overlay] > *` 한 줄이 맡는다.
+ */
+function ScreenOverlay({ children, sx, className }: ScreenSlotProps) {
+  const { className: c, style } = stylex.props(styles.overlay, sx);
+  return (
+    <div data-screen-overlay="" className={merge(c, className)} style={style}>
+      {children}
+    </div>
+  );
 }
 
-function ScreenFooter({ children, className }: ScreenSlotProps) {
-  return <footer className={cx(screenFooter, className)}>{children}</footer>;
+function ScreenFooter({ children, sx, className }: ScreenSlotProps) {
+  const { className: c, style } = stylex.props(styles.footer, sx);
+  return (
+    <footer className={merge(c, className)} style={style}>
+      {children}
+    </footer>
+  );
 }
 
 type ScreenProps = {
@@ -34,6 +102,7 @@ type ScreenProps = {
   bottomBar?: ReactNode;
   overlay?: ReactNode;
   children?: ReactNode;
+  sx?: stylex.StyleXStyles;
   className?: string;
 };
 
@@ -44,9 +113,9 @@ type ScreenProps = {
  * `routes/_app/_tabs`)는 이 조합 대신 `Screen.Root`/`Header`/`Content`/`Footer`
  * 파트를 직접 조립한다.
  */
-function ScreenBase({ topBar, bottomBar, overlay, children, className }: ScreenProps) {
+function ScreenBase({ topBar, bottomBar, overlay, children, sx, className }: ScreenProps) {
   return (
-    <ScreenRoot className={className}>
+    <ScreenRoot sx={sx} className={className}>
       {topBar != null ? <ScreenHeader>{topBar}</ScreenHeader> : null}
       <ScreenContent>{children}</ScreenContent>
       {overlay != null ? <ScreenOverlay>{overlay}</ScreenOverlay> : null}

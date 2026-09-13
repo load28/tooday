@@ -1,8 +1,12 @@
 import { Field as ArkField } from '@ark-ui/react/field';
+import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
-import { fieldRoot } from '@/shared/ui/field.css';
 import { Text } from '@/shared/ui/text';
-import { cx } from '@/styles/cx';
+import { space } from '@/styles/tokens.stylex';
+
+const styles = stylex.create({
+  root: { display: 'flex', flexDirection: 'column', gap: space.md, minWidth: 0 },
+});
 
 type FieldProps = {
   label?: string;
@@ -14,6 +18,7 @@ type FieldProps = {
   invalid?: boolean;
   required?: boolean;
   disabled?: boolean;
+  sx?: stylex.StyleXStyles;
   className?: string;
   children: ReactNode;
 };
@@ -23,13 +28,15 @@ type FieldProps = {
  * Ark Field가 id, aria-describedby, data-invalid를 하위 컨트롤
  * (Input, NumberInput 등 Field.Input 기반 컨트롤)에 전파한다.
  */
-export function Field({ label, helper, error, invalid, required, disabled, className, children }: FieldProps) {
+export function Field({ label, helper, error, invalid, required, disabled, sx, className, children }: FieldProps) {
+  const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <ArkField.Root
       invalid={invalid ?? error !== undefined}
       required={required}
       disabled={disabled}
-      className={cx(fieldRoot(), className)}
+      className={className ? `${sxClassName} ${className}` : sxClassName}
+      style={style}
     >
       {label !== undefined ? (
         <ArkField.Label asChild>

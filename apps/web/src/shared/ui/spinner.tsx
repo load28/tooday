@@ -1,19 +1,40 @@
+import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef } from 'react';
 import { useT } from '@/shared/i18n';
-import { spinner } from '@/shared/ui/spinner.css';
-import { cx } from '@/styles/cx';
+import { radii } from '@/styles/tokens.stylex';
 
-type SpinnerProps = ComponentPropsWithoutRef<'output'> & {
+const styles = stylex.create({
+  root: {
+    display: 'inline-block',
+    flexShrink: 0,
+    width: '1em',
+    height: '1em',
+    borderRadius: radii.full,
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderColor: 'currentcolor',
+    borderBottomColor: 'transparent',
+    animationName: 'toodaySpin',
+    animationDuration: '0.6s',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+  },
+});
+
+type SpinnerProps = Omit<ComponentPropsWithoutRef<'output'>, 'style'> & {
   label?: string;
+  sx?: stylex.StyleXStyles;
 };
 
-export function Spinner({ label, className, ...rest }: SpinnerProps) {
+export function Spinner({ label, sx, className, ...rest }: SpinnerProps) {
   const t = useT();
+  const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <output
       aria-label={rest['aria-hidden'] ? undefined : (label ?? t.common.loading)}
       {...rest}
-      className={cx(spinner(), className)}
+      className={className ? `${sxClassName} ${className}` : sxClassName}
+      style={style}
     />
   );
 }

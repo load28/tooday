@@ -92,3 +92,10 @@ today(task-card/today-screen/week-strip).
 
 - 2026-09-13: 태스크 생성. 대상 실측 — `*.css.ts` 32개(theme 185줄·layers 15줄 포함 시 34개),
   `cx` 사용 16파일, `theme.css` 참조 33파일, VE recipe 사용 19파일.
+- 2026-09-13: 1단계 — tokens.stylex.ts를 theme 전체 계약으로 확장, text.styles.ts 신설.
+- 2026-09-13: 2단계 — shared/ui 18개 프리미티브를 StyleX로 이관하고 `*.css.ts`를 모두 제거했다.
+  자손 셀렉터 두 곳은 공식 레시피대로 처리 — ColorSwatch Indicator는 `slots.stylex.ts`의
+  변수(`swatch.indicatorOpacity`)로, `Screen.Overlay > *`는 global.css의
+  `[data-screen-overlay] > *` 한 줄로 옮겼다. Input의 `&&` 스펙시티 트릭은 인자 순서로 대체했다.
+  검증 — typecheck/build/test(24)/lint 통과, `/login`·`/today`·`/projects` 픽셀 차이 0,
+  `/settings`는 랜덤 이메일 문자열만 다름.

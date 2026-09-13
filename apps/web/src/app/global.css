@@ -290,6 +290,12 @@
     -webkit-user-drag: none;
     user-select: none;
   }
+
+  /* Screen.Overlay는 자기 자신만 클릭을 통과시키고 자식은 받게 한다.
+     자식 셀렉터라 StyleX로 표현할 수 없어 여기 한 줄로 둔다. */
+  [data-screen-overlay] > * {
+    pointer-events: auto;
+  }
 }
 
 /* ── keyframes ─────────────────────────────────────────────────────────── */
