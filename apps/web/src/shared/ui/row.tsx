@@ -89,11 +89,13 @@ type RowBase = {
   leading?: ReactNode;
   trailing?: ReactNode;
   sx?: ControlSx;
-  className?: string;
   children?: ReactNode;
 };
 
-type RowProps<T extends ElementType> = RowBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof RowBase | 'as'>;
+type RowProps<T extends ElementType> = RowBase & { as?: T } & Omit<
+    ComponentPropsWithoutRef<T>,
+    keyof RowBase | 'as' | 'className'
+  >;
 
 export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
   const {
@@ -105,7 +107,6 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
     leading,
     trailing,
     sx,
-    className,
     children,
     ...rest
   } = props;
@@ -117,7 +118,7 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
     insets[inset],
     sx,
   );
-  const cls = className ? `${sxClassName} ${className}` : sxClassName;
+  const cls = sxClassName;
   const slots = (
     <>
       {leading != null ? <div {...stylex.props(base.slotLeading)}>{leading}</div> : null}

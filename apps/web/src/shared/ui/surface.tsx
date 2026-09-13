@@ -73,11 +73,13 @@ type SurfaceBase = {
   padding?: keyof typeof paddings;
   inset?: keyof typeof insets;
   sx?: SurfaceSx;
-  className?: string;
   children?: ReactNode;
 };
 
-type SurfaceProps<T extends ElementType> = SurfaceBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof SurfaceBase | 'as'>;
+type SurfaceProps<T extends ElementType> = SurfaceBase & { as?: T } & Omit<
+    ComponentPropsWithoutRef<T>,
+    keyof SurfaceBase | 'as' | 'className'
+  >;
 
 export function Surface<T extends ElementType = 'div'>(props: SurfaceProps<T>) {
   const {
@@ -89,7 +91,6 @@ export function Surface<T extends ElementType = 'div'>(props: SurfaceProps<T>) {
     padding,
     inset,
     sx,
-    className,
     children,
     ...rest
   } = props;
@@ -105,7 +106,7 @@ export function Surface<T extends ElementType = 'div'>(props: SurfaceProps<T>) {
     sx,
   );
   return (
-    <Tag {...rest} className={className ? `${sxClassName} ${className}` : sxClassName} style={style}>
+    <Tag {...rest} className={sxClassName} style={style}>
       {children}
     </Tag>
   );

@@ -67,7 +67,6 @@ type BottomSheetProps = {
 type BottomSheetSlotProps<Sx> = {
   children?: ReactNode;
   sx?: Sx;
-  className?: string;
 };
 
 function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProps) {
@@ -93,28 +92,28 @@ function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProp
   );
 }
 
-function BottomSheetHeader({ children, sx, className }: BottomSheetSlotProps<FlexSx>) {
+function BottomSheetHeader({ children, sx }: BottomSheetSlotProps<FlexSx>) {
   return (
-    <Stack gap="xs" sx={sx} className={className}>
+    <Stack gap="xs" sx={sx}>
       {children}
     </Stack>
   );
 }
 
-function BottomSheetTitle({ children, sx, className }: BottomSheetSlotProps<TextSx>) {
+function BottomSheetTitle({ children, sx }: BottomSheetSlotProps<TextSx>) {
   return (
     <Dialog.Title asChild>
-      <Text as="h2" variant="title" sx={sx} className={className}>
+      <Text as="h2" variant="title" sx={sx}>
         {children}
       </Text>
     </Dialog.Title>
   );
 }
 
-function BottomSheetDescription({ children, sx, className }: BottomSheetSlotProps<TextSx>) {
+function BottomSheetDescription({ children, sx }: BottomSheetSlotProps<TextSx>) {
   return (
     <Dialog.Description asChild>
-      <Text as="p" variant="bodySm" tone="tertiary" sx={sx} className={className}>
+      <Text as="p" variant="bodySm" tone="tertiary" sx={sx}>
         {children}
       </Text>
     </Dialog.Description>

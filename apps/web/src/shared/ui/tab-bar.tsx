@@ -50,13 +50,12 @@ type TabBarProps<K extends string> = {
   onSelect?: (key: K) => void;
   'aria-label'?: string;
   sx?: ControlSx;
-  className?: string;
 };
 
-export function TabBar<K extends string>({ items, activeKey, onSelect, sx, className, ...rest }: TabBarProps<K>) {
+export function TabBar<K extends string>({ items, activeKey, onSelect, sx, ...rest }: TabBarProps<K>) {
   const { className: navClassName, style } = stylex.props(styles.nav, sx);
   return (
-    <nav {...rest} className={className ? `${navClassName} ${className}` : navClassName} style={style}>
+    <nav {...rest} className={navClassName} style={style}>
       <div {...stylex.props(styles.inner)}>
         {items.map(({ key, label, icon }) => {
           const isActive = key === activeKey;

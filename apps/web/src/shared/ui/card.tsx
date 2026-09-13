@@ -66,25 +66,16 @@ type CardBase = {
   interactive?: boolean;
   selected?: boolean;
   sx?: SurfaceSx;
-  className?: string;
   children?: ReactNode;
 };
 
-type CardProps<T extends ElementType> = CardBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof CardBase | 'as'>;
+type CardProps<T extends ElementType> = CardBase & { as?: T } & Omit<
+    ComponentPropsWithoutRef<T>,
+    keyof CardBase | 'as' | 'className'
+  >;
 
 export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
-  const {
-    as,
-    elevation = 'raised',
-    radius = 'xl',
-    padding = 'none',
-    interactive,
-    selected,
-    sx,
-    className,
-    children,
-    ...rest
-  } = props;
+  const { as, elevation = 'raised', radius = 'xl', padding = 'none', interactive, selected, sx, children, ...rest } = props;
   const { className: sxClassName, style } = stylex.props(
     base.root,
     elevations[elevation],
@@ -94,7 +85,7 @@ export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
     selected && base.selected,
     sx,
   );
-  const cls = className ? `${sxClassName} ${className}` : sxClassName;
+  const cls = sxClassName;
 
   // interactive 카드는 항상 버튼 — Framer Motion으로 press 딤을 스프링 구동(TDS와 동일한 방식).
   if (interactive) {

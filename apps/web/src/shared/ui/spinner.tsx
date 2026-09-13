@@ -22,19 +22,19 @@ const styles = stylex.create({
   },
 });
 
-type SpinnerProps = Omit<ComponentPropsWithoutRef<'output'>, 'style'> & {
+type SpinnerProps = Omit<ComponentPropsWithoutRef<'output'>, 'style' | 'className'> & {
   label?: string;
   sx?: ControlSx;
 };
 
-export function Spinner({ label, sx, className, ...rest }: SpinnerProps) {
+export function Spinner({ label, sx, ...rest }: SpinnerProps) {
   const t = useT();
   const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <output
       aria-label={rest['aria-hidden'] ? undefined : (label ?? t.common.loading)}
       {...rest}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
+      className={sxClassName}
       style={style}
     />
   );

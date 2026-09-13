@@ -180,7 +180,6 @@ export function Button({
   loading,
   loadingText,
   spinner,
-  className,
   sx,
   children,
   onClick,
@@ -241,7 +240,7 @@ export function Button({
   // asChild(<Link> 등)는 Ark BaseButton으로 — 링크엔 tap 축소가 부적절하므로 모션 없이 둔다.
   if (asChild) {
     return (
-      <BaseButton asChild className={className} sx={look} {...rest} {...shared}>
+      <BaseButton asChild sx={look} {...rest} {...shared}>
         {content}
       </BaseButton>
     );
@@ -257,7 +256,7 @@ export function Button({
       transition={PRESS_SPRING}
       {...(rest as unknown as HTMLMotionProps<'button'>)}
       {...shared}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
+      className={sxClassName}
       style={style}
     >
       {content}

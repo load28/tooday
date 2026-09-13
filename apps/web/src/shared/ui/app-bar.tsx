@@ -30,42 +30,39 @@ const styles = stylex.create({
 type AppBarSlotProps = {
   children?: ReactNode;
   sx?: SlotSx;
-  className?: string;
 };
 
-const merge = (sxClassName: string | undefined, className?: string) => (className ? `${sxClassName} ${className}` : sxClassName);
-
-function AppBarRoot({ children, sx, className }: AppBarSlotProps) {
+function AppBarRoot({ children, sx }: AppBarSlotProps) {
   const { className: c, style } = stylex.props(styles.root, sx);
   return (
-    <header className={merge(c, className)} style={style}>
+    <header className={c} style={style}>
       {children}
     </header>
   );
 }
 
-function AppBarLeading({ children, sx, className }: AppBarSlotProps) {
+function AppBarLeading({ children, sx }: AppBarSlotProps) {
   const { className: c, style } = stylex.props(styles.side, sx);
   return (
-    <div className={merge(c, className)} style={style}>
+    <div className={c} style={style}>
       {children}
     </div>
   );
 }
 
-function AppBarTitle({ children, sx, className }: AppBarSlotProps) {
+function AppBarTitle({ children, sx }: AppBarSlotProps) {
   const { className: c, style } = stylex.props(text.subtitle, styles.title, sx);
   return (
-    <span className={merge(c, className)} style={style}>
+    <span className={c} style={style}>
       {children}
     </span>
   );
 }
 
-function AppBarTrailing({ children, sx, className }: AppBarSlotProps) {
+function AppBarTrailing({ children, sx }: AppBarSlotProps) {
   const { className: c, style } = stylex.props(styles.side, sx);
   return (
-    <div className={merge(c, className)} style={style}>
+    <div className={c} style={style}>
       {children}
     </div>
   );

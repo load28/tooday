@@ -55,7 +55,6 @@ type ColorSwatchGroupProps<V extends string> = {
   value: V | null;
   onValueChange: (value: V) => void;
   sx?: FlexSx;
-  className?: string;
   children?: ReactNode;
   'aria-label'?: string;
 };
@@ -64,7 +63,7 @@ function ColorSwatchGroupRoot<V extends string>({
   value,
   onValueChange,
   sx,
-  className,
+
   children,
   ...rest
 }: ColorSwatchGroupProps<V>) {
@@ -77,7 +76,7 @@ function ColorSwatchGroupRoot<V extends string>({
         const next = details.value[0] as V | undefined;
         if (next !== undefined) onValueChange(next);
       }}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
+      className={sxClassName}
       style={style}
       {...rest}
     >

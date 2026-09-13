@@ -34,18 +34,10 @@ type DotProps = {
   size?: keyof typeof sizes;
   tone?: keyof typeof tones;
   sx?: ControlSx;
-  className?: string;
   'aria-label'?: string;
 };
 
-export function Dot({ size = 'sm', tone = 'neutral', sx, className, ...rest }: DotProps) {
+export function Dot({ size = 'sm', tone = 'neutral', sx, ...rest }: DotProps) {
   const { className: sxClassName, style } = stylex.props(base.root, sizes[size], tones[tone], sx);
-  return (
-    <span
-      aria-hidden={rest['aria-label'] ? undefined : true}
-      {...rest}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
-      style={style}
-    />
-  );
+  return <span aria-hidden={rest['aria-label'] ? undefined : true} {...rest} className={sxClassName} style={style} />;
 }

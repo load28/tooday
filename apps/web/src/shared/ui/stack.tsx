@@ -68,11 +68,13 @@ type StackBase = {
   wrap?: boolean;
   inline?: boolean;
   sx?: FlexSx;
-  className?: string;
   children?: ReactNode;
 };
 
-type StackProps<T extends ElementType> = StackBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof StackBase | 'as'>;
+type StackProps<T extends ElementType> = StackBase & { as?: T } & Omit<
+    ComponentPropsWithoutRef<T>,
+    keyof StackBase | 'as' | 'className'
+  >;
 
 // alignItems 충돌을 피하려 direction은 flexDirection만, alignItems는 align variant만 맡는다.
 function stackProps(
@@ -92,7 +94,7 @@ function stackProps(
 }
 
 export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
-  const { as, gap = 'xl', align, justify, wrap, inline, sx, className, children, ...rest } = props;
+  const { as, gap = 'xl', align, justify, wrap, inline, sx, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
   const { className: sxClassName, style } = stackProps('column', {
     gap,
@@ -103,14 +105,14 @@ export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
     sx,
   });
   return (
-    <Tag {...rest} className={className ? `${sxClassName} ${className}` : sxClassName} style={style}>
+    <Tag {...rest} className={sxClassName} style={style}>
       {children}
     </Tag>
   );
 }
 
 export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
-  const { as, gap = 'md', align, justify, wrap, inline, sx, className, children, ...rest } = props;
+  const { as, gap = 'md', align, justify, wrap, inline, sx, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
   const { className: sxClassName, style } = stackProps('row', {
     gap,
@@ -121,7 +123,7 @@ export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
     sx,
   });
   return (
-    <Tag {...rest} className={className ? `${sxClassName} ${className}` : sxClassName} style={style}>
+    <Tag {...rest} className={sxClassName} style={style}>
       {children}
     </Tag>
   );

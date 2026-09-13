@@ -67,14 +67,13 @@ type InputOwnProps = {
   variant?: InputVariant;
   size?: InputSize;
   sx?: ControlSx;
-  className?: string;
 };
 
-type InputProps = InputOwnProps & Omit<ComponentPropsWithRef<'input'>, keyof InputOwnProps | 'style'>;
+type InputProps = InputOwnProps & Omit<ComponentPropsWithRef<'input'>, keyof InputOwnProps | 'style' | 'className'>;
 
 /** Field 컨텍스트가 있으면 id·aria 배선을 물려받고, 없으면 일반 input으로 동작한다. */
-export function Input({ variant = 'box', size = 'md', sx, className, ...rest }: InputProps) {
+export function Input({ variant = 'box', size = 'md', sx, ...rest }: InputProps) {
   const look = variant === 'inline' ? [text.display, base.inline] : [base.box, sizes[size]];
   const { className: sxClassName, style } = stylex.props(base.root, ...look, sx);
-  return <ArkField.Input {...rest} className={className ? `${sxClassName} ${className}` : sxClassName} style={style} />;
+  return <ArkField.Input {...rest} className={sxClassName} style={style} />;
 }

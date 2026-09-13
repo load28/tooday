@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
+import type { FlexSx } from '@/styles/sx';
 import { space } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -21,13 +22,13 @@ type SectionProps = {
   trailing?: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
-  className?: string;
+  sx?: FlexSx;
 };
 
-export function Section({ title, trailing, description, children, className }: SectionProps) {
+export function Section({ title, trailing, description, children, sx }: SectionProps) {
   const showHeader = title != null || trailing != null || description != null;
   return (
-    <Stack as="section" gap="md" className={className}>
+    <Stack as="section" gap="md" sx={sx}>
       {showHeader ? (
         <header {...stylex.props(styles.header)}>
           <Stack gap="2xs">

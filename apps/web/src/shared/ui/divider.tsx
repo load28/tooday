@@ -27,10 +27,9 @@ type DividerProps = {
   tone?: keyof typeof tones;
   inset?: keyof typeof insets;
   sx?: SlotSx;
-  className?: string;
 };
 
-export function Divider({ orientation = 'horizontal', tone = 'subtle', inset = 'none', sx, className }: DividerProps) {
+export function Divider({ orientation = 'horizontal', tone = 'subtle', inset = 'none', sx }: DividerProps) {
   const { className: sxClassName, style } = stylex.props(base.root, orientations[orientation], tones[tone], insets[inset], sx);
-  return <hr aria-orientation={orientation} className={className ? `${sxClassName} ${className}` : sxClassName} style={style} />;
+  return <hr aria-orientation={orientation} className={sxClassName} style={style} />;
 }

@@ -46,14 +46,13 @@ type ChipProps = {
   leading?: ReactNode;
   trailing?: ReactNode;
   sx?: TextSx;
-  className?: string;
   children?: ReactNode;
 };
 
-export function Chip({ tone = 'neutral', size = 'md', leading, trailing, sx, className, children }: ChipProps) {
+export function Chip({ tone = 'neutral', size = 'md', leading, trailing, sx, children }: ChipProps) {
   const { className: sxClassName, style } = stylex.props(base.root, text.caption, tones[tone], SIZE_TEXT[size], sizes[size], sx);
   return (
-    <span className={className ? `${sxClassName} ${className}` : sxClassName} style={style}>
+    <span className={sxClassName} style={style}>
       {leading}
       {children}
       {trailing}

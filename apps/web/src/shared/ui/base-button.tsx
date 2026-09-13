@@ -28,7 +28,7 @@ const styles = stylex.create({
   },
 });
 
-type BaseButtonProps = Omit<ComponentPropsWithoutRef<'button'>, 'style'> & {
+type BaseButtonProps = Omit<ComponentPropsWithoutRef<'button'>, 'style' | 'className'> & {
   children?: ReactNode;
   /**
    * children 엘리먼트에 버튼 스타일·props를 병합해 렌더한다(예: <Link>). Ark factory가 처리.
@@ -45,7 +45,7 @@ type BaseButtonProps = Omit<ComponentPropsWithoutRef<'button'>, 'style'> & {
 };
 
 /** 모든 클릭 가능한 엘리먼트의 토대 — 리셋 + 인터랙션만. 버튼처럼 보여야 하면 Button을 쓴다. */
-export function BaseButton({ asChild, className, sx, children, type, ...rest }: BaseButtonProps) {
+export function BaseButton({ asChild, sx, children, type, ...rest }: BaseButtonProps) {
   const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <ark.button
@@ -54,7 +54,7 @@ export function BaseButton({ asChild, className, sx, children, type, ...rest }: 
       type={asChild ? undefined : (type ?? 'button')}
       data-base-button=""
       {...rest}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
+      className={sxClassName}
       style={style}
     >
       {children}

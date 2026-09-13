@@ -42,14 +42,16 @@ type TextBase = {
   strike?: boolean;
   /** 배치용 StyleX 스타일. 베이스 뒤에 병합되므로 겹치는 속성은 이쪽이 이긴다. */
   sx?: TextSx;
-  className?: string;
   children?: ReactNode;
 };
 
-type TextProps<T extends ElementType> = TextBase & { as?: T } & Omit<ComponentPropsWithoutRef<T>, keyof TextBase | 'as'>;
+type TextProps<T extends ElementType> = TextBase & { as?: T } & Omit<
+    ComponentPropsWithoutRef<T>,
+    keyof TextBase | 'as' | 'className'
+  >;
 
 export function Text<T extends ElementType = 'span'>(props: TextProps<T>) {
-  const { as, variant = 'body', tone = 'default', align, truncate, strike, sx, className, children, ...rest } = props;
+  const { as, variant = 'body', tone = 'default', align, truncate, strike, sx, children, ...rest } = props;
   const Tag = (as ?? 'span') as ElementType;
   const { className: sxClassName, style } = stylex.props(
     base.root,
@@ -61,7 +63,7 @@ export function Text<T extends ElementType = 'span'>(props: TextProps<T>) {
     sx,
   );
   return (
-    <Tag {...rest} className={className ? `${sxClassName} ${className}` : sxClassName} style={style}>
+    <Tag {...rest} className={sxClassName} style={style}>
       {children}
     </Tag>
   );

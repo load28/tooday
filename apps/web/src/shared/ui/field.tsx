@@ -20,7 +20,6 @@ type FieldProps = {
   required?: boolean;
   disabled?: boolean;
   sx?: SlotSx;
-  className?: string;
   children: ReactNode;
 };
 
@@ -29,14 +28,14 @@ type FieldProps = {
  * Ark Field가 id, aria-describedby, data-invalid를 하위 컨트롤
  * (Input, NumberInput 등 Field.Input 기반 컨트롤)에 전파한다.
  */
-export function Field({ label, helper, error, invalid, required, disabled, sx, className, children }: FieldProps) {
+export function Field({ label, helper, error, invalid, required, disabled, sx, children }: FieldProps) {
   const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <ArkField.Root
       invalid={invalid ?? error !== undefined}
       required={required}
       disabled={disabled}
-      className={className ? `${sxClassName} ${className}` : sxClassName}
+      className={sxClassName}
       style={style}
     >
       {label !== undefined ? (

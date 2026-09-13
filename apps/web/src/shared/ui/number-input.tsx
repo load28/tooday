@@ -11,10 +11,10 @@ type NumberInputOwnProps = {
   size?: InputSize;
   /** 미지정 시 min/max 범위를 벗어나면 자동으로 invalid 처리한다 */
   invalid?: boolean;
-  className?: string;
 };
 
-type NumberInputProps = NumberInputOwnProps & Omit<ComponentPropsWithRef<'input'>, keyof NumberInputOwnProps | 'type'>;
+type NumberInputProps = NumberInputOwnProps &
+  Omit<ComponentPropsWithRef<'input'>, keyof NumberInputOwnProps | 'type' | 'className'>;
 
 function clamp(value: number, min?: number, max?: number): number {
   let result = value;
@@ -39,7 +39,6 @@ export function NumberInput({
   step = 1,
   size,
   invalid,
-  className,
   disabled,
   onBlur,
   ...rest
@@ -101,7 +100,6 @@ export function NumberInput({
       onChange={handleChange}
       onBlur={handleBlur}
       size={size}
-      className={className}
     />
   );
 }

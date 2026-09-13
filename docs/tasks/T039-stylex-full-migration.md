@@ -117,3 +117,7 @@ today(task-card/today-screen/week-strip).
   when.ancestor는 조상에 `stylex.defaultMarker()`를 붙여야 해서 조상·자손 컴포넌트가
   마커를 공유하는 결합이 생긴다([when API](https://stylexjs.com/docs/api/javascript/when)).
   검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).
+- 2026-09-13: 후속 — 전환기 호환용으로 남겨뒀던 `className` prop을 `shared/ui` 전체에서 제거했다.
+  사용처가 0이었고, 타입으로 좁힌 `sx`를 우회하는 뒷문이라 남길 이유가 없다.
+  네이티브 `className`이 스프레드로 새어 들어오지 않게 각 props 타입의 `Omit`에 `'className'`을 넣었다.
+  검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).
