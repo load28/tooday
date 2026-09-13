@@ -65,4 +65,4 @@
 | T036 | [Panda CSS → vanilla-extract 마이그레이션](T036-panda-to-vanilla-extract.md) | 중간 | ✅ 완료 |
 | T037 | [vanilla-extract 전환에 맞춰 문서·주석 정합](T037-ve-docs-alignment.md) | 중간 | ✅ 완료 |
 | T038 | [StyleX 전환 타당성 스파이크 (vanilla-extract 대체 검토)](T038-stylex-migration-spike.md) | 중간 | ✅ 완료 |
-| T039 | [vanilla-extract → StyleX 전면 전환](T039-stylex-full-migration.md) | 중간 | 🔄 진행중 |
+| T039 | [vanilla-extract → StyleX 전면 전환](T039-stylex-full-migration.md) | 중간 | ✅ 완료 |

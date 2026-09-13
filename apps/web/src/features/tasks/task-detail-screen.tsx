@@ -1,3 +1,4 @@
+import * as stylex from '@stylexjs/stylex';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import type { Task, TaskPatch, TaskStatus, UpdateTaskRequest } from '@tooday/shared';
@@ -5,7 +6,7 @@ import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { applyTaskPatch } from '@/entities/task/patch';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
-import { pageCls, statusButtonCls } from '@/features/tasks/task-detail-screen.css';
+import { styles } from '@/features/tasks/task-detail-screen.styles';
 import {
   MetaList,
   MetaRow,
@@ -100,7 +101,7 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
         </AppBar>
       }
     >
-      <div className={pageCls}>
+      <div {...stylex.props(styles.page)}>
         <Stack gap="lg">
           <Input
             variant="inline"
@@ -117,7 +118,7 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
             aria-label={t.taskDetail.title}
           />
 
-          <BaseButton className={statusButtonCls} onClick={() => setStatusSheetOpen(true)}>
+          <BaseButton sx={styles.statusButton} onClick={() => setStatusSheetOpen(true)}>
             <Chip tone={STATUS_CHIP_TONE[task.status]} size="lg" leading={<Dot size="sm" tone={STATUS_DOT_TONE[task.status]} />}>
               {t.common.status[task.status]}
             </Chip>

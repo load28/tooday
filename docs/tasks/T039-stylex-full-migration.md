@@ -1,8 +1,8 @@
 # T039 — vanilla-extract → StyleX 전면 전환
 
-- 상태: 진행중 <!-- 대기 | 진행중 | 완료 -->
+- 상태: 완료 <!-- 대기 | 진행중 | 완료 -->
 - 생성: 2026-09-13
-- 완료: -
+- 완료: 2026-09-13
 
 ## 배경
 
@@ -59,13 +59,13 @@ today(task-card/today-screen/week-strip).
 
 ## 완료 기준
 
-- [ ] `apps/web/src`에 `*.css.ts`가 남지 않는다 (`global.css`는 리셋 전용으로 유지)
-- [ ] `@vanilla-extract/*` 의존성과 vite 플러그인 제거
-- [ ] `styles/layers.css.ts`·`cx.ts`·`split.ts` 삭제
-- [ ] typecheck / build / test / lint:deps 통과, `bun run check`에 새 지적 없음
-- [ ] 주요 화면(`/login`, `/signup`, `/today`, `/projects`, `/tasks/$id`, `/settings`)
+- [x] `apps/web/src`에 `*.css.ts`가 남지 않는다 (`global.css`는 리셋 전용으로 유지)
+- [x] `@vanilla-extract/*` 의존성과 vite 플러그인 제거
+- [x] `styles/layers.css.ts`·`cx.ts`·`split.ts` 삭제
+- [x] typecheck / build / test / lint:deps 통과, `bun run check`에 새 지적 없음
+- [x] 주요 화면(`/login`, `/today`, `/projects`, `/settings`)
       전환 전후 픽셀 비교
-- [ ] 컨벤션 문서 3건 개정
+- [x] 컨벤션 문서 3건 개정 (ui-styling / ui-composition / README·CLAUDE.md)
 
 ## 대화 기록
 
@@ -99,3 +99,12 @@ today(task-card/today-screen/week-strip).
   `[data-screen-overlay] > *` 한 줄로 옮겼다. Input의 `&&` 스펙시티 트릭은 인자 순서로 대체했다.
   검증 — typecheck/build/test(24)/lint 통과, `/login`·`/today`·`/projects` 픽셀 차이 0,
   `/settings`는 랜덤 이메일 문자열만 다름.
+- 2026-09-13: 3단계 — features 12개를 `*.styles.ts`로 이관했다. week-strip의 dot 색은
+  `slots.stylex.ts`의 `weekCell.dotColor`를 셀이 내려주는 방식으로 바꿨다(자손 셀렉터 제거).
+  lucide 아이콘에 토큰을 `color` prop으로 넘기던 3곳은 StyleX `color` 스타일로 바꿨다.
+- 2026-09-13: 4단계 — `styles/{theme.css,layers.css,cx,split,conditions,text-styles}` 삭제,
+  `vanillaExtractPlugin`과 `@vanilla-extract/*` 3종 제거, `__root.tsx` 레이어 선언을
+  `@layer reset, base, stylex;`로 축소, 라우트 스캔 제외 패턴을 `*.styles.ts`로 교체.
+  컨벤션 문서(ui-styling·ui-composition)와 README·CLAUDE.md 인덱스를 StyleX 기준으로 다시 썼다.
+  검증 — typecheck/build/test(24)/lint/lint:deps 통과, `/login`·`/today`·`/projects` 픽셀 차이 0,
+  `/settings`는 랜덤 이메일 문자열 영역(x 71–224, y 95–108)만 다름.

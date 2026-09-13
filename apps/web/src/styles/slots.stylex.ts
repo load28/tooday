@@ -6,3 +6,7 @@ export const swatch = stylex.defineVars({
   color: 'transparent',
   indicatorOpacity: '0',
 });
+
+export const weekCell = stylex.defineVars({
+  dotColor: 'transparent',
+});

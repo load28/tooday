@@ -70,11 +70,11 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        {/* 캐스케이드 레이어 순서 확정 — reset < base < base-recipe < stylex < recipes < 레이어 없음(1회성 css).
-            (스타일시트 <link> 주입 순서와 무관하게 baseButton이 컴포넌트 recipe에 지고, 1회성 css가 recipe를 이긴다)
-            stylex는 StyleX가 방출하는 stylex.priorityN의 부모 레이어 — 여기서 자리를 잡아
-            VE recipes가 StyleX 베이스를 덮는 관계를 전환 기간 동안 유지한다. */}
-        <style>{'@layer reset, base, base-recipe, stylex, recipes;'}</style>
+        {/* 캐스케이드 레이어 순서 확정 — reset < base < stylex.
+            stylex는 StyleX가 방출하는 stylex.priorityN의 부모 레이어다. 스타일시트 주입 순서와
+            무관하게 컴포넌트 스타일이 리셋을 이기도록 이 한 줄이 자리를 확정한다.
+            (컴포넌트끼리의 승패는 레이어가 아니라 stylex.props 인자 순서가 정한다) */}
+        <style>{'@layer reset, base, stylex;'}</style>
         <StylexDevStyles />
         <HeadContent />
       </head>

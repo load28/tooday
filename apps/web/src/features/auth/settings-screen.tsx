@@ -1,8 +1,9 @@
+import * as stylex from '@stylexjs/stylex';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
-import { logoutSlotCls, pageCls, sheetActionsCls } from '@/features/auth/settings-screen.css';
+import { styles } from '@/features/auth/settings-screen.styles';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
 
@@ -46,14 +47,14 @@ export function SettingsScreen() {
           </AppBar>
         }
       >
-        <div className={pageCls}>
+        <div {...stylex.props(styles.page)}>
           <Stack gap="xs">
             <Text variant="label" tone="tertiary">
               {t.settings.account.label}
             </Text>
             <Text variant="body">{data.user?.email}</Text>
           </Stack>
-          <div className={logoutSlotCls}>
+          <div {...stylex.props(styles.logoutSlot)}>
             <Button tone="danger" size="xl" fullWidth onClick={() => setConfirmOpen(true)}>
               {t.settings.logout.action}
             </Button>
@@ -66,7 +67,7 @@ export function SettingsScreen() {
           <BottomSheet.Title>{t.settings.logout.confirmTitle}</BottomSheet.Title>
           <BottomSheet.Description>{t.settings.logout.confirmDescription}</BottomSheet.Description>
         </BottomSheet.Header>
-        <Stack gap="md" className={sheetActionsCls}>
+        <Stack gap="md" sx={styles.sheetActions}>
           {logout.isError ? (
             <Text variant="bodySm" tone="danger" align="center">
               {t.settings.logout.error}

@@ -1,9 +1,10 @@
+import * as stylex from '@stylexjs/stylex';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import * as v from 'valibot';
-import { formCls } from '@/features/auth/signup-screen.css';
+import { styles } from '@/features/auth/signup-screen.styles';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { Button, HStack, Screen, Stack, Text, TextField } from '@/shared/ui';
@@ -59,7 +60,7 @@ export function SignupScreen() {
   return (
     <Screen>
       <form
-        className={formCls}
+        {...stylex.props(styles.form)}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
