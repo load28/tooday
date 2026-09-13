@@ -1,4 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
+import type { SlotSx } from '@/styles/sx';
 import { color, space } from '@/styles/tokens.stylex';
 
 const base = stylex.create({
@@ -25,7 +26,7 @@ type DividerProps = {
   orientation?: keyof typeof orientations;
   tone?: keyof typeof tones;
   inset?: keyof typeof insets;
-  sx?: stylex.StyleXStyles;
+  sx?: SlotSx;
   className?: string;
 };
 

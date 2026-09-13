@@ -4,6 +4,7 @@ import { type MouseEvent, type ReactNode, useId } from 'react';
 import { useT } from '@/shared/i18n';
 import { BaseButton, type BaseButtonProps, baseButtonStyles } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
+import type { ControlSx } from '@/styles/sx';
 import { text } from '@/styles/text.styles';
 import { color, radii, size as sizeVars, space } from '@/styles/tokens.stylex';
 
@@ -156,7 +157,9 @@ type Tone = keyof typeof tones;
 type Shape = keyof typeof shapes;
 type Size = keyof typeof sizes;
 
-type ButtonProps = BaseButtonProps & {
+type ButtonProps = Omit<BaseButtonProps, 'sx'> & {
+  /** 배치 전용 — tone/shape/size가 소유하는 속성은 타입이 막는다. */
+  sx?: ControlSx;
   tone?: Tone;
   shape?: Shape;
   size?: Size;

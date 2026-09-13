@@ -36,7 +36,11 @@ type BaseButtonProps = Omit<ComponentPropsWithoutRef<'button'>, 'style'> & {
    * (Button 등)의 variant prop으로 지정한다.
    */
   asChild?: boolean;
-  /** 배치용 StyleX 스타일. 베이스 뒤에 병합되므로 겹치는 속성은 이쪽이 이긴다. */
+  /**
+   * 베이스 뒤에 병합되는 스타일 — 겹치는 속성은 이쪽이 이긴다.
+   * BaseButton은 파생 컴포넌트(Button·TabBar·ColorSwatch·WeekStrip)가 룩을 얹는 조립 지점이라
+   * 속성을 좁히지 않는다. 사용처가 직접 쓰는 컴포넌트의 sx는 styles/sx.ts로 좁힌다.
+   */
   sx?: stylex.StyleXStyles;
 };
 

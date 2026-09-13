@@ -2,6 +2,7 @@ import { Field as ArkField } from '@ark-ui/react/field';
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import { Text } from '@/shared/ui/text';
+import type { SlotSx } from '@/styles/sx';
 import { space } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -18,7 +19,7 @@ type FieldProps = {
   invalid?: boolean;
   required?: boolean;
   disabled?: boolean;
-  sx?: stylex.StyleXStyles;
+  sx?: SlotSx;
   className?: string;
   children: ReactNode;
 };

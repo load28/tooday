@@ -4,6 +4,7 @@ import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
+import type { FlexSx, TextSx } from '@/styles/sx';
 import { anim, color, layer, radii, shadow, size as sizeVars, space } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -63,9 +64,9 @@ type BottomSheetProps = {
   children?: ReactNode;
 };
 
-type BottomSheetSlotProps = {
+type BottomSheetSlotProps<Sx> = {
   children?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: Sx;
   className?: string;
 };
 
@@ -92,7 +93,7 @@ function BottomSheetRoot({ open, onClose, ariaLabel, children }: BottomSheetProp
   );
 }
 
-function BottomSheetHeader({ children, sx, className }: BottomSheetSlotProps) {
+function BottomSheetHeader({ children, sx, className }: BottomSheetSlotProps<FlexSx>) {
   return (
     <Stack gap="xs" sx={sx} className={className}>
       {children}
@@ -100,7 +101,7 @@ function BottomSheetHeader({ children, sx, className }: BottomSheetSlotProps) {
   );
 }
 
-function BottomSheetTitle({ children, sx, className }: BottomSheetSlotProps) {
+function BottomSheetTitle({ children, sx, className }: BottomSheetSlotProps<TextSx>) {
   return (
     <Dialog.Title asChild>
       <Text as="h2" variant="title" sx={sx} className={className}>
@@ -110,7 +111,7 @@ function BottomSheetTitle({ children, sx, className }: BottomSheetSlotProps) {
   );
 }
 
-function BottomSheetDescription({ children, sx, className }: BottomSheetSlotProps) {
+function BottomSheetDescription({ children, sx, className }: BottomSheetSlotProps<TextSx>) {
   return (
     <Dialog.Description asChild>
       <Text as="p" variant="bodySm" tone="tertiary" sx={sx} className={className}>

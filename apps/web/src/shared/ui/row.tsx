@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { type HTMLMotionProps, motion } from 'framer-motion';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import type { ControlSx } from '@/styles/sx';
 import { anim, color, shadow, size as sizeVars, space } from '@/styles/tokens.stylex';
 
 // TDS식 press 딤 — whileTap이 --press-dim(0↔1)을 스프링 구동해 ::before 딤 opacity를 애니메이션한다.
@@ -87,7 +88,7 @@ type RowBase = {
   interactive?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
   className?: string;
   children?: ReactNode;
 };

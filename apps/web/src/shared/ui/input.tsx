@@ -1,6 +1,7 @@
 import { Field as ArkField } from '@ark-ui/react/field';
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithRef } from 'react';
+import type { ControlSx } from '@/styles/sx';
 import { text } from '@/styles/text.styles';
 import { anim, color, radii, size as sizeVars, space, tracking } from '@/styles/tokens.stylex';
 
@@ -65,7 +66,7 @@ type InputOwnProps = {
   /** box(기본) = 박스형 필드, inline = 테두리 없는 타이틀 입력 (size 무시) */
   variant?: InputVariant;
   size?: InputSize;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
   className?: string;
 };
 

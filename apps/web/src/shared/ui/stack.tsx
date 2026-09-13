@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import type { FlexSx } from '@/styles/sx';
 import { size as sizeVars, space } from '@/styles/tokens.stylex';
 
 const base = stylex.create({
@@ -66,7 +67,7 @@ type StackBase = {
   justify?: JustifyToken;
   wrap?: boolean;
   inline?: boolean;
-  sx?: stylex.StyleXStyles;
+  sx?: FlexSx;
   className?: string;
   children?: ReactNode;
 };

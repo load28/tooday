@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef } from 'react';
+import type { ControlSx } from '@/styles/sx';
 import { anim, color, radii, size as sizeVars } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -39,7 +40,7 @@ type ProgressBarOwnProps = {
   /** 진행 비율 0..1 — 범위를 벗어나면 클램프한다 */
   value: number;
   tone?: ProgressBarTone;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
   className?: string;
 };
 

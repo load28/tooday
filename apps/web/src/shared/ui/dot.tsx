@@ -1,4 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
+import type { ControlSx } from '@/styles/sx';
 import { color, radii, size as sizeVars } from '@/styles/tokens.stylex';
 
 const base = stylex.create({
@@ -32,7 +33,7 @@ const tones = stylex.create({
 type DotProps = {
   size?: keyof typeof sizes;
   tone?: keyof typeof tones;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
   className?: string;
   'aria-label'?: string;
 };

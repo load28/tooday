@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
+import type { TextSx } from '@/styles/sx';
 import { text } from '@/styles/text.styles';
 import { color, radii, space } from '@/styles/tokens.stylex';
 
@@ -44,7 +45,7 @@ type ChipProps = {
   size?: keyof typeof sizes;
   leading?: ReactNode;
   trailing?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: TextSx;
   className?: string;
   children?: ReactNode;
 };

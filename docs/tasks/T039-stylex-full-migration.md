@@ -108,3 +108,12 @@ today(task-card/today-screen/week-strip).
   컨벤션 문서(ui-styling·ui-composition)와 README·CLAUDE.md 인덱스를 StyleX 기준으로 다시 썼다.
   검증 — typecheck/build/test(24)/lint/lint:deps 통과, `/login`·`/today`·`/projects` 픽셀 차이 0,
   `/settings`는 랜덤 이메일 문자열 영역(x 71–224, y 95–108)만 다름.
+- 2026-09-13: 5단계(후속) — `styles/sx.ts`를 만들어 `sx` 타입을 컴포넌트 성격별로 좁혔다
+  (`SurfaceSx`/`TextSx`/`FlexSx`/`ControlSx`/`SlotSx`, 구현은 `StyleXStylesWithout`).
+  `BaseButton`은 파생 컴포넌트가 룩을 얹는 조립 지점이라 예외로 넓게 남긴다.
+  임시 파일로 `Card sx={{padding}}`·`Text sx={{color}}`·`Stack sx={{gap}}`이 실제로
+  컴파일 에러가 나는 것을 확인하고 지웠다.
+  자손 셀렉터를 `stylex.when.ancestor` 대신 변수로 처리한 이유도 컨벤션에 적었다 —
+  when.ancestor는 조상에 `stylex.defaultMarker()`를 붙여야 해서 조상·자손 컴포넌트가
+  마커를 공유하는 결합이 생긴다([when API](https://stylexjs.com/docs/api/javascript/when)).
+  검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).

@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import type { TextSx } from '@/styles/sx';
 import { text as textStyles } from '@/styles/text.styles';
 import { color } from '@/styles/tokens.stylex';
 
@@ -40,7 +41,7 @@ type TextBase = {
   /** 완료 항목 취소선 — 색은 tone으로 함께 지정한다 */
   strike?: boolean;
   /** 배치용 StyleX 스타일. 베이스 뒤에 병합되므로 겹치는 속성은 이쪽이 이긴다. */
-  sx?: stylex.StyleXStyles;
+  sx?: TextSx;
   className?: string;
   children?: ReactNode;
 };

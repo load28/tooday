@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef } from 'react';
 import { useT } from '@/shared/i18n';
+import type { ControlSx } from '@/styles/sx';
 import { radii } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -23,7 +24,7 @@ const styles = stylex.create({
 
 type SpinnerProps = Omit<ComponentPropsWithoutRef<'output'>, 'style'> & {
   label?: string;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
 };
 
 export function Spinner({ label, sx, className, ...rest }: SpinnerProps) {

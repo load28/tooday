@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import { BaseButton } from '@/shared/ui/base-button';
+import type { ControlSx } from '@/styles/sx';
 import { text } from '@/styles/text.styles';
 import { anim, color, radii, size as sizeVars, space } from '@/styles/tokens.stylex';
 
@@ -48,7 +49,7 @@ type TabBarProps<K extends string> = {
   activeKey: K;
   onSelect?: (key: K) => void;
   'aria-label'?: string;
-  sx?: stylex.StyleXStyles;
+  sx?: ControlSx;
   className?: string;
 };
 

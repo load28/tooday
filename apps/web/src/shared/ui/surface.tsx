@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import type { SurfaceSx } from '@/styles/sx';
 import { anim, color, radii, shadow, space } from '@/styles/tokens.stylex';
 
 const base = stylex.create({
@@ -71,7 +72,7 @@ type SurfaceBase = {
   elevation?: keyof typeof elevations;
   padding?: keyof typeof paddings;
   inset?: keyof typeof insets;
-  sx?: stylex.StyleXStyles;
+  sx?: SurfaceSx;
   className?: string;
   children?: ReactNode;
 };

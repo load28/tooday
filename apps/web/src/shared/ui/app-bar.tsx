@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
+import type { SlotSx } from '@/styles/sx';
 import { text } from '@/styles/text.styles';
 import { color, size as sizeVars, space } from '@/styles/tokens.stylex';
 
@@ -28,7 +29,7 @@ const styles = stylex.create({
 
 type AppBarSlotProps = {
   children?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: SlotSx;
   className?: string;
 };
 

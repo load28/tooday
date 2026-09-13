@@ -67,17 +67,31 @@ CSS 레이어는 딱 한 가지 용도로만 남아 있다: `routes/__root.tsx`�
 `@layer reset, base, stylex;` 한 줄이 **리셋보다 컴포넌트 스타일이 위**라는 것만 확정한다.
 컴포넌트끼리의 승패에는 관여하지 않는다.
 
-## 덮을 수 있는 속성을 타입으로 좁힌다
+## 덮을 수 있는 속성을 타입이 막는다
 
-"variant로만 덮어라"는 문서 규약이 아니라 타입으로 강제할 수 있다. `sx`의 타입을 좁히면
-컴포넌트가 관리하는 속성을 넘길 때 컴파일 에러가 난다.
+"variant로만 덮어라"는 문서 규약이 아니라 타입으로 강제된다. `styles/sx.ts`가 컴포넌트
+성격별로 **금지 속성 집합**을 정의하고, 각 컴포넌트의 `sx`가 그 타입을 쓴다.
+
+| 타입 | 쓰는 컴포넌트 | 막는 것 |
+| --- | --- | --- |
+| `SurfaceSx` | Card, Surface | 여백·모서리·채움·테두리 |
+| `TextSx` | Text, Chip | 타이포·정렬·채움·모서리·여백 |
+| `FlexSx` | Stack, HStack, ColorSwatchGroup | flex 배치(display/gap/align/justify) |
+| `ControlSx` | Button, Input, Row, TabBar, Dot, ProgressBar, Spinner | 위 전부 + 치수 |
+| `SlotSx` | Screen, AppBar, BottomSheet, Field, Divider | 채움·테두리·모서리·배치·치수 |
 
 ```tsx
-sx?: StyleXStyles<{ margin?: string; marginTop?: string; flex?: string }>;
+<Card padding="none" sx={styles.withPadding} />
+//                       ~~~~~~~~~~~~~~~~~~ padding은 SurfaceSx가 막는다
 ```
 
-> "any key not defined in the object type will be disallowed"
-> — [StyleX, StyleXStyles](https://stylexjs.com/docs/api/types/StyleXStyles/)
+구현은 `StyleXStylesWithout<T>` — T의 키를 뺀 나머지 CSS 속성만 허용한다
+([StyleXStyles](https://stylexjs.com/docs/api/types/StyleXStyles/)). 새 variant를 추가해
+컴포넌트가 소유하게 되는 속성이 생기면 `styles/sx.ts`의 해당 그룹에 키를 더한다.
+
+**예외는 `BaseButton` 하나다.** 파생 컴포넌트(Button·TabBar·ColorSwatch·WeekStrip)가 룩을
+얹는 조립 지점이므로 `sx`를 좁히지 않는다. 사용처가 직접 쓰는 것은 `BaseButton`이 아니라
+`Button`이고, 그쪽은 `ControlSx`로 좁혀져 있다.
 
 ## 자손 스타일 — 변수로 내려보낸다
 
@@ -85,6 +99,11 @@ StyleX는 자손 셀렉터(`.parent > *`, `[data-state="on"] &`)를 지원하지
 따라 자손을 바꿔야 하면 **조상이 변수 값을 바꾸고 자손이 그 변수를 읽는다**
 ([Variables for descendant styles](https://stylexjs.com/docs/learn/recipes/descendant-styles)).
 공용 변수는 `styles/slots.stylex.ts`에 모은다.
+
+`stylex.when.ancestor()`라는 대안이 있지만 쓰지 않는다 — **조상 엘리먼트에
+`stylex.defaultMarker()`를 붙여야** 동작해서, 조상 컴포넌트와 자손 컴포넌트가 마커를
+공유하는 숨은 결합이 생긴다(마커가 하나뿐이라 중첩되면 서로 간섭한다). 변수 방식은 그
+결합이 변수 이름 하나로 드러난다.
 
 ```tsx
 // 조상 — 선택 상태를 변수로 내려보낸다

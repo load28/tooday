@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { type HTMLMotionProps, motion } from 'framer-motion';
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import type { SurfaceSx } from '@/styles/sx';
 import { anim, color, radii, shadow, space } from '@/styles/tokens.stylex';
 
 // TDS식 press 딤 — whileTap이 --press-dim(0↔1)을 스프링으로 구동해 ::before 딤 opacity를 애니메이션한다.
@@ -64,7 +65,7 @@ type CardBase = {
   padding?: keyof typeof paddings;
   interactive?: boolean;
   selected?: boolean;
-  sx?: stylex.StyleXStyles;
+  sx?: SurfaceSx;
   className?: string;
   children?: ReactNode;
 };

@@ -3,6 +3,7 @@ import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
 import { BaseButton, type BaseButtonProps } from '@/shared/ui/base-button';
 import { swatch } from '@/styles/slots.stylex';
+import type { FlexSx } from '@/styles/sx';
 import { anim, color, radii, size as sizeVars, space } from '@/styles/tokens.stylex';
 
 // 팔레트 색 단일 선택 그룹 — 상태·접근성은 Ark ToggleGroup, 클릭 엘리먼트는
@@ -53,7 +54,7 @@ type SwatchTone = keyof typeof tones;
 type ColorSwatchGroupProps<V extends string> = {
   value: V | null;
   onValueChange: (value: V) => void;
-  sx?: stylex.StyleXStyles;
+  sx?: FlexSx;
   className?: string;
   children?: ReactNode;
   'aria-label'?: string;
@@ -100,7 +101,7 @@ function ColorSwatchItem({ value, tone = 'gray', sx, children, ...rest }: ColorS
   );
 }
 
-function ColorSwatchIndicator({ sx, children }: { sx?: stylex.StyleXStyles; children?: ReactNode }) {
+function ColorSwatchIndicator({ sx, children }: { sx?: FlexSx; children?: ReactNode }) {
   return (
     <span aria-hidden="true" {...stylex.props(styles.indicator, sx)}>
       {children}

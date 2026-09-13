@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
+import type { SlotSx } from '@/styles/sx';
 import { color, font, size as sizeVars, tracking } from '@/styles/tokens.stylex';
 
 const styles = stylex.create({
@@ -40,7 +41,7 @@ const styles = stylex.create({
 
 type ScreenSlotProps = {
   children?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: SlotSx;
   className?: string;
 };
 
@@ -102,7 +103,7 @@ type ScreenProps = {
   bottomBar?: ReactNode;
   overlay?: ReactNode;
   children?: ReactNode;
-  sx?: stylex.StyleXStyles;
+  sx?: SlotSx;
   className?: string;
 };
 
