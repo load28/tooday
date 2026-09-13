@@ -4,6 +4,7 @@ import { type MouseEvent, type ReactNode, useId } from 'react';
 import { useT } from '@/shared/i18n';
 import { BaseButton, type BaseButtonProps, baseButtonStyles } from '@/shared/ui/base-button';
 import { Spinner } from '@/shared/ui/spinner';
+import { text } from '@/styles/text.styles';
 import { color, radii, size as sizeVars, space } from '@/styles/tokens.stylex';
 
 // TDS식 press — 눌렀다 뗄 때 살짝 튕기는 스프링(물리). 축소는 Button(진짜 버튼)에만, 리스트/카드엔 안 준다.
@@ -103,43 +104,25 @@ const shapes = stylex.create({
   circle: { borderRadius: radii.full, aspectRatio: '1 / 1' },
 });
 
-// textStyles는 stylex.create 안에서 스프레드할 수 없어(정적 분석 제약) 값을 인라인한다.
+// 박스 치수만 여기 두고, 타이포는 styles/text.styles.ts를 배열에서 합친다
+// (stylex.create 안에서는 객체 스프레드가 금지된다).
 const sizes = stylex.create({
-  sm: {
-    height: sizeVars.controlSm,
-    paddingInline: space.xl,
-    fontSize: '13px',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    lineHeight: '20px',
-  },
-  md: {
-    height: sizeVars.tap,
-    paddingInline: space['2xl'],
-    fontSize: '14px',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    lineHeight: '22px',
-  },
-  lg: {
-    height: sizeVars.tapLg,
-    paddingInline: space['3xl'],
-    fontSize: '16px',
-    fontWeight: 500,
-    letterSpacing: '-0.01em',
-    lineHeight: '24px',
-  },
-  xl: {
-    height: '56px',
-    paddingInline: space['3xl'],
-    fontSize: '16px',
-    fontWeight: 700,
-    letterSpacing: '-0.01em',
-    lineHeight: '24px',
-  },
+  sm: { height: sizeVars.controlSm, paddingInline: space.xl },
+  md: { height: sizeVars.tap, paddingInline: space['2xl'] },
+  lg: { height: sizeVars.tapLg, paddingInline: space['3xl'] },
+  xl: { height: sizeVars.tapXl, paddingInline: space['3xl'] },
   icon: { height: sizeVars.tap, width: sizeVars.tap, paddingInline: 0 },
   iconLg: { height: sizeVars.tapLg, width: sizeVars.tapLg, paddingInline: 0 },
 });
+
+const SIZE_TEXT = {
+  sm: text.bodySm,
+  md: text.body,
+  lg: text.bodyLg,
+  xl: text.bodyLgStrong,
+  icon: null,
+  iconLg: null,
+} as const;
 
 const misc = stylex.create({
   fullWidth: { width: '100%' },
@@ -222,6 +205,7 @@ export function Button({
     tones[tone],
     shapes[shape],
     sizes[size],
+    SIZE_TEXT[size],
     fullWidth && misc.fullWidth,
     isLoading && misc.loadingCursor,
     sx,
