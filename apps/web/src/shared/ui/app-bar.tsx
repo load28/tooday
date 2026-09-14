@@ -33,39 +33,19 @@ type AppBarSlotProps = {
 };
 
 function AppBarRoot({ children, sx }: AppBarSlotProps) {
-  const { className: c, style } = stylex.props(styles.root, sx);
-  return (
-    <header className={c} style={style}>
-      {children}
-    </header>
-  );
+  return <header {...stylex.props(styles.root, sx)}>{children}</header>;
 }
 
 function AppBarLeading({ children, sx }: AppBarSlotProps) {
-  const { className: c, style } = stylex.props(styles.side, sx);
-  return (
-    <div className={c} style={style}>
-      {children}
-    </div>
-  );
+  return <div {...stylex.props(styles.side, sx)}>{children}</div>;
 }
 
 function AppBarTitle({ children, sx }: AppBarSlotProps) {
-  const { className: c, style } = stylex.props(text.subtitle, styles.title, sx);
-  return (
-    <span className={c} style={style}>
-      {children}
-    </span>
-  );
+  return <span {...stylex.props(text.subtitle, styles.title, sx)}>{children}</span>;
 }
 
 function AppBarTrailing({ children, sx }: AppBarSlotProps) {
-  const { className: c, style } = stylex.props(styles.side, sx);
-  return (
-    <div className={c} style={style}>
-      {children}
-    </div>
-  );
+  return <div {...stylex.props(styles.side, sx)}>{children}</div>;
 }
 
 export const AppBar = Object.assign(AppBarRoot, {

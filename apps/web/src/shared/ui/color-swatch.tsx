@@ -59,15 +59,7 @@ type ColorSwatchGroupProps<V extends string> = {
   'aria-label'?: string;
 };
 
-function ColorSwatchGroupRoot<V extends string>({
-  value,
-  onValueChange,
-  sx,
-
-  children,
-  ...rest
-}: ColorSwatchGroupProps<V>) {
-  const { className: sxClassName, style } = stylex.props(styles.root, sx);
+function ColorSwatchGroupRoot<V extends string>({ value, onValueChange, sx, children, ...rest }: ColorSwatchGroupProps<V>) {
   return (
     <ToggleGroup.Root
       value={value === null ? [] : [value]}
@@ -76,9 +68,8 @@ function ColorSwatchGroupRoot<V extends string>({
         const next = details.value[0] as V | undefined;
         if (next !== undefined) onValueChange(next);
       }}
-      className={sxClassName}
-      style={style}
       {...rest}
+      {...stylex.props(styles.root, sx)}
     >
       {children}
     </ToggleGroup.Root>

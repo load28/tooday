@@ -46,31 +46,16 @@ type ScreenSlotProps = {
 
 /** 화면 뷰포트(세로 flex 컨테이너). 헤더·본문·푸터를 이 순서로 담는다. */
 function ScreenRoot({ children, sx }: ScreenSlotProps) {
-  const { className: c, style } = stylex.props(styles.viewport, sx);
-  return (
-    <div className={c} style={style}>
-      {children}
-    </div>
-  );
+  return <div {...stylex.props(styles.viewport, sx)}>{children}</div>;
 }
 
 function ScreenHeader({ children, sx }: ScreenSlotProps) {
-  const { className: c, style } = stylex.props(styles.header, sx);
-  return (
-    <header className={c} style={style}>
-      {children}
-    </header>
-  );
+  return <header {...stylex.props(styles.header, sx)}>{children}</header>;
 }
 
 /** 유일한 스크롤 영역. 화면 단위 스크롤 위치를 갖는다. */
 function ScreenContent({ children, sx }: ScreenSlotProps) {
-  const { className: c, style } = stylex.props(styles.content, sx);
-  return (
-    <main className={c} style={style}>
-      {children}
-    </main>
-  );
+  return <main {...stylex.props(styles.content, sx)}>{children}</main>;
 }
 
 /**
@@ -78,21 +63,15 @@ function ScreenContent({ children, sx }: ScreenSlotProps) {
  * 자식 셀렉터라 global.css의 `[data-screen-overlay] > *` 한 줄이 맡는다.
  */
 function ScreenOverlay({ children, sx }: ScreenSlotProps) {
-  const { className: c, style } = stylex.props(styles.overlay, sx);
   return (
-    <div data-screen-overlay="" className={c} style={style}>
+    <div data-screen-overlay="" {...stylex.props(styles.overlay, sx)}>
       {children}
     </div>
   );
 }
 
 function ScreenFooter({ children, sx }: ScreenSlotProps) {
-  const { className: c, style } = stylex.props(styles.footer, sx);
-  return (
-    <footer className={c} style={style}>
-      {children}
-    </footer>
-  );
+  return <footer {...stylex.props(styles.footer, sx)}>{children}</footer>;
 }
 
 type ScreenProps = {

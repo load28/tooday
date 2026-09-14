@@ -110,7 +110,7 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
     children,
     ...rest
   } = props;
-  const { className: sxClassName, style } = stylex.props(
+  const styleProps = stylex.props(
     base.root,
     densities[density],
     aligns[align],
@@ -118,7 +118,6 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
     insets[inset],
     sx,
   );
-  const cls = sxClassName;
   const slots = (
     <>
       {leading != null ? <div {...stylex.props(base.slotLeading)}>{leading}</div> : null}
@@ -136,8 +135,7 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
         whileTap={{ '--press-dim': 1 }}
         transition={PRESS_DIM}
         {...(rest as unknown as HTMLMotionProps<'button'>)}
-        className={cls}
-        style={style}
+        {...styleProps}
       >
         {slots}
       </motion.button>
@@ -147,7 +145,7 @@ export function Row<T extends ElementType = 'div'>(props: RowProps<T>) {
   const Tag = (as ?? 'div') as ElementType;
   const isButton = Tag === 'button';
   return (
-    <Tag {...(isButton ? { type: 'button' } : null)} {...rest} className={cls} style={style}>
+    <Tag {...(isButton ? { type: 'button' } : null)} {...rest} {...styleProps}>
       {slots}
     </Tag>
   );

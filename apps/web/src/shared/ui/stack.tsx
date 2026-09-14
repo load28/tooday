@@ -96,16 +96,8 @@ function stackProps(
 export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'xl', align, justify, wrap, inline, sx, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const { className: sxClassName, style } = stackProps('column', {
-    gap,
-    align: align ?? 'stretch',
-    justify: justify ?? 'start',
-    wrap,
-    inline,
-    sx,
-  });
   return (
-    <Tag {...rest} className={sxClassName} style={style}>
+    <Tag {...rest} {...stackProps('column', { gap, align: align ?? 'stretch', justify: justify ?? 'start', wrap, inline, sx })}>
       {children}
     </Tag>
   );
@@ -114,16 +106,8 @@ export function Stack<T extends ElementType = 'div'>(props: StackProps<T>) {
 export function HStack<T extends ElementType = 'div'>(props: StackProps<T>) {
   const { as, gap = 'md', align, justify, wrap, inline, sx, children, ...rest } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const { className: sxClassName, style } = stackProps('row', {
-    gap,
-    align: align ?? 'center',
-    justify: justify ?? 'start',
-    wrap,
-    inline,
-    sx,
-  });
   return (
-    <Tag {...rest} className={sxClassName} style={style}>
+    <Tag {...rest} {...stackProps('row', { gap, align: align ?? 'center', justify: justify ?? 'start', wrap, inline, sx })}>
       {children}
     </Tag>
   );

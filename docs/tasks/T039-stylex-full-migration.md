@@ -125,3 +125,11 @@ today(task-card/today-screen/week-strip).
   컴포넌트가 `stylex.props()`의 `style`을 뒤에 얹기 때문에 사용처가 넘긴 인라인 스타일이
   조용히 무시되던 구멍이었다. 이제 사용처가 스타일을 넣는 통로는 `sx` 하나뿐이다.
   검증 — typecheck/build/test(24)/lint 통과, 4개 화면 픽셀 차이 0(설정은 랜덤 이메일만).
+- 2026-09-14: 리뷰 반영 — ① `app/stylex-dev.tsx`를 `app/stylex-stylesheet.tsx`
+  (`StylexStyleSheet`)로 개명했다. 개발 전용 장치가 아니라 **빌드 모드에 따라 CSS 주입 방식을
+  고르는** 컴포넌트다. ② `stylex.props()` 결과를 분해해 `className`/`style`로 넘기던 26곳을
+  전부 spread로 통일했다 — 공식 문서가 "The return value should be spread onto an element"로
+  못박고 있고([props](https://stylexjs.com/docs/api/javascript/props/)),
+  분해는 사용처 className과 합치려던 잔재였다.
+  검증 — typecheck/build/test(24)/lint 통과. 날짜가 바뀌어 기존 스냅샷이 무효해져
+  `/today`는 같은 날짜 기준으로 다시 캡처해 비교했다(차이 0).

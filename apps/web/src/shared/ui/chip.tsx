@@ -50,9 +50,8 @@ type ChipProps = {
 };
 
 export function Chip({ tone = 'neutral', size = 'md', leading, trailing, sx, children }: ChipProps) {
-  const { className: sxClassName, style } = stylex.props(base.root, text.caption, tones[tone], SIZE_TEXT[size], sizes[size], sx);
   return (
-    <span className={sxClassName} style={style}>
+    <span {...stylex.props(base.root, text.caption, tones[tone], SIZE_TEXT[size], sizes[size], sx)}>
       {leading}
       {children}
       {trailing}

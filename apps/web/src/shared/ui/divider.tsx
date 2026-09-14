@@ -30,6 +30,7 @@ type DividerProps = {
 };
 
 export function Divider({ orientation = 'horizontal', tone = 'subtle', inset = 'none', sx }: DividerProps) {
-  const { className: sxClassName, style } = stylex.props(base.root, orientations[orientation], tones[tone], insets[inset], sx);
-  return <hr aria-orientation={orientation} className={sxClassName} style={style} />;
+  return (
+    <hr aria-orientation={orientation} {...stylex.props(base.root, orientations[orientation], tones[tone], insets[inset], sx)} />
+  );
 }

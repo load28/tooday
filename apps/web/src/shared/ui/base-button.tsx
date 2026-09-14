@@ -46,7 +46,6 @@ type BaseButtonProps = Omit<ComponentPropsWithoutRef<'button'>, 'style' | 'class
 
 /** 모든 클릭 가능한 엘리먼트의 토대 — 리셋 + 인터랙션만. 버튼처럼 보여야 하면 Button을 쓴다. */
 export function BaseButton({ asChild, sx, children, type, ...rest }: BaseButtonProps) {
-  const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <ark.button
       asChild={asChild}
@@ -54,8 +53,7 @@ export function BaseButton({ asChild, sx, children, type, ...rest }: BaseButtonP
       type={asChild ? undefined : (type ?? 'button')}
       data-base-button=""
       {...rest}
-      className={sxClassName}
-      style={style}
+      {...stylex.props(styles.root, sx)}
     >
       {children}
     </ark.button>

@@ -49,9 +49,8 @@ type ProgressBarProps = ProgressBarOwnProps &
 /** 장식용 진행률 바 — 수치는 곁의 텍스트가 전달하므로 접근성 트리에서는 숨긴다. */
 export function ProgressBar({ value, tone = 'primary', sx, ...rest }: ProgressBarProps) {
   const ratio = Math.min(1, Math.max(0, value));
-  const { className: trackClassName, style: trackStyle } = stylex.props(styles.track, sx);
   return (
-    <div aria-hidden {...rest} className={trackClassName} style={trackStyle}>
+    <div aria-hidden {...rest} {...stylex.props(styles.track, sx)}>
       <div {...stylex.props(styles.fill(ratio), tones[tone])} />
     </div>
   );

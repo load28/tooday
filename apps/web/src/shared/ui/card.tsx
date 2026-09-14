@@ -76,7 +76,7 @@ type CardProps<T extends ElementType> = CardBase & { as?: T } & Omit<
 
 export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
   const { as, elevation = 'raised', radius = 'xl', padding = 'none', interactive, selected, sx, children, ...rest } = props;
-  const { className: sxClassName, style } = stylex.props(
+  const styleProps = stylex.props(
     base.root,
     elevations[elevation],
     radiuses[radius],
@@ -85,7 +85,6 @@ export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
     selected && base.selected,
     sx,
   );
-  const cls = sxClassName;
 
   // interactive 카드는 항상 버튼 — Framer Motion으로 press 딤을 스프링 구동(TDS와 동일한 방식).
   if (interactive) {
@@ -96,8 +95,7 @@ export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
         whileTap={{ '--press-dim': 1 }}
         transition={PRESS_DIM}
         {...(rest as unknown as HTMLMotionProps<'button'>)}
-        className={cls}
-        style={style}
+        {...styleProps}
       >
         {children}
       </motion.button>
@@ -106,7 +104,7 @@ export function Card<T extends ElementType = 'div'>(props: CardProps<T>) {
 
   const Tag = (as ?? 'div') as ElementType;
   return (
-    <Tag {...rest} className={cls} style={style}>
+    <Tag {...rest} {...styleProps}>
       {children}
     </Tag>
   );

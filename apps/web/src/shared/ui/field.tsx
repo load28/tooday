@@ -29,14 +29,12 @@ type FieldProps = {
  * (Input, NumberInput 등 Field.Input 기반 컨트롤)에 전파한다.
  */
 export function Field({ label, helper, error, invalid, required, disabled, sx, children }: FieldProps) {
-  const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <ArkField.Root
       invalid={invalid ?? error !== undefined}
       required={required}
       disabled={disabled}
-      className={sxClassName}
-      style={style}
+      {...stylex.props(styles.root, sx)}
     >
       {label !== undefined ? (
         <ArkField.Label asChild>

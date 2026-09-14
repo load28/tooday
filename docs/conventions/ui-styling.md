@@ -63,6 +63,34 @@ stylex.props(base, tone, size, sx)   // 뒤에 오는 인자가 이긴다
 관례는 **베이스 먼저, 사용처에서 받은 `sx`를 마지막**이다. `BaseButton` → `Button` →
 사용처가 이 순서로 쌓인다.
 
+## 붙일 때는 spread 한다
+
+`stylex.props()`가 돌려주는 `{ className, style }`은 **엘리먼트에 그대로 펼친다.** 분해해서
+`className=`/`style=`로 따로 넘기지 않는다 — 공식 문서가 정한 형태이고, 동적 스타일이
+채우는 `style`(CSS 변수)을 빠뜨릴 여지가 없다.
+
+> "The return value should be spread onto an element to apply the styles directly."
+> — [StyleX, stylex.props](https://stylexjs.com/docs/api/javascript/props/)
+
+```tsx
+// ✅
+<div {...rest} {...stylex.props(base.root, tones[tone], sx)} />
+
+// ❌ 분해 — 이유 없이 두 prop으로 쪼갠다
+const { className, style } = stylex.props(...);
+<div className={className} style={style} />
+```
+
+`className`/`style`을 받는 컴포넌트(Ark 파트, `motion.*`)에도 그대로 펼친다. 두 갈래 렌더가
+같은 결과를 재사용할 때만 변수로 뽑고, 붙이는 지점에서는 역시 spread 한다(`Card`, `Row`).
+
+> "if a custom component, such as `DialogPanel` accepts both `className` and `style`
+> (and `data-` attributes), then `<DialogPanel {...stylex.props(...)}>` is preferred."
+> — [facebook/stylex Discussion #766](https://github.com/facebook/stylex/discussions/766)
+
+같은 스레드에서 유지보수자는 **StyleX용 컴포넌트 라이브러리라면 스타일 prop을 받아
+`stylex.props()`를 내부에서 처리하는 편이 낫다**고 덧붙인다 — `shared/ui`의 `sx`가 그 형태다.
+
 `vite.config.ts`는 `styleResolution: 'application-order'`를 명시한다 — 축약(`margin`)과
 개별(`marginTop`)을 섞어 쓸 때 어느 쪽이 이기는지를 기본값에 맡기지 않기 위해서다.
 

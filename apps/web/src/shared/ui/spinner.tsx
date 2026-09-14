@@ -29,13 +29,11 @@ type SpinnerProps = Omit<ComponentPropsWithoutRef<'output'>, 'style' | 'classNam
 
 export function Spinner({ label, sx, ...rest }: SpinnerProps) {
   const t = useT();
-  const { className: sxClassName, style } = stylex.props(styles.root, sx);
   return (
     <output
       aria-label={rest['aria-hidden'] ? undefined : (label ?? t.common.loading)}
       {...rest}
-      className={sxClassName}
-      style={style}
+      {...stylex.props(styles.root, sx)}
     />
   );
 }

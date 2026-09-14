@@ -36,7 +36,7 @@ const config = defineConfig({
       aliases: { '@/*': [path.join(rootDir, 'src/*')] },
       unstable_moduleResolution: { type: 'commonJS', rootDir },
       // 기본 'full' 모드는 transformIndexHtml로 주입하는데 TanStack Start는 index.html이 없어
-      // 아무것도 주입되지 않는다. dev CSS는 app/stylex-dev.tsx가 직접 물린다.
+      // 아무것도 주입되지 않는다. 주입은 app/stylex-stylesheet.tsx가 맡는다.
       devMode: 'css-only',
     }),
     viteReact(),

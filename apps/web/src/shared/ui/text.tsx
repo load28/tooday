@@ -53,17 +53,19 @@ type TextProps<T extends ElementType> = TextBase & { as?: T } & Omit<
 export function Text<T extends ElementType = 'span'>(props: TextProps<T>) {
   const { as, variant = 'body', tone = 'default', align, truncate, strike, sx, children, ...rest } = props;
   const Tag = (as ?? 'span') as ElementType;
-  const { className: sxClassName, style } = stylex.props(
-    base.root,
-    textStyles[variant],
-    tones[tone],
-    align && aligns[align],
-    truncate && base.truncate,
-    strike && base.strike,
-    sx,
-  );
   return (
-    <Tag {...rest} className={sxClassName} style={style}>
+    <Tag
+      {...rest}
+      {...stylex.props(
+        base.root,
+        textStyles[variant],
+        tones[tone],
+        align && aligns[align],
+        truncate && base.truncate,
+        strike && base.strike,
+        sx,
+      )}
+    >
       {children}
     </Tag>
   );

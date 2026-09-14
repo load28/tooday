@@ -5,7 +5,7 @@ import { createIsomorphicFn } from '@tanstack/react-start';
 import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css?url';
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
-import { StylexDevStyles } from '@/app/stylex-dev';
+import { StylexStyleSheet } from '@/app/stylex-stylesheet';
 import type { RouterAppContext } from '@/app/trpc.ts';
 import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
@@ -75,7 +75,7 @@ function RootDocument({ children }: { children: ReactNode }) {
             무관하게 컴포넌트 스타일이 리셋을 이기도록 이 한 줄이 자리를 확정한다.
             (컴포넌트끼리의 승패는 레이어가 아니라 stylex.props 인자 순서가 정한다) */}
         <style>{'@layer reset, base, stylex;'}</style>
-        <StylexDevStyles />
+        <StylexStyleSheet />
         <HeadContent />
       </head>
       <body>

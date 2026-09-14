@@ -53,9 +53,8 @@ type TabBarProps<K extends string> = {
 };
 
 export function TabBar<K extends string>({ items, activeKey, onSelect, sx, ...rest }: TabBarProps<K>) {
-  const { className: navClassName, style } = stylex.props(styles.nav, sx);
   return (
-    <nav {...rest} className={navClassName} style={style}>
+    <nav {...rest} {...stylex.props(styles.nav, sx)}>
       <div {...stylex.props(styles.inner)}>
         {items.map(({ key, label, icon }) => {
           const isActive = key === activeKey;

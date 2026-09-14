@@ -95,18 +95,20 @@ export function Surface<T extends ElementType = 'div'>(props: SurfaceProps<T>) {
     ...rest
   } = props;
   const Tag = (as ?? 'div') as ElementType;
-  const { className: sxClassName, style } = stylex.props(
-    base.root,
-    tones[tone],
-    borders[bordered],
-    radiuses[radius],
-    elevations[elevation],
-    padding && paddings[padding],
-    inset && insets[inset],
-    sx,
-  );
   return (
-    <Tag {...rest} className={sxClassName} style={style}>
+    <Tag
+      {...rest}
+      {...stylex.props(
+        base.root,
+        tones[tone],
+        borders[bordered],
+        radiuses[radius],
+        elevations[elevation],
+        padding && paddings[padding],
+        inset && insets[inset],
+        sx,
+      )}
+    >
       {children}
     </Tag>
   );

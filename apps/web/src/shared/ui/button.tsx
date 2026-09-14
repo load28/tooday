@@ -247,7 +247,6 @@ export function Button({
   }
 
   // 일반 버튼 — Framer Motion으로 tap 시 spring 축소(TDS 방식). baseButton 리셋을 함께 얹는다.
-  const { className: sxClassName, style } = stylex.props(baseButtonStyles.root, ...look);
   return (
     <motion.button
       type={type ?? 'button'}
@@ -256,8 +255,7 @@ export function Button({
       transition={PRESS_SPRING}
       {...(rest as unknown as HTMLMotionProps<'button'>)}
       {...shared}
-      className={sxClassName}
-      style={style}
+      {...stylex.props(baseButtonStyles.root, ...look)}
     >
       {content}
     </motion.button>
