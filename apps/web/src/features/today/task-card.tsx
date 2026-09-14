@@ -1,6 +1,6 @@
 import type { Project, Task } from '@tooday/shared';
 import { Check, LoaderCircle } from 'lucide-react';
-import { bodyCls, cardCls, checkRecipe } from '@/features/today/task-card.css';
+import { checkStatus, styles } from '@/features/today/task-card.styles';
 import { useT } from '@/shared/i18n';
 import { BaseButton, Card, Dot, HStack, Text } from '@/shared/ui';
 
@@ -16,8 +16,8 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
   const isDone = task.status === 'done';
 
   return (
-    <Card padding="md" selected={task.status === 'doing'} className={cardCls}>
-      <BaseButton onClick={onClick} className={bodyCls}>
+    <Card padding="md" selected={task.status === 'doing'} sx={styles.card}>
+      <BaseButton onClick={onClick} sx={styles.body}>
         <Text as="h3" variant="subtitle" tone={isDone ? 'tertiary' : 'default'} truncate strike={isDone}>
           {task.title}
         </Text>
@@ -32,7 +32,7 @@ export function TaskCard({ task, project, onToggle, onClick }: TaskCardProps) {
         aria-label={t.today.toggleDone}
         aria-pressed={isDone}
         onClick={() => onToggle?.(task)}
-        className={checkRecipe({ status: task.status })}
+        sx={[styles.check, checkStatus[task.status]]}
       >
         {isDone ? (
           <Check size={14} strokeWidth={3} />

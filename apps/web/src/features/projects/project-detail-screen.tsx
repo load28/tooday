@@ -1,13 +1,15 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
+import * as stylex from '@stylexjs/stylex';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
 import type { Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { STATUS_ORDER } from '@/entities/task/status';
-import { emptyCls, listCls, rowCls, segmentButtonCls, segmentCls } from '@/features/projects/project-detail-screen.css';
+import { styles } from '@/features/projects/project-detail-screen.styles';
 import { useT } from '@/shared/i18n';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, Text } from '@/shared/ui';
+import { text } from '@/styles/text.styles';
 
 type ProjectDetailScreenProps = {
   projectId: string;
@@ -64,11 +66,11 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
             const next = STATUS_ORDER.find((status) => status === details.value[0]);
             if (next !== undefined) setTab(next);
           }}
-          className={segmentCls}
+          {...stylex.props(styles.segment)}
         >
           {STATUS_ORDER.map((status) => (
             <ToggleGroup.Item key={status} value={status} asChild>
-              <BaseButton className={segmentButtonCls}>
+              <BaseButton sx={[text.bodySm, styles.segmentButton]}>
                 <span>{t.common.status[status]}</span>
                 <Text variant="micro" tone={tab === status ? 'tertiary' : 'placeholder'}>
                   {byStatus[status].length}
@@ -79,13 +81,13 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
         </ToggleGroup.Root>
 
         {items.length === 0 ? (
-          <Stack align="center" className={emptyCls}>
+          <Stack align="center" sx={styles.empty}>
             <Text variant="bodySm" tone="placeholder">
               {t.projectDetail.empty}
             </Text>
           </Stack>
         ) : (
-          <Stack gap="md" className={listCls}>
+          <Stack gap="md" sx={styles.list}>
             {items.map((task) => {
               const isDone = task.status === 'done';
               return (
@@ -94,7 +96,7 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
                   as="button"
                   interactive
                   padding="none"
-                  className={rowCls}
+                  sx={styles.row}
                   onClick={() => navigate({ to: '/tasks/$taskId', params: { taskId: task.id } })}
                 >
                   <Row

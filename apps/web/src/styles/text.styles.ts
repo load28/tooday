@@ -1,8 +1,9 @@
-import type { StyleRule } from '@vanilla-extract/css';
+import * as stylex from '@stylexjs/stylex';
 
 // 타이포 스케일 — 이름 하나가 fontSize·weight·letterSpacing·lineHeight 한 벌을 묶는다.
-// 사용처에서 `...textStyles.body`로 스타일 객체에 펼친다.
-export const textStyles = {
+// stylex.create 안에서는 객체 스프레드가 금지되므로, 사용처에서 `stylex.props(text.body, ...)`로 합친다.
+// (.stylex.ts는 defineVars 전용이므로 create는 일반 모듈에 둔다.)
+export const text = stylex.create({
   display: { fontSize: '24px', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: '30px' },
   title: { fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '24px' },
   subtitle: { fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '22px' },
@@ -36,6 +37,6 @@ export const textStyles = {
     lineHeight: '20px',
     fontFeatureSettings: '"tnum" 1',
   },
-} satisfies Record<string, StyleRule>;
+});
 
-export type TextStyleName = keyof typeof textStyles;
+export type TextStyleName = keyof typeof text;

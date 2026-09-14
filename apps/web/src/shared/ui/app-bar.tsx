@@ -1,31 +1,51 @@
+import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
-import { appBarLeading, appBarRoot, appBarTitle, appBarTrailing } from '@/shared/ui/app-bar.css';
-import { cx } from '@/styles/cx';
+import type { SlotSx } from '@/styles/sx';
+import { text } from '@/styles/text.styles';
+import { color, size as sizeVars, space } from '@/styles/tokens.stylex';
 
-type AppBarRootProps = {
-  children?: ReactNode;
-  className?: string;
-};
+const styles = stylex.create({
+  root: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBlock: space.appBarPadY,
+    paddingInline: space.appBarPadX,
+    gap: space.appBarGap,
+    minHeight: sizeVars.appBar,
+  },
+  side: { display: 'flex', alignItems: 'center', gap: space.xs, flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
+  title: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '0%',
+    minWidth: 0,
+    color: color.text,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+});
 
 type AppBarSlotProps = {
   children?: ReactNode;
-  className?: string;
+  sx?: SlotSx;
 };
 
-function AppBarRoot({ children, className }: AppBarRootProps) {
-  return <header className={cx(appBarRoot(), className)}>{children}</header>;
+function AppBarRoot({ children, sx }: AppBarSlotProps) {
+  return <header {...stylex.props(styles.root, sx)}>{children}</header>;
 }
 
-function AppBarLeading({ children, className }: AppBarSlotProps) {
-  return <div className={cx(appBarLeading(), className)}>{children}</div>;
+function AppBarLeading({ children, sx }: AppBarSlotProps) {
+  return <div {...stylex.props(styles.side, sx)}>{children}</div>;
 }
 
-function AppBarTitle({ children, className }: AppBarSlotProps) {
-  return <span className={cx(appBarTitle(), className)}>{children}</span>;
+function AppBarTitle({ children, sx }: AppBarSlotProps) {
+  return <span {...stylex.props(text.subtitle, styles.title, sx)}>{children}</span>;
 }
 
-function AppBarTrailing({ children, className }: AppBarSlotProps) {
-  return <div className={cx(appBarTrailing(), className)}>{children}</div>;
+function AppBarTrailing({ children, sx }: AppBarSlotProps) {
+  return <div {...stylex.props(styles.side, sx)}>{children}</div>;
 }
 
 export const AppBar = Object.assign(AppBarRoot, {

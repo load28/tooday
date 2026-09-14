@@ -1,3 +1,4 @@
+import * as stylex from '@stylexjs/stylex';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
@@ -5,7 +6,7 @@ import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { applyTaskPatch } from '@/entities/task/patch';
 import { TaskCard } from '@/features/today/task-card';
-import { emptyCls, heroCls, pageCls, rowCls, timeColCls, timelineCls } from '@/features/today/today-screen.css';
+import { styles } from '@/features/today/today-screen.styles';
 import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
@@ -13,7 +14,6 @@ import { useLocale, useT } from '@/shared/i18n';
 import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
-import { vars } from '@/styles/theme.css';
 
 type DaySection = 'morning' | 'afternoon' | 'evening';
 const SECTION_ORDER: DaySection[] = ['morning', 'afternoon', 'evening'];
@@ -104,8 +104,8 @@ export function TodayScreen({ now }: TodayScreenProps) {
         </AppBar>
       </Screen.Header>
       <Screen.Content>
-        <div className={pageCls}>
-          <Card radius="2xl" padding="lg" className={heroCls}>
+        <div {...stylex.props(styles.page)}>
+          <Card radius="2xl" padding="lg" sx={styles.hero}>
             <Stack gap="xs">
               <Text variant="label" tone="brand">
                 {day.isToday ? t.today.hero.today({ date: day.label }) : day.label}
@@ -130,8 +130,8 @@ export function TodayScreen({ now }: TodayScreenProps) {
           />
 
           {tasks.length === 0 ? (
-            <Stack gap="sm" align="center" className={emptyCls}>
-              <CalendarX2 size={36} color={vars.color.borderStrong} />
+            <Stack gap="sm" align="center" sx={styles.empty}>
+              <CalendarX2 size={36} {...stylex.props(styles.emptyIcon)} />
               <Text variant="bodyLgStrong" tone="secondary">
                 {t.today.empty.title}
               </Text>
@@ -145,10 +145,10 @@ export function TodayScreen({ now }: TodayScreenProps) {
               if (items.length === 0) return null;
               return (
                 <Section key={sectionKey} title={t.today.section[sectionKey]}>
-                  <div className={timelineCls}>
+                  <div {...stylex.props(styles.timeline)}>
                     {items.map((task) => (
-                      <div key={task.id} className={rowCls}>
-                        <div className={timeColCls}>
+                      <div key={task.id} {...stylex.props(styles.row)}>
+                        <div {...stylex.props(styles.timeCol)}>
                           <Text variant="numeric" tone="secondary">
                             {task.startAt}
                           </Text>

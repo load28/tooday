@@ -2,94 +2,166 @@
 
 ## 규칙
 
-- `shared/ui` 컴포넌트가 recipe로 관리하는 속성(padding, tone, size, radius 등)은
-  반드시 해당 variant prop으로 지정한다. className으로 같은 속성을 덮지 않는다.
-- className은 recipe가 다루지 않는 속성에만 쓴다 — 배치·레이아웃(margin, display,
+- `shared/ui` 컴포넌트가 관리하는 속성(padding, tone, size, radius 등)은 반드시 해당
+  variant prop으로 지정한다. `sx`로 같은 속성을 덮지 않는다.
+- `sx`는 컴포넌트가 다루지 않는 속성에만 쓴다 — 배치·레이아웃(margin, display,
   flex/grid, gap 등)이 대표적이다.
-- 필요한 variant가 없으면 사용처에서 덮지 말고 `shared/ui` 컴포넌트에
-  variant를 추가한 뒤 쓴다.
+- 필요한 variant가 없으면 사용처에서 덮지 말고 `shared/ui` 컴포넌트에 variant를
+  추가한 뒤 쓴다.
+- **사용처가 스타일을 넣는 통로는 `sx` 하나다.** `shared/ui` 컴포넌트는 `className`도
+  `style`도 받지 않는다 — 둘 다 타입이 검사할 수 없어 `sx` 가드를 우회하고, 게다가
+  `style`은 컴포넌트가 자기 값으로 덮어써 **넘겨도 조용히 무시된다.**
 
 ## 이유
 
-className override는 **기술적으로는 항상 이긴다** (아래 캐스케이드 참고). 그래서
-recipe가 관리하는 속성을 덮으면 조용히 밀리는 대신 **조용히 어긋난다** — recipe의
-variant는 그대로 있는데 화면만 다르고, 두 곳을 다 열어보기 전에는 어느 쪽이 실제
-값인지 알 수 없다. variant를 바꿔도 화면이 안 변하는 컴포넌트가 생긴다.
+`sx` override는 **기술적으로는 항상 이긴다** (아래 병합 규칙 참고). 그래서 컴포넌트가
+관리하는 속성을 덮으면 조용히 밀리는 대신 **조용히 어긋난다** — variant는 그대로 있는데
+화면만 다르고, 두 곳을 다 열어보기 전에는 어느 쪽이 실제 값인지 알 수 없다. variant를
+바꿔도 화면이 안 변하는 컴포넌트가 생긴다.
 
-실제 사례(Panda 시절): `Card`는 기본 variant가 `padding: none`인데 사용처에서
-padding을 className으로 덮었고, 당시엔 특이도가 동률이라 생성 순서에 따라 카드
-안쪽 여백이 통째로 사라졌다. VE로 옮긴 지금은 override가 이기지만 — **문제의 원인은
-같다.** 같은 속성을 두 곳에서 선언하는 것 자체다.
+실제 사례(Panda 시절): `Card`는 기본 variant가 `padding: none`인데 사용처에서 padding을
+className으로 덮었고, 당시엔 특이도가 동률이라 생성 순서에 따라 카드 안쪽 여백이 통째로
+사라졌다. StyleX로 옮긴 지금은 override가 결정적으로 이기지만 — **문제의 원인은 같다.**
+같은 속성을 두 곳에서 선언하는 것 자체다.
 
 ```tsx
-// today-screen.css.ts
-export const heroCls = style({ marginInline: vars.space.pageX, display: 'flex', gap: vars.space.xl });
+// today-screen.styles.ts
+export const styles = stylex.create({
+  hero: { marginInline: space.pageX, display: 'flex', gap: space.xl },
+});
 
-// ❌ recipe가 관리하는 속성(padding/color)을 className으로 덮음
-<Card className={style({ padding: '14px 16px' })} />
-<Text className={style({ color: vars.color.textTertiary })} />
+// ❌ 컴포넌트가 관리하는 속성(padding/color)을 sx로 덮음
+<Card sx={styles.cardPadding} />
+<Text sx={styles.tertiaryColor} />
 
 // ✅ variant로 지정 — 선언이 한 곳
 <Card padding="md" />
 <Text tone="tertiary" />
 
-// ✅ className은 레이아웃 등 recipe 밖 속성에만
-<Card radius="2xl" padding="lg" className={heroCls} />
+// ✅ sx는 레이아웃 등 variant 밖 속성에만
+<Card radius="2xl" padding="lg" sx={styles.hero} />
 ```
 
-스타일 상수는 tsx에 인라인하지 않고 같은 폴더의 `*.css.ts`에 두고 import 한다
-(`style()`은 빌드타임에 평가되므로 `.css.ts`에서만 호출할 수 있다).
+스타일은 tsx에 인라인하지 않고 같은 폴더의 `*.styles.ts`에 `stylex.create`로 두고 import
+한다. 컴포넌트 고유 스타일이 짧으면 그 컴포넌트 파일 최상단에 `stylex.create`를 둬도 된다
+(`stylex.create`는 **반드시 모듈 최상단**에서 호출한다 — 함수 안에서는 컴파일되지 않는다).
 
-## 캐스케이드 — 레이어로 override를 결정적으로
+## 병합 — 레이어가 아니라 인자 순서
 
-vanilla-extract에는 특이도 조작이 없다. 대신 **CSS `@layer` 순서**가 승패를
-결정한다. `apps/web/src/styles/layers.css.ts`가 두 헬퍼를 노출하고,
-순서는 `routes/__root.tsx`의 `<style>{'@layer reset, base, base-recipe, recipes;'}</style>`
-한 줄이 확정한다.
+StyleX는 속성+조건 하나당 원자 클래스 하나를 컴파일 타임에 만들고, `stylex.props()`가
+**겹치는 속성의 지는 클래스를 아예 붙이지 않는다.** 그래서 특이도 싸움도, `@layer`로 승패를
+정할 일도 없다.
+
+> "The order in which the styles are defined does not affect the resulting styles, only the
+> order in which they are applied to the HTML element."
+> — [StyleX, Using styles](https://stylexjs.com/docs/learn/styling-ui/using-styles/)
 
 ```
-reset(preflight) < base(globalStyle) < base-recipe < recipes < 레이어 없음
+stylex.props(base, tone, size, sx)   // 뒤에 오는 인자가 이긴다
 ```
 
-- `baseRec(...)` — **base-recipe 레이어.** 다른 recipe에 `cx`로 합성돼 덮이는
-  베이스용. 현재 `baseButton` 하나.
-- `rec(...)` — **recipes 레이어.** 나머지 모든 컴포넌트 recipe
-  (card·text·buttonStyle·swatchItem·…). base-recipe보다 위라 베이스를 결정적으로 덮는다.
-- **레이어 없음** — 1회성 `style()`(`heroCls`, feature의 레이아웃 클래스 등).
-  "레이어 없는 스타일이 어떤 레이어보다 이긴다"는 CSS 규칙 때문에 recipe를 항상 이긴다.
+관례는 **베이스 먼저, 사용처에서 받은 `sx`를 마지막**이다. `BaseButton` → `Button` →
+사용처가 이 순서로 쌓인다.
 
-그래서 `BaseButton`은 리셋·인터랙션만 갖고(base-recipe), 그 위의 시각 스타일
-(`Button`의 tone/shape/size, 스와치·탭 오버레이)은 recipes 레이어라 **항상 예측
-가능하게** 이긴다. 예: `button.css.ts`의 `&:disabled { opacity: 1 }`이
-`base-button.css.ts`의 `&:disabled { opacity: 0.5 }`를 덮어 tone 무관 중립 채움으로
-바꾼다 — 순서가 아니라 레이어가 보증한다.
+## 붙일 때는 spread 한다
 
-단, 이것은 override를 *결정적으로* 만들 뿐 *권장하는 것은 아니다* — 위의
-"variant 우선" 규칙은 그대로다.
+`stylex.props()`가 돌려주는 `{ className, style }`은 **엘리먼트에 그대로 펼친다.** 분해해서
+`className=`/`style=`로 따로 넘기지 않는다 — 공식 문서가 정한 형태이고, 동적 스타일이
+채우는 `style`(CSS 변수)을 빠뜨릴 여지가 없다.
 
-> 모든 프리미티브를 base-recipe로 내릴 필요는 없다. 합성돼 덮이는 토대만 `baseRec`,
-> 나머지 recipe는 `rec`, 1회성은 무레이어 `style()`. 새 recipe를 만들면서 레이어
-> 헬퍼를 빠뜨리면 무레이어가 되어 다른 recipe를 전부 이겨버리므로,
-> `recipe()`의 base와 각 variant는 `rec(...)`로 감싼다.
+> "The return value should be spread onto an element to apply the styles directly."
+> — [StyleX, stylex.props](https://stylexjs.com/docs/api/javascript/props/)
+
+```tsx
+// ✅
+<div {...rest} {...stylex.props(base.root, tones[tone], sx)} />
+
+// ❌ 분해 — 이유 없이 두 prop으로 쪼갠다
+const { className, style } = stylex.props(...);
+<div className={className} style={style} />
+```
+
+`className`/`style`을 받는 컴포넌트(Ark 파트, `motion.*`)에도 그대로 펼친다. 두 갈래 렌더가
+같은 결과를 재사용할 때만 변수로 뽑고, 붙이는 지점에서는 역시 spread 한다(`Card`, `Row`).
+
+> "if a custom component, such as `DialogPanel` accepts both `className` and `style`
+> (and `data-` attributes), then `<DialogPanel {...stylex.props(...)}>` is preferred."
+> — [facebook/stylex Discussion #766](https://github.com/facebook/stylex/discussions/766)
+
+같은 스레드에서 유지보수자는 **StyleX용 컴포넌트 라이브러리라면 스타일 prop을 받아
+`stylex.props()`를 내부에서 처리하는 편이 낫다**고 덧붙인다 — `shared/ui`의 `sx`가 그 형태다.
+
+`vite.config.ts`는 `styleResolution: 'application-order'`를 명시한다 — 축약(`margin`)과
+개별(`marginTop`)을 섞어 쓸 때 어느 쪽이 이기는지를 기본값에 맡기지 않기 위해서다.
+
+CSS 레이어는 딱 한 가지 용도로만 남아 있다: `routes/__root.tsx`의
+`@layer reset, base, stylex;` 한 줄이 **리셋보다 컴포넌트 스타일이 위**라는 것만 확정한다.
+컴포넌트끼리의 승패에는 관여하지 않는다.
+
+## 덮을 수 있는 속성을 타입이 막는다
+
+"variant로만 덮어라"는 문서 규약이 아니라 타입으로 강제된다. `styles/sx.ts`가 컴포넌트
+성격별로 **금지 속성 집합**을 정의하고, 각 컴포넌트의 `sx`가 그 타입을 쓴다.
+
+| 타입 | 쓰는 컴포넌트 | 막는 것 |
+| --- | --- | --- |
+| `SurfaceSx` | Card, Surface | 여백·모서리·채움·테두리 |
+| `TextSx` | Text, Chip | 타이포·정렬·채움·모서리·여백 |
+| `FlexSx` | Stack, HStack, ColorSwatchGroup | flex 배치(display/gap/align/justify) |
+| `ControlSx` | Button, Input, Row, TabBar, Dot, ProgressBar, Spinner | 위 전부 + 치수 |
+| `SlotSx` | Screen, AppBar, BottomSheet, Field, Divider | 채움·테두리·모서리·배치·치수 |
+
+```tsx
+<Card padding="none" sx={styles.withPadding} />
+//                       ~~~~~~~~~~~~~~~~~~ padding은 SurfaceSx가 막는다
+```
+
+구현은 `StyleXStylesWithout<T>` — T의 키를 뺀 나머지 CSS 속성만 허용한다
+([StyleXStyles](https://stylexjs.com/docs/api/types/StyleXStyles/)). 새 variant를 추가해
+컴포넌트가 소유하게 되는 속성이 생기면 `styles/sx.ts`의 해당 그룹에 키를 더한다.
+
+`className`·`style`은 각 props 타입의 `Omit`에서 빼 아예 받지 않는다. 사용처가 스타일을
+넣는 통로를 `sx` 하나로 고정해야 위 금지 집합이 실제로 강제된다.
+
+**예외는 `BaseButton` 하나다.** 파생 컴포넌트(Button·TabBar·ColorSwatch·WeekStrip)가 룩을
+얹는 조립 지점이므로 `sx`를 좁히지 않는다. 사용처가 직접 쓰는 것은 `BaseButton`이 아니라
+`Button`이고, 그쪽은 `ControlSx`로 좁혀져 있다.
+
+## 자손 스타일 — 변수로 내려보낸다
+
+StyleX는 자손 셀렉터(`.parent > *`, `[data-state="on"] &`)를 지원하지 않는다. 조상 상태에
+따라 자손을 바꿔야 하면 **조상이 변수 값을 바꾸고 자손이 그 변수를 읽는다**
+([Variables for descendant styles](https://stylexjs.com/docs/learn/recipes/descendant-styles)).
+공용 변수는 `styles/slots.stylex.ts`에 모은다.
+
+`stylex.when.ancestor()`라는 대안이 있지만 쓰지 않는다 — **조상 엘리먼트에
+`stylex.defaultMarker()`를 붙여야** 동작해서, 조상 컴포넌트와 자손 컴포넌트가 마커를
+공유하는 숨은 결합이 생긴다(마커가 하나뿐이라 중첩되면 서로 간섭한다). 변수 방식은 그
+결합이 변수 이름 하나로 드러난다.
+
+```tsx
+// 조상 — 선택 상태를 변수로 내려보낸다
+item: { [swatch.indicatorOpacity]: { default: '0', ':is([data-state="on"])': '1' } }
+// 자손 — 변수를 읽기만 한다
+indicator: { opacity: swatch.indicatorOpacity }
+```
+
+임의의 자식 전체를 대상으로 해야 하는 경우(`Screen.Overlay > *`)만 `app/global.css`에
+데이터 속성 셀렉터 한 줄로 둔다.
 
 ## asChild — 자식에는 배치만
 
 `BaseButton`/`Button`은 `asChild`로 스타일을 다른 엘리먼트(예: `<Link>`)에 입힐 수 있다
-(Ark factory). 이때 부모 스타일과 자식 className이 **한 엘리먼트에 함께** 얹히므로,
-자식이 variant 관리 속성을 덮으면 위와 같은 이중 선언이 asChild 경계에서 재현된다.
+(Ark factory). 이때 부모 스타일과 자식 스타일이 **한 엘리먼트에 함께** 얹히므로, 자식이
+variant 관리 속성을 덮으면 위와 같은 이중 선언이 asChild 경계에서 재현된다.
 
-```tsx
-// ❌ 자식이 tone/size/색·여백(variant 관리)을 덮음
-<Button asChild tone="brand" size="lg">
-  <Link className={linkOverrideCls}>열기</Link>  {/* background·paddingLeft */}
-</Button>
+규칙: **색·크기·모서리·여백 = 부모 variant prop. 자식 `sx` = 배치(margin/flex/position)만.**
 
-// ✅ tone/size는 부모 prop, 자식 className엔 배치(margin/flex 등)만
-<Button asChild tone="brand" size="lg">
-  <Link className={linkSpacingCls}>열기</Link>  {/* marginTop */}
-</Button>
-```
+## 토큰
 
-규칙: **색·크기·모서리·여백 = 부모 variant prop. 자식 className = 배치(margin/flex/position)만.**
-자식의 무레이어 `style()`이 부모 recipe를 이기는 건 안전망이지 의도가 아니다 —
-variant 관리 속성은 자식에서 덮지 않는다.
+- `styles/tokens.stylex.ts` — `defineVars`로 선언하는 디자인 토큰(color/space/size/radii/
+  shadow/anim/tracking/font/layer). 스타일은 리터럴이 아니라 여기만 참조한다.
+- `styles/text.styles.ts` — 타이포 스케일. `stylex.create` 안에서는 객체 스프레드가 금지라
+  `...textStyles.body` 대신 `stylex.props(text.body, ...)`로 합친다.
+- `defineVars`는 **`.stylex.ts` 파일에서만** 선언할 수 있고 그 파일은 변수 선언 전용이다
+  ([Defining variables](https://stylexjs.com/docs/learn/theming/defining-variables/)).

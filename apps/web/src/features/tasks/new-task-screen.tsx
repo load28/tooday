@@ -1,3 +1,4 @@
+import * as stylex from '@stylexjs/stylex';
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
@@ -5,7 +6,7 @@ import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@
 import { ChevronLeft } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import * as v from 'valibot';
-import { pageCls } from '@/features/tasks/new-task-screen.css';
+import { styles } from '@/features/tasks/new-task-screen.styles';
 import {
   MetaList,
   MetaRow,
@@ -120,7 +121,7 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
       }
     >
       <form
-        className={pageCls}
+        {...stylex.props(styles.page)}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();

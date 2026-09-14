@@ -1,22 +1,36 @@
+import * as stylex from '@stylexjs/stylex';
 import type { ReactNode } from 'react';
-import { sectionHeader, sectionHeaderTrailing } from '@/shared/ui/section.css';
 import { Stack } from '@/shared/ui/stack';
 import { Text } from '@/shared/ui/text';
+import type { FlexSx } from '@/styles/sx';
+import { space } from '@/styles/tokens.stylex';
+
+const styles = stylex.create({
+  header: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: space.xl,
+    paddingInline: space['3xl'],
+    paddingBlock: space.md,
+  },
+  trailing: { display: 'flex', alignItems: 'center', gap: space.md },
+});
 
 type SectionProps = {
   title?: ReactNode;
   trailing?: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
-  className?: string;
+  sx?: FlexSx;
 };
 
-export function Section({ title, trailing, description, children, className }: SectionProps) {
+export function Section({ title, trailing, description, children, sx }: SectionProps) {
   const showHeader = title != null || trailing != null || description != null;
   return (
-    <Stack as="section" gap="md" className={className}>
+    <Stack as="section" gap="md" sx={sx}>
       {showHeader ? (
-        <header className={sectionHeader()}>
+        <header {...stylex.props(styles.header)}>
           <Stack gap="2xs">
             {title != null ? (
               typeof title === 'string' ? (
@@ -37,7 +51,7 @@ export function Section({ title, trailing, description, children, className }: S
               )
             ) : null}
           </Stack>
-          {trailing != null ? <div className={sectionHeaderTrailing()}>{trailing}</div> : null}
+          {trailing != null ? <div {...stylex.props(styles.trailing)}>{trailing}</div> : null}
         </header>
       ) : null}
       <div>{children}</div>

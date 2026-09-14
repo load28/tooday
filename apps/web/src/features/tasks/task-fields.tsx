@@ -1,12 +1,12 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
+import * as stylex from '@stylexjs/stylex';
 import type { Project, ProjectColor } from '@tooday/shared';
 import { Check, ChevronRight, Plus } from 'lucide-react';
 import { Children, Fragment, type ReactNode, useState } from 'react';
-import { checkCls, durationRowCls, valueCls } from '@/features/tasks/task-fields.css';
+import { styles } from '@/features/tasks/task-fields.styles';
 import { useT } from '@/shared/i18n';
 import { endTime, formatDuration } from '@/shared/time';
 import { BottomSheet, Button, Card, Divider, Dot, HStack, Input, Row, Stack, Text } from '@/shared/ui';
-import { vars } from '@/styles/theme.css';
 
 /** 프로젝트 선택 시트의 '없음' 옵션 키 — 태스크의 projectId=null에 대응 (UUID와 충돌하지 않는 sentinel) */
 export const NO_PROJECT_KEY = '__none__';
@@ -44,8 +44,8 @@ export function MetaRow({ label, value, onClick }: MetaRowProps) {
       onClick={onClick}
       trailing={
         <>
-          <span className={valueCls}>{value}</span>
-          {interactive ? <ChevronRight size={16} color={vars.color.textPlaceholder} /> : null}
+          <span {...stylex.props(styles.value)}>{value}</span>
+          {interactive ? <ChevronRight size={16} {...stylex.props(styles.chevron)} /> : null}
         </>
       }
     >
@@ -117,7 +117,7 @@ export function OptionSheet<K extends string>({
             interactive
             inset="flush"
             leading={option.leading}
-            trailing={option.key === selectedKey ? <Check size={20} strokeWidth={2.6} className={checkCls} /> : null}
+            trailing={option.key === selectedKey ? <Check size={20} strokeWidth={2.6} {...stylex.props(styles.check)} /> : null}
             onClick={() => onSelect(option.key)}
           >
             <Text variant="bodyLg">{option.label}</Text>
@@ -130,7 +130,7 @@ export function OptionSheet<K extends string>({
               as="button"
               interactive
               inset="flush"
-              leading={<Plus size={18} strokeWidth={2.4} className={checkCls} />}
+              leading={<Plus size={18} strokeWidth={2.4} {...stylex.props(styles.check)} />}
               onClick={action.onClick}
             >
               <Text variant="bodyLg" tone="brand">
@@ -186,7 +186,7 @@ export function ScheduleSheet({ open, onClose, startAt, durationMin, onApply }: 
               if (next !== undefined) setDraftDuration(Number(next));
             }}
             aria-label={t.schedule.durationLabel}
-            className={durationRowCls}
+            {...stylex.props(styles.durationRow)}
           >
             {DURATION_OPTIONS.map((option) => (
               <ToggleGroup.Item key={option} value={String(option)} asChild>

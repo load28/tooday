@@ -1,12 +1,12 @@
+import * as stylex from '@stylexjs/stylex';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
-import { cardCls, emptyCls, heroCls, listCls } from '@/features/projects/projects-screen.css';
+import { styles } from '@/features/projects/projects-screen.styles';
 import { useT } from '@/shared/i18n';
 import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } from '@/shared/ui';
-import { vars } from '@/styles/theme.css';
 
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function ProjectsScreen() {
@@ -36,7 +36,7 @@ export function ProjectsScreen() {
         </AppBar>
       </Screen.Header>
       <Screen.Content>
-        <div className={heroCls}>
+        <div {...stylex.props(styles.hero)}>
           <Stack gap="2xs">
             <Text as="h1" variant="title">
               {t.projects.title}
@@ -48,14 +48,14 @@ export function ProjectsScreen() {
         </div>
 
         {projects.length === 0 ? (
-          <Stack gap="sm" align="center" className={emptyCls}>
-            <LayoutGrid size={36} color={vars.color.borderStrong} />
+          <Stack gap="sm" align="center" sx={styles.empty}>
+            <LayoutGrid size={36} {...stylex.props(styles.emptyIcon)} />
             <Text variant="bodyLgStrong" tone="secondary">
               {t.projects.empty}
             </Text>
           </Stack>
         ) : (
-          <Stack gap="md" className={listCls}>
+          <Stack gap="md" sx={styles.list}>
             {projects.map((project) => {
               const ratio = project.totalCount > 0 ? project.doneCount / project.totalCount : 0;
               return (
@@ -65,7 +65,7 @@ export function ProjectsScreen() {
                   interactive
                   radius="2xl"
                   padding="lg"
-                  className={cardCls}
+                  sx={styles.card}
                   onClick={() => navigate({ to: '/projects/$projectId', params: { projectId: project.id } })}
                 >
                   <HStack gap="sm">

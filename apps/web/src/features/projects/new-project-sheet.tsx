@@ -4,7 +4,7 @@ import { useRouteContext } from '@tanstack/react-router';
 import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
 import * as v from 'valibot';
-import { colorRowCls } from '@/features/projects/new-project-sheet.css';
+import { styles } from '@/features/projects/new-project-sheet.styles';
 import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 import { BottomSheet, Button, ColorSwatchGroup, Stack, Text, TextField } from '@/shared/ui';
@@ -108,7 +108,7 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
                 value={field.state.value}
                 onValueChange={field.handleChange}
                 aria-label={t.projectNew.colorLabel}
-                className={colorRowCls}
+                sx={styles.colorRow}
               >
                 {PROJECT_COLORS.map((option) => (
                   <ColorSwatchGroup.Item key={option} value={option} tone={option} aria-label={t.projectNew.color[option]}>
