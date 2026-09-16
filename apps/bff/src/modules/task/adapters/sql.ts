@@ -8,6 +8,7 @@ import type {
   ProjectTaskCounts,
   TaskRefInput,
   TaskStore,
+  TaskSyncReader,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
 import type { DatabaseSchema } from '@bff/platform/db/schema';
@@ -239,7 +240,7 @@ export class SqlTaskStore implements TaskStore {
       const now = new Date();
       const row = await trx
         .updateTable('tasks')
-        .set({ deleted_at: now, updated_at: now, sync_seq: seq })
+        .set((eb) => ({ deleted_at: now, updated_at: now, sync_seq: seq, version: eb('version', '+', 1) }))
         .where('user_id', '=', userId)
         .where('id', '=', id)
         .where('deleted_at', 'is', null)
@@ -262,5 +263,34 @@ export class SqlTaskStore implements TaskStore {
 
   async syncCursor(userId: string): Promise<number> {
     return currentSyncSeq(this.db, userId);
+  }
+}
+
+/** 커서가 데이터보다 앞서는 것을 막기 위해 하나의 REPEATABLE READ 연결을 사용한다. */
+export class SqlTaskSyncReader implements TaskSyncReader {
+  constructor(private readonly db: Kysely<DatabaseSchema>) {}
+
+  range(input: ListTasksRangeInput) {
+    return this.db
+      .transaction()
+      .setIsolationLevel('repeatable read')
+      .execute(async (trx) => {
+        const tasks = await new SqlTaskStore(trx).listRange(input);
+        const projects = await new SqlProjectStore(trx).listByUser(input.userId);
+        const cursor = await currentSyncSeq(trx, input.userId);
+        return { tasks, projects, cursor };
+      });
+  }
+
+  changes(input: ListChangesInput) {
+    return this.db
+      .transaction()
+      .setIsolationLevel('repeatable read')
+      .execute(async (trx) => {
+        const tasks = await new SqlTaskStore(trx).changesSince(input);
+        const projects = await new SqlProjectStore(trx).changesSince(input);
+        const cursor = await currentSyncSeq(trx, input.userId);
+        return { tasks, projects, cursor };
+      });
   }
 }

@@ -3,9 +3,11 @@ import type {
   CreateTaskRequest,
   Project,
   ProjectChange,
+  SyncChangesResponse,
   Task,
   TaskChange,
   TaskPatch,
+  TaskRangeResponse,
 } from '@tooday/shared';
 
 export interface CreateProjectInput extends CreateProjectRequest {
@@ -78,4 +80,10 @@ export interface TaskStore {
   changesSince(input: ListChangesInput): Promise<TaskChange[]>;
   /** 유저의 현재 sync seq — 클라이언트의 초기 커서 */
   syncCursor(userId: string): Promise<number>;
+}
+
+/** 데이터와 커서를 같은 스냅샷에서 읽는 연산. 트랜잭션은 어댑터가 소유한다. */
+export interface TaskSyncReader {
+  range(input: ListTasksRangeInput): Promise<TaskRangeResponse>;
+  changes(input: ListChangesInput): Promise<SyncChangesResponse>;
 }

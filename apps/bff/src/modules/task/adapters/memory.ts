@@ -8,6 +8,7 @@ import type {
   ProjectTaskCounts,
   TaskRefInput,
   TaskStore,
+  TaskSyncReader,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
 import { newId } from '@bff/platform/ids';
@@ -201,5 +202,31 @@ export class InMemoryTaskStore implements TaskStore {
 
   async syncCursor(userId: string): Promise<number> {
     return this.counter.current(userId);
+  }
+}
+
+/** 메모리 스토어는 첫 await 전에 배열을 복사한다. 세 읽기를 같은 JS 턴에서 시작한다. */
+export class InMemoryTaskSyncReader implements TaskSyncReader {
+  constructor(
+    private readonly tasks: InMemoryTaskStore,
+    private readonly projects: InMemoryProjectStore,
+  ) {}
+
+  async range(input: ListTasksRangeInput) {
+    const [tasks, projects, cursor] = await Promise.all([
+      this.tasks.listRange(input),
+      this.projects.listByUser(input.userId),
+      this.tasks.syncCursor(input.userId),
+    ]);
+    return { tasks, projects, cursor };
+  }
+
+  async changes(input: ListChangesInput) {
+    const [tasks, projects, cursor] = await Promise.all([
+      this.tasks.changesSince(input),
+      this.projects.changesSince(input),
+      this.tasks.syncCursor(input.userId),
+    ]);
+    return { tasks, projects, cursor };
   }
 }

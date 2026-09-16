@@ -98,7 +98,7 @@ export const projectChangeSchema = v.object({
 export const syncChangesResponseSchema = v.object({
   tasks: v.array(taskChangeSchema),
   projects: v.array(projectChangeSchema),
-  /** 다음 요청에 쓸 커서 — max(요청 커서, 반환된 변경의 최대 seq) */
+  /** 다음 요청에 쓸 커서 — 데이터와 같은 스냅샷에서 읽은 유저 sync counter */
   cursor: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
 

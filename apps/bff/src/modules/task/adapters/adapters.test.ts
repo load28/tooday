@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'bun:test';
-import { InMemoryProjectStore, InMemorySyncCounter, InMemoryTaskStore } from '@bff/modules/task/adapters/memory';
-import { SqlProjectStore, SqlTaskStore } from '@bff/modules/task/adapters/sql';
-import type { ProjectStore, TaskStore } from '@bff/modules/task/ports';
+import {
+  InMemoryProjectStore,
+  InMemorySyncCounter,
+  InMemoryTaskStore,
+  InMemoryTaskSyncReader,
+} from '@bff/modules/task/adapters/memory';
+import { SqlProjectStore, SqlTaskStore, SqlTaskSyncReader } from '@bff/modules/task/adapters/sql';
+import type { ProjectStore, TaskStore, TaskSyncReader } from '@bff/modules/task/ports';
 import { testDatabase } from '@bff/platform/db/testing';
 
 interface Stores {
   projects: ProjectStore;
   tasks: TaskStore;
+  taskSync: TaskSyncReader;
   /** SQL 구현은 tasks.user_id FK 때문에 실제 유저 행이 필요하다 */
   seedUser: (id: string) => Promise<void>;
 }
@@ -21,9 +27,12 @@ const IMPLEMENTATIONS: Implementation[] = [
     name: 'memory',
     make: async () => {
       const counter = new InMemorySyncCounter();
+      const tasks = new InMemoryTaskStore(counter);
+      const projects = new InMemoryProjectStore(counter);
       return {
-        projects: new InMemoryProjectStore(counter),
-        tasks: new InMemoryTaskStore(counter),
+        projects,
+        tasks,
+        taskSync: new InMemoryTaskSyncReader(tasks, projects),
         seedUser: async () => {},
       };
     },
@@ -35,6 +44,7 @@ const IMPLEMENTATIONS: Implementation[] = [
       return {
         projects: new SqlProjectStore(db),
         tasks: new SqlTaskStore(db),
+        taskSync: new SqlTaskSyncReader(db),
         seedUser: async (id) => {
           await db
             .insertInto('users')
@@ -66,6 +76,22 @@ for (const { name, make } of IMPLEMENTATIONS) {
       await stores.seedUser(USER_B);
       return stores;
     }
+
+    it('스냅샷 커서 이후의 수정·삭제를 놓치지 않고 사용자별로 격리한다', async () => {
+      const { tasks, projects, taskSync } = await setup();
+      await projects.create({ userId: USER_A, name: '계획', color: 'blue' });
+      const task = await tasks.create(TASK_INPUT);
+      const snapshot = await taskSync.range({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' });
+      expect(snapshot.tasks).toEqual([task]);
+      expect(snapshot.cursor).toBe(2);
+      await tasks.update({ userId: USER_A, id: task.id, patch: { title: '수정' } });
+      await tasks.remove({ userId: USER_A, id: task.id });
+      const delta = await taskSync.changes({ userId: USER_A, cursor: snapshot.cursor });
+      expect(delta.tasks).toMatchObject([{ id: task.id, title: '수정', version: 3, deleted: true }]);
+      expect(delta.cursor).toBe(4);
+      expect(await taskSync.changes({ userId: USER_A, cursor: delta.cursor })).toEqual({ tasks: [], projects: [], cursor: 4 });
+      expect(await taskSync.changes({ userId: USER_B, cursor: 0 })).toEqual({ tasks: [], projects: [], cursor: 0 });
+    });
 
     it('프로젝트를 만들고 유저별로 생성 순서(fractional key 순)로 조회한다', async () => {
       const { projects } = await setup();
@@ -144,7 +170,7 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await tasks.listRange({ userId: USER_A, from: '2026-07-01', to: '2026-07-31' })).toEqual([]);
       const changes = await tasks.changesSince({ userId: USER_A, cursor: 1 });
       expect(changes).toHaveLength(1);
-      expect(changes[0]).toMatchObject({ id: task.id, deleted: true });
+      expect(changes[0]).toMatchObject({ id: task.id, deleted: true, version: task.version + 1 });
     });
 
     it('update는 patch의 필드만 적용하고 version을 올린다', async () => {
