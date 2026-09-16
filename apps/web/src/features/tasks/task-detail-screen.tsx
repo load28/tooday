@@ -1,11 +1,14 @@
 import * as stylex from '@stylexjs/stylex';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
-import type { Task, TaskPatch, TaskStatus, UpdateTaskRequest } from '@tooday/shared';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useAtom } from '@tanstack/react-store';
+import type { Project, Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { applyTaskPatch } from '@/entities/task/patch';
+import { useTaskData } from '@/entities/task/context';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
+import { useTaskPageState } from '@/features/tasks/state';
 import { styles } from '@/features/tasks/task-detail-screen.styles';
 import {
   MetaList,
@@ -18,7 +21,6 @@ import {
   useProjectOptions,
 } from '@/features/tasks/task-fields';
 import { useLocale, useT } from '@/shared/i18n';
-import { optimisticPatch } from '@/shared/query';
 import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
 
@@ -27,24 +29,32 @@ type TaskDetailScreenProps = {
 };
 
 export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
+  const taskData = useTaskData();
+  const t = useT();
+  const { data: tasks } = useLiveSuspenseQuery(taskData.taskView({ kind: 'task', id: taskId }));
+  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const task = tasks[0];
+  if (!task)
+    return (
+      <Screen>
+        <Text>{t.taskDetail.notFound}</Text>
+      </Screen>
+    );
+  return <TaskEditor key={task.id} task={task} projects={projects} />;
+}
+
+function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
+  const taskId = task.id;
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const { actions } = useTaskData();
   const t = useT();
   const locale = useLocale();
-
-  const {
-    data: { task },
-  } = useSuspenseQuery(trpc.task.byId.queryOptions({ id: taskId }));
-  const {
-    data: { projects },
-  } = useSuspenseQuery(trpc.task.projects.queryOptions());
   const projectOptions = useProjectOptions(projects);
-
-  const [titleDraft, setTitleDraft] = useState(task.title);
-  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
-  const [projectSheetOpen, setProjectSheetOpen] = useState(false);
-  const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false);
+  // null은 미편집 상태다. 원격 제목은 미편집 상태에서만 즉시 표시한다.
+  const [titleDraft, setTitleDraft] = useState<string | null>(null);
+  const { activeSheetAtom } = useTaskPageState();
+  const [activeSheet, setActiveSheet] = useAtom(activeSheetAtom);
 
   const project = useMemo(
     () => (task.projectId !== null ? (projects.find((candidate) => candidate.id === task.projectId) ?? null) : null),
@@ -53,39 +63,23 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
 
   const dateLabel = useMemo(() => formatDateLabel(locale, parseIsoDate(task.date), 'short'), [locale, task.date]);
 
-  const update = useMutation(
-    trpc.task.update.mutationOptions(
-      optimisticPatch(
-        queryClient,
-        trpc.task.byId.queryKey({ id: taskId }),
-        (old: { task: Task }, { patch }: UpdateTaskRequest) => ({
-          task: applyTaskPatch(old.task, patch),
-        }),
-      ),
-    ),
-  );
-
-  const remove = useMutation(
-    trpc.task.delete.mutationOptions({
-      onSuccess: async () => {
-        // 전략 ④(떠나며 다음 화면 loader가 채움) — loader의 ensureQueryData는 낡음을
-        // 무시하고 캐시를 그대로 주므로, invalidate가 아니라 remove여야 새로 채워진다.
-        queryClient.removeQueries({ queryKey: trpc.task.range.queryKey() });
-        await navigate({ to: '/today' });
-        // 이 화면이 구독 중이던 캐시라 언마운트된 뒤에 지운다 — 마운트 상태에서 지우면
-        // useSuspenseQuery가 데이터를 잃고 suspend 해 화면이 빈다. 지우지 않으면 삭제
-        // 직후 뒤로가기가 loader 캐시에서 지워진 태스크를 꺼내 보여준다.
-        queryClient.removeQueries({ queryKey: trpc.task.byId.queryKey({ id: taskId }) });
-      },
-    }),
-  );
-
-  const patch = (patch: TaskPatch) => update.mutate({ id: taskId, patch });
+  const update = useMutation({ mutationFn: (action: () => Promise<void>) => action() });
+  const remove = useMutation({
+    mutationFn: actions.deleteTask,
+    onSuccess: () => navigate({ to: '/today' }),
+  });
 
   const commitTitle = () => {
-    const next = titleDraft.trim();
-    if (next && next !== task.title) patch({ title: next });
-    else setTitleDraft(task.title);
+    if (titleDraft === null) return;
+    const submitted = titleDraft;
+    const next = submitted.trim();
+    if (!next || next === task.title) {
+      setTitleDraft(null);
+      return;
+    }
+    update.mutate(() => actions.renameTask({ taskId, title: next }), {
+      onSuccess: () => setTitleDraft((current) => (current === submitted ? null : current)),
+    });
   };
 
   return (
@@ -105,20 +99,20 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
         <Stack gap="lg">
           <Input
             variant="inline"
-            value={titleDraft}
+            value={titleDraft ?? task.title}
             onChange={(event) => setTitleDraft(event.currentTarget.value)}
             onBlur={commitTitle}
             onKeyDown={(event) => {
               if (event.key === 'Enter') event.currentTarget.blur();
               if (event.key === 'Escape') {
-                setTitleDraft(task.title);
-                event.currentTarget.blur();
+                event.preventDefault();
+                setTitleDraft(null);
               }
             }}
             aria-label={t.taskDetail.title}
           />
 
-          <BaseButton sx={styles.statusButton} onClick={() => setStatusSheetOpen(true)}>
+          <BaseButton sx={styles.statusButton} onClick={() => setActiveSheet('status')}>
             <Chip tone={STATUS_CHIP_TONE[task.status]} size="lg" leading={<Dot size="sm" tone={STATUS_DOT_TONE[task.status]} />}>
               {t.common.status[task.status]}
             </Chip>
@@ -129,22 +123,22 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
           <MetaRow
             label={t.taskDetail.project}
             value={<ProjectValue name={project?.name ?? null} color={project?.color} />}
-            onClick={() => setProjectSheetOpen(true)}
+            onClick={() => setActiveSheet('project')}
           />
           <MetaRow label={t.taskDetail.date} value={<Text variant="bodyStrong">{dateLabel}</Text>} />
           <MetaRow
             label={t.taskDetail.time}
             value={<ScheduleValue startAt={task.startAt} durationMin={task.durationMin} />}
-            onClick={() => setScheduleSheetOpen(true)}
+            onClick={() => setActiveSheet('schedule')}
           />
         </MetaList>
 
         <Stack gap="md">
-          <Button tone="dangerSoft" size="lg" fullWidth loading={remove.isPending} onClick={() => remove.mutate({ id: taskId })}>
+          <Button tone="dangerSoft" size="lg" fullWidth loading={remove.isPending} onClick={() => remove.mutate({ taskId })}>
             <Trash2 size={16} />
             {t.taskDetail.delete}
           </Button>
-          {remove.isError ? (
+          {remove.isError || update.isError ? (
             <Text variant="bodySm" tone="danger" align="center">
               {t.common.error.unexpected}
             </Text>
@@ -153,8 +147,8 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
       </div>
 
       <OptionSheet<TaskStatus>
-        open={statusSheetOpen}
-        onClose={() => setStatusSheetOpen(false)}
+        open={activeSheet === 'status'}
+        onClose={() => setActiveSheet(null)}
         title={t.taskDetail.changeStatus}
         options={STATUS_ORDER.map((status) => ({
           key: status,
@@ -163,32 +157,34 @@ export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
         }))}
         selectedKey={task.status}
         onSelect={(status) => {
-          if (status !== task.status) patch({ status });
-          setStatusSheetOpen(false);
+          if (status !== task.status) update.mutate(() => actions.setTaskStatus({ taskId, status }));
+          setActiveSheet(null);
         }}
       />
 
       <OptionSheet
-        open={projectSheetOpen}
-        onClose={() => setProjectSheetOpen(false)}
+        open={activeSheet === 'project'}
+        onClose={() => setActiveSheet(null)}
         title={t.taskDetail.changeProject}
         options={projectOptions}
         selectedKey={task.projectId ?? NO_PROJECT_KEY}
         onSelect={(key) => {
           const nextProjectId = key === NO_PROJECT_KEY ? null : key;
-          if (nextProjectId !== task.projectId) patch({ projectId: nextProjectId });
-          setProjectSheetOpen(false);
+          if (nextProjectId !== task.projectId)
+            update.mutate(() => actions.moveTaskToProject({ taskId, projectId: nextProjectId }));
+          setActiveSheet(null);
         }}
       />
 
       <ScheduleSheet
-        open={scheduleSheetOpen}
-        onClose={() => setScheduleSheetOpen(false)}
+        open={activeSheet === 'schedule'}
+        onClose={() => setActiveSheet(null)}
         startAt={task.startAt}
         durationMin={task.durationMin}
         onApply={(startAt, durationMin) => {
-          if (startAt !== task.startAt || durationMin !== task.durationMin) patch({ startAt, durationMin });
-          setScheduleSheetOpen(false);
+          if (startAt !== task.startAt || durationMin !== task.durationMin)
+            update.mutate(() => actions.rescheduleTask({ taskId, startAt, durationMin }));
+          setActiveSheet(null);
         }}
       />
     </Screen>

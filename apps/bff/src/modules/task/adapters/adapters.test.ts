@@ -93,6 +93,21 @@ for (const { name, make } of IMPLEMENTATIONS) {
       expect(await taskSync.changes({ userId: USER_B, cursor: 0 })).toEqual({ tasks: [], projects: [], cursor: 0 });
     });
 
+    it('컬렉션 범위 스냅샷은 ID·프로젝트·날짜·사용자 경계를 지킨다', async () => {
+      const { tasks, projects, taskSync } = await setup();
+      const project = await projects.create({ userId: USER_A, name: '계획', color: 'mint' });
+      const task = await tasks.create({ ...TASK_INPUT, projectId: project.id });
+      await tasks.create({ ...TASK_INPUT, title: '프로젝트 밖', date: '2026-08-01' });
+      const single = await taskSync.snapshot({ userId: USER_A, scope: { kind: 'task', id: task.id } });
+      expect(single).toEqual({ tasks: [task], projects: [project], cursor: 3 });
+      const board = await taskSync.snapshot({ userId: USER_A, scope: { kind: 'project', projectId: project.id } });
+      expect(board).toEqual(single);
+      const labels = await taskSync.snapshot({ userId: USER_A, scope: { kind: 'projects' } });
+      expect(labels).toEqual({ tasks: [], projects: [project], cursor: 3 });
+      const other = await taskSync.snapshot({ userId: USER_B, scope: { kind: 'task', id: task.id } });
+      expect(other).toEqual({ tasks: [], projects: [], cursor: 0 });
+    });
+
     it('프로젝트를 만들고 유저별로 생성 순서(fractional key 순)로 조회한다', async () => {
       const { projects } = await setup();
       const daily = await projects.create({ userId: USER_A, name: '일상', color: 'mint' });

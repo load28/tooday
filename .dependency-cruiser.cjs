@@ -61,7 +61,7 @@ module.exports = {
     {
       name: 'web-entities-direction',
       severity: 'error',
-      comment: 'web entities(도메인 공용 모델·표시 상수)는 shared만 import 할 수 있습니다 — FSD 부분 채택 (docs/conventions/web-entities.md).',
+      comment: 'web entities(모델·컬렉션·액션)는 shared만 import 할 수 있으며 통신은 포트로 주입합니다 — FSD 부분 채택 (docs/conventions/web-entities.md).',
       from: { path: '^apps/web/src/entities/' },
       to: { path: '^apps/web/src/(features|routes|app)/' },
     },

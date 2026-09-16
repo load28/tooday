@@ -15,7 +15,7 @@ import type { DatabaseSchema } from '@bff/platform/db/schema';
 import { currentSyncSeq, withUserSyncSeq } from '@bff/platform/db/sync';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
+import type { Project, ProjectChange, Task, TaskChange, TaskScope } from '@tooday/shared';
 import type { Kysely } from 'kysely';
 
 const TASK_COLUMNS = ['id', 'project_id', 'title', 'date', 'start_at', 'duration_min', 'status', 'version'] as const;
@@ -269,6 +269,25 @@ export class SqlTaskStore implements TaskStore {
 /** 커서가 데이터보다 앞서는 것을 막기 위해 하나의 REPEATABLE READ 연결을 사용한다. */
 export class SqlTaskSyncReader implements TaskSyncReader {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
+
+  snapshot({ userId, scope }: { userId: string; scope: TaskScope }) {
+    return this.db
+      .transaction()
+      .setIsolationLevel('repeatable read')
+      .execute(async (trx) => {
+        const store = new SqlTaskStore(trx);
+        let tasks: Task[] = [];
+        if (scope.kind === 'range') tasks = await store.listRange({ userId, ...scope });
+        if (scope.kind === 'project') tasks = await store.listByProject({ userId, projectId: scope.projectId });
+        if (scope.kind === 'task') {
+          const task = await store.findById({ userId, id: scope.id });
+          if (task) tasks = [task];
+        }
+        const projects = await new SqlProjectStore(trx).listByUser(userId);
+        const cursor = await currentSyncSeq(trx, userId);
+        return { tasks, projects, cursor };
+      });
+  }
 
   range(input: ListTasksRangeInput) {
     return this.db

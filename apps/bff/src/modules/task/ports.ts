@@ -8,6 +8,7 @@ import type {
   TaskChange,
   TaskPatch,
   TaskRangeResponse,
+  TaskScope,
 } from '@tooday/shared';
 
 export interface CreateProjectInput extends CreateProjectRequest {
@@ -84,6 +85,7 @@ export interface TaskStore {
 
 /** 데이터와 커서를 같은 스냅샷에서 읽는 연산. 트랜잭션은 어댑터가 소유한다. */
 export interface TaskSyncReader {
+  snapshot(input: { userId: string; scope: TaskScope }): Promise<TaskRangeResponse>;
   range(input: ListTasksRangeInput): Promise<TaskRangeResponse>;
   changes(input: ListChangesInput): Promise<SyncChangesResponse>;
 }

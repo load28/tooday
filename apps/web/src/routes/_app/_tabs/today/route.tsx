@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { TodayStateProvider } from '@/features/today/state';
 import { TodayScreen } from '@/features/today/today-screen';
 import { weekRange } from '@/features/today/week';
 
@@ -6,7 +7,7 @@ export const Route = createFileRoute('/_app/_tabs/today')({
   // 기준 시각을 loader로 고정해 SSR과 하이드레이션이 같은 날짜를 그리게 한다
   loader: async ({ context }) => {
     const now = Date.now();
-    await context.queryClient.ensureQueryData(context.trpc.task.range.queryOptions(weekRange(new Date(now))));
+    await context.taskSession.get(context.user.id).preload({ kind: 'range', ...weekRange(new Date(now)) });
     return { now };
   },
   component: TodayRoute,
@@ -14,5 +15,9 @@ export const Route = createFileRoute('/_app/_tabs/today')({
 
 function TodayRoute() {
   const { now } = Route.useLoaderData();
-  return <TodayScreen now={now} />;
+  return (
+    <TodayStateProvider>
+      <TodayScreen now={now} />
+    </TodayStateProvider>
+  );
 }

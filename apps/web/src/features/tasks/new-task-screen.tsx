@@ -1,11 +1,13 @@
 import * as stylex from '@stylexjs/stylex';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import * as v from 'valibot';
+import { useTaskData } from '@/entities/task/context';
 import { styles } from '@/features/tasks/new-task-screen.styles';
 import {
   MetaList,
@@ -52,11 +54,11 @@ type NewTaskScreenProps = {
 export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const taskData = useTaskData();
   const t = useT();
 
-  const { data } = useSuspenseQuery(trpc.task.projects.queryOptions());
-  const projectOptions = useProjectOptions(data.projects);
+  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const projectOptions = useProjectOptions(projects);
 
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [newProjectSheetOpen, setNewProjectSheetOpen] = useState(false);
@@ -66,16 +68,10 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
     title: { min_length: t.taskNew.titleRequired },
   }));
 
-  const create = useMutation(
-    trpc.task.create.mutationOptions({
-      onSuccess: async () => {
-        // 전략 ④(떠나며 다음 화면 loader가 채움) — loader의 ensureQueryData는 낡음을
-        // 무시하고 캐시를 그대로 주므로, invalidate가 아니라 remove여야 새로 채워진다.
-        queryClient.removeQueries({ queryKey: trpc.task.range.queryKey() });
-        await navigate({ to: '/today' });
-      },
-    }),
-  );
+  const create = useMutation({
+    mutationFn: taskData.actions.createTask,
+    onSuccess: () => navigate({ to: '/today' }),
+  });
 
   const form = useForm({
     defaultValues: {
@@ -103,8 +99,8 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
   const durationMin = useStore(form.store, (state) => state.values.durationMin);
 
   const selectedProject = useMemo(
-    () => (projectId !== null ? (data.projects.find((project) => project.id === projectId) ?? null) : null),
-    [data.projects, projectId],
+    () => (projectId !== null ? (projects.find((project) => project.id === projectId) ?? null) : null),
+    [projects, projectId],
   );
 
   return (

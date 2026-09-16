@@ -159,3 +159,12 @@ export type ProjectDetailRequest = v.InferOutput<typeof projectDetailRequestSche
 export type ProjectSummary = v.InferOutput<typeof projectSummarySchema>;
 export type ProjectListResponse = v.InferOutput<typeof projectListResponseSchema>;
 export type ProjectDetailResponse = v.InferOutput<typeof projectDetailResponseSchema>;
+
+/** 컬렉션 로딩 범위. 화면 이름 대신 서버 데이터의 조회 조건을 계약으로 둔다. */
+export const taskScopeSchema = v.variant('kind', [
+  v.object({ kind: v.literal('range'), ...taskRangeRequestSchema.entries }),
+  v.object({ kind: v.literal('task'), ...taskIdRequestSchema.entries }),
+  v.object({ kind: v.literal('project'), ...projectDetailRequestSchema.entries }),
+  v.object({ kind: v.literal('projects') }),
+]);
+export type TaskScope = v.InferOutput<typeof taskScopeSchema>;

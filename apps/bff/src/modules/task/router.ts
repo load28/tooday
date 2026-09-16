@@ -10,6 +10,7 @@ import {
   syncChangesRequestSchema,
   taskIdRequestSchema,
   taskRangeRequestSchema,
+  taskScopeSchema,
   updateTaskRequestSchema,
 } from '@tooday/shared';
 
@@ -22,6 +23,9 @@ export interface TaskRouterDeps {
 
 export function createTaskRouter({ tasks, projects, sync, taskSync }: TaskRouterDeps) {
   return router({
+    snapshot: protectedProcedure
+      .input(taskScopeSchema)
+      .query(({ ctx, input }) => taskSync.snapshot({ userId: ctx.userId, scope: input })),
     /** 메인(오늘) 화면 주간 창 데이터 + 동기화 커서 */
     range: protectedProcedure.input(taskRangeRequestSchema).query(async ({ ctx, input }): Promise<TaskRangeResponse> => {
       return taskSync.range({ userId: ctx.userId, ...input });

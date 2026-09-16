@@ -13,7 +13,7 @@ import type {
 } from '@bff/modules/task/ports';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
+import type { Project, ProjectChange, Task, TaskChange, TaskScope } from '@tooday/shared';
 
 /** 유저별 단조증가 seq — SQL 구현의 sync_counters에 대응. 두 스토어가 하나를 공유해야 한다 */
 export class InMemorySyncCounter {
@@ -211,6 +211,24 @@ export class InMemoryTaskSyncReader implements TaskSyncReader {
     private readonly tasks: InMemoryTaskStore,
     private readonly projects: InMemoryProjectStore,
   ) {}
+
+  async snapshot({ userId, scope }: { userId: string; scope: TaskScope }) {
+    // findById 역시 호출 즉시 복사한다. await를 사이에 넣지 않는다.
+    const taskRead =
+      scope.kind === 'range'
+        ? this.tasks.listRange({ userId, ...scope })
+        : scope.kind === 'project'
+          ? this.tasks.listByProject({ userId, projectId: scope.projectId })
+          : scope.kind === 'task'
+            ? this.tasks.findById({ userId, id: scope.id }).then((task) => (task ? [task] : []))
+            : Promise.resolve([]);
+    const [tasks, projects, cursor] = await Promise.all([
+      taskRead,
+      this.projects.listByUser(userId),
+      this.tasks.syncCursor(userId),
+    ]);
+    return { tasks, projects, cursor };
+  }
 
   async range(input: ListTasksRangeInput) {
     const [tasks, projects, cursor] = await Promise.all([

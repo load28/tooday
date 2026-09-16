@@ -10,7 +10,7 @@ import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
 export function SettingsScreen() {
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const { trpc, endSession } = useRouteContext({ from: '__root__' });
   const t = useT();
 
   const { data } = useSuspenseQuery(trpc.user.me.queryOptions());
@@ -21,7 +21,7 @@ export function SettingsScreen() {
       onSuccess: async () => {
         setConfirmOpen(false);
         // 웹뷰는 새로고침으로 리셋되지 않는다 — 이전 유저 데이터가 남지 않게 전 캐시를 비운다.
-        queryClient.clear();
+        await endSession();
         await navigate({ to: '/login' });
       },
     }),

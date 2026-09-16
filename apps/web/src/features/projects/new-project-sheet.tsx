@@ -1,9 +1,9 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { useRouteContext } from '@tanstack/react-router';
 import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
 import * as v from 'valibot';
+import { useTaskData } from '@/entities/task/context';
 import { styles } from '@/features/projects/new-project-sheet.styles';
 import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -43,21 +43,14 @@ export function NewProjectSheet({ open, onClose, onCreated }: NewProjectSheetPro
 }
 
 function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }) {
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const { actions } = useTaskData();
   const t = useT();
 
   const messages = useFormMessages(projectFormSchema, (t) => ({
     name: { min_length: t.projectNew.nameRequired },
   }));
 
-  const create = useMutation(
-    trpc.task.createProject.mutationOptions({
-      onSuccess: async ({ project }) => {
-        await queryClient.invalidateQueries({ queryKey: trpc.task.projects.queryKey() });
-        onCreated(project);
-      },
-    }),
-  );
+  const create = useMutation({ mutationFn: actions.createProject, onSuccess: onCreated });
 
   const form = useForm({
     defaultValues: { name: '', color: 'blue' } as ProjectFormValues,
