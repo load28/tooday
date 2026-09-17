@@ -5,7 +5,7 @@ export const Route = createFileRoute('/_app/_tabs/projects/')({
   loader: async ({ context }) => {
     await Promise.all([
       context.taskSession.get(context.user.id).preload({ kind: 'projects' }),
-      context.queryClient.ensureQueryData({ ...context.trpc.task.projects.queryOptions(), revalidateIfStale: true }),
+      context.taskSession.get(context.user.id).preloadSummaries(),
     ]);
   },
   component: ProjectsRoute,

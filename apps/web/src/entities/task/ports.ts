@@ -2,6 +2,7 @@ import type {
   CreateProjectRequest,
   CreateTaskRequest,
   Project,
+  ProjectListResponse,
   SyncChangesResponse,
   Task,
   TaskRangeResponse,
@@ -19,5 +20,6 @@ export interface TaskTransport {
   createProject(input: CreateProjectRequest, signal: AbortSignal): Promise<{ project: Project }>;
   /** 변경 신호는 데이터가 아니다. 재연결에서도 listener를 호출해야 한다. */
   subscribe(listener: () => void): () => void;
-  invalidateSummaries(): void;
+  /** 서버가 계산한 전체 프로젝트 집계. */
+  summaries(signal: AbortSignal): Promise<ProjectListResponse>;
 }

@@ -1,9 +1,9 @@
 import * as stylex from '@stylexjs/stylex';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
-import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import * as v from 'valibot';
+import { useAuthData } from '@/entities/auth/context';
 import { styles } from '@/features/auth/signup-screen.styles';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -21,7 +21,7 @@ function toSignupRequest({ name, email, password }: SignupFormValues): SignupReq
 
 export function SignupScreen() {
   const navigate = useNavigate();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const { actions } = useAuthData();
   const t = useT();
 
   const messages = useFormMessages(signupFormSchema, (t) => ({
@@ -30,15 +30,6 @@ export function SignupScreen() {
     password: { min_length: t.auth.signup.passwordTooShort({ min: MIN_PASSWORD_LENGTH }) },
   }));
 
-  const signup = useMutation(
-    trpc.auth.signup.mutationOptions({
-      onSuccess: async ({ user }) => {
-        queryClient.setQueryData(trpc.user.me.queryKey(), { user });
-        await navigate({ to: '/today' });
-      },
-    }),
-  );
-
   const form = useForm({
     defaultValues: { name: '', email: '', password: '' },
     validationLogic: revalidateLogic(),
@@ -46,7 +37,8 @@ export function SignupScreen() {
       onDynamic: signupFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await signup.mutateAsync(toSignupRequest(value));
+          await actions.signup(toSignupRequest(value));
+          await navigate({ to: '/today' });
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
             return fieldErrors(signupFormSchema, { email: t.auth.signup.emailTaken });

@@ -1,5 +1,4 @@
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
 import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
 import * as v from 'valibot';
@@ -50,8 +49,6 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
     name: { min_length: t.projectNew.nameRequired },
   }));
 
-  const create = useMutation({ mutationFn: actions.createProject, onSuccess: onCreated });
-
   const form = useForm({
     defaultValues: { name: '', color: 'blue' } as ProjectFormValues,
     validationLogic: revalidateLogic(),
@@ -59,7 +56,8 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
       onDynamic: projectFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await create.mutateAsync(toCreateProjectRequest(value));
+          const project = await actions.createProject(toCreateProjectRequest(value));
+          onCreated(project);
         } catch {
           return formError(t.common.error.unexpected);
         }

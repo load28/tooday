@@ -8,6 +8,13 @@
 module.exports = {
   forbidden: [
     {
+      name: 'web-ui-no-query-or-transport',
+      severity: 'error',
+      comment: 'UI는 DB·Store·업무 액션으로 접근한다. Query와 전송 구현은 컬렉션/조립 계층에 한정한다.',
+      from: { path: '^apps/web/src/features/' },
+      to: { path: '(@tanstack/(react-query|query-core|query-db-collection|react-router-ssr-query)|@trpc/|apps/web/src/app/trpc)' },
+    },
+    {
       name: 'no-circular',
       severity: 'error',
       comment: '순환 의존성을 금지합니다.',

@@ -1,10 +1,9 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { fetchSessionUser } from '@/app/trpc.ts';
 import { TaskDataProvider } from '@/entities/task/context';
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context }) => {
-    const user = await fetchSessionUser(context);
+    const user = await context.auth.resolveUser();
     if (!user) {
       await context.endSession();
       throw redirect({ to: '/login' });

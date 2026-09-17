@@ -1,7 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
@@ -68,11 +67,6 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
     title: { min_length: t.taskNew.titleRequired },
   }));
 
-  const create = useMutation({
-    mutationFn: taskData.actions.createTask,
-    onSuccess: () => navigate({ to: '/today' }),
-  });
-
   const form = useForm({
     defaultValues: {
       title: '',
@@ -86,7 +80,8 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
       onDynamic: taskFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await create.mutateAsync(toCreateTaskRequest(value));
+          await taskData.actions.createTask(toCreateTaskRequest(value));
+          await navigate({ to: '/today' });
         } catch {
           return formError(t.common.error.unexpected);
         }

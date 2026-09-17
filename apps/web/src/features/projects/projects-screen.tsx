@@ -1,7 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { useLiveSuspenseQuery } from '@tanstack/react-db';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { useTaskData } from '@/entities/task/context';
@@ -13,14 +12,11 @@ import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } f
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function ProjectsScreen() {
   const navigate = useNavigate();
-  const { trpc } = useRouteContext({ from: '__root__' });
   const t = useT();
   const taskData = useTaskData();
   const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
 
-  const {
-    data: { projects: summaries },
-  } = useSuspenseQuery(trpc.task.projects.queryOptions());
+  const { data: summaries } = useLiveSuspenseQuery(taskData.summaryView());
 
   const [createOpen, setCreateOpen] = useState(false);
 

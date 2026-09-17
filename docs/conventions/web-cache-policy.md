@@ -5,8 +5,9 @@
 | 데이터 | 소유자 | UI 접근 |
 | --- | --- | --- |
 | Task·Project 원본 | 사용자별 `entities/task/data.ts` | DB live query |
-| 프로젝트 전체·완료 건수 | 서버 집계 + Query | `task.projects` |
-| 인증 사용자 | Query | `user.me` |
+| 프로젝트 전체·완료 건수 | 사용자별 집계 DB 컬렉션 | DB live query |
+| 인증 사용자 | router / SSR 요청별 인증 DB 컬렉션 | DB live query |
+| 액션 대기·오류 | 컴포넌트 Store (`useActionState`) | Atom 구독 |
 | 선택 날짜·탭·열린 시트 | 페이지 Store | Context로 Atom 객체 전달 후 개별 구독 |
 | 입력 중인 값 | TanStack Form 또는 지역 draft | 폼의 검증·dirty 상태 유지 |
 
@@ -63,17 +64,30 @@ ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 �
 - 로그아웃·세션 상실·사용자 변경은 AbortController로 이전 요청·대기 액션을 차단하고,
   DB와 Query를 명시적으로 비운다. GC는 보안 경계를 대체하지 않는다.
 
-## 남아 있는 Query의 정책
+## UI 경계와 컬렉션 내부 Query
 
-인증·집계에는 Query의 기본 staleTime 0 / gcTime 5분을 사용한다. 인증 게이트의
-예외는 `fetchSessionUser`가 소유한다. loader에서 캐시를 즉시 반환하면서 재검증하려면
-`ensureQueryData({ ..., revalidateIfStale: true })`를 사용한다.
+화면은 DB live query로 서버 데이터를 읽고 이름 있는 업무 액션으로 변경한다.
+`useQuery`/`useMutation`/QueryClient/tRPC를 화면에서 직접 사용하지 않는다.
+Router context에도 QueryClient와 rpc를 노출하지 않으며 의존성 검사로 직접 import를 금지한다.
 
-화면 이동을 이유로 Task 캐시를 지우지 않는다. 인증 응답의 `setQueryData` prime은
-유지하고, 집계는 invalidate한다. Query 키는 `trpc.<procedure>.queryKey()`로 파생한다.
+서버 집계와 인증은 `queryCollectionOptions`로 만든 실제 DB 컬렉션이다.
+Query는 컬렉션의 전송 캐시·취소·재조회 수단이며, Query 결과를 UI Atom에 복사하지 않는다.
+집계는 기존 서버 API의 전체 카운트를 사용한다. 사용자별 키를 쓰고, 업무 액션과
+SSE 델타 반영에서 내부 캐시를 무효화한다. 서버 집계는 낙관적으로 추정하지 않는다.
+
+인증 게이트와 설정 화면은 동일한 인증 컬렉션을 사용한다. 인증 캐시의 staleTime은
+15분, gcTime은 30분이다. 네트워크 장애는 오류로 전달하고 익명 사용자로 오인하지 않는다.
+로그인·회원가입 액션이 사용자 데이터를 정리한 뒤 인증 원본을 갱신한다.
+로그아웃·세션 상실은 진행 중인 이전 요청을 취소하고 사용자 데이터를 정리한다.
+SSR에는 인증 행과 갱신 시각, 로딩한 집계 행을 직렬화하고 복원한다.
+Query의 focus/reconnect 처리를 위한 구독도 데이터 환경이 생성·정리한다.
+
+액션 실행 상태는 컴포넌트마다 생성한 Store가 소유한다. 겹친 실행의 대기 개수를
+추적하고 마지막 실행의 오류를 표시한다. 서버 결과 자체는 Store에 보관하지 않는다.
+Form으로 작성하는 화면은 Form의 isSubmitting/errorMap을 재사용하고 별도 mutation 캐시를 만들지 않는다.
 
 ## 에러
 
-폼은 기존 `formError`를 사용한다. 오늘 토글과 상세 수정·삭제는 mutation error를
+폼은 기존 `formError`를 사용한다. 오늘 토글과 상세 수정·삭제는 Store의 실행 오류를
 표시한다. 상세 제목은 draft가 없을 때 원격 제목을 그대로 보여 주고, 작성 중이면
 draft를 유지한다. 저장 실패 시 입력을 잃지 않는다.

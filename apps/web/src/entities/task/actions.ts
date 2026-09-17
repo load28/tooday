@@ -8,6 +8,7 @@ type ActionDeps = {
   projects: Collection<Project, string>;
   transport: TaskTransport;
   signal: AbortSignal;
+  invalidateSummaries(): void;
   retain(): Promise<() => void>;
   applyTask(task: Task): Promise<void>;
   removeTask(id: string): Promise<void>;
@@ -46,7 +47,7 @@ export function createTaskActions(deps: ActionDeps) {
           const { task } = await send(id, () => transport.update({ id, patch }, signal));
           check();
           await deps.applyTask(task);
-          transport.invalidateSummaries();
+          deps.invalidateSummaries();
         },
       });
       try {
@@ -90,7 +91,7 @@ export function createTaskActions(deps: ActionDeps) {
         const { task } = await transport.create(input, signal);
         check();
         await deps.applyTask(task);
-        transport.invalidateSummaries();
+        deps.invalidateSummaries();
         return task;
       } finally {
         release();
@@ -103,7 +104,7 @@ export function createTaskActions(deps: ActionDeps) {
         const { project } = await transport.createProject(input, signal);
         check();
         await deps.applyProject(project);
-        transport.invalidateSummaries();
+        deps.invalidateSummaries();
         return project;
       } finally {
         release();
@@ -117,7 +118,7 @@ export function createTaskActions(deps: ActionDeps) {
         await send(taskId, () => transport.remove(taskId, signal));
         check();
         await deps.removeTask(taskId);
-        transport.invalidateSummaries();
+        deps.invalidateSummaries();
       } finally {
         release();
       }

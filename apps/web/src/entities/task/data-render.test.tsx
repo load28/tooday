@@ -45,7 +45,7 @@ describe('페이지 상태와 초기 렌더링', () => {
         remove: unexpected,
         createProject: unexpected,
         subscribe: () => () => {},
-        invalidateSummaries: () => {},
+        summaries: async () => ({ projects: [] }),
       },
       { realtime: false, initial },
     );
@@ -103,4 +103,64 @@ describe('페이지 상태와 초기 렌더링', () => {
     render(tree);
     expect(screen.getByText('A:0')).toBeDefined();
   });
+});
+
+it('집계·인증 DB를 SSR 데이터로 복원해 하이드레이션한다', async () => {
+  const { createAuthData } = await import('@/entities/auth/data');
+  const { createProjectSummaries } = await import('@/entities/task/summaries');
+  const { DbClient } = await import('@tanstack/react-db');
+  const user = { id: 'u1', name: '하나', email: 'one@example.test' };
+  const summary = { id: 'p1', name: '전체 업무', color: 'blue' as const, totalCount: 100, doneCount: 20 };
+  const auth = createAuthData({
+    me: async () => ({ user }),
+    login: async () => user,
+    signup: async () => user,
+    logout: async () => {},
+    clearUserData: async () => {},
+  });
+  auth.hydrate({ rows: [{ id: 'current', user }], updatedAt: Date.now() });
+  await auth.resolveUser();
+  const db = new DbClient();
+  const abort = new AbortController();
+  const summaries = createProjectSummaries(
+    db,
+    user.id,
+    { summaries: async () => ({ projects: [summary] }) },
+    abort.signal,
+    300000,
+    [summary],
+  );
+  await summaries.preload();
+  function View() {
+    const { data: sessions } = useLiveSuspenseQuery(auth.sessionView());
+    const { data: rows } = useLiveSuspenseQuery(summaries.view());
+    return (
+      <p>
+        {sessions[0]?.user?.name}: {rows[0]?.totalCount}
+      </p>
+    );
+  }
+  const ui = (
+    <Suspense fallback="loading">
+      <View />
+    </Suspense>
+  );
+  const container = document.createElement('div');
+  container.innerHTML = renderToString(ui);
+  expect(container.textContent).toBe('하나: 100');
+  const onRecoverableError = vi.fn();
+  const root = hydrateRoot(container, ui, { onRecoverableError });
+  try {
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onRecoverableError).not.toHaveBeenCalled();
+    expect(container.textContent).toBe('하나: 100');
+  } finally {
+    await act(async () => root.unmount());
+    abort.abort();
+    await db.cleanup();
+    summaries.clear();
+    await auth.dispose();
+  }
 });

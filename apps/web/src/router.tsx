@@ -1,11 +1,12 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
-import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import * as v from 'valibot';
 import { subscribeTaskEvents } from '@/app/task-events';
 import { createTrpc } from '@/app/trpc.ts';
+import { authHydrationSchema, createAuthData } from '@/entities/auth/data';
 import { taskHydrationSchema } from '@/entities/task/data';
 import { createTaskSession } from '@/entities/task/session';
 import { routeTree } from '@/routeTree.gen.ts';
+import { hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { useT } from '@/shared/i18n';
 
 function NotFound() {
@@ -20,7 +21,7 @@ function NotFound() {
 
 export function getRouter() {
   const transport = createTrpc();
-  const { queryClient, trpc, rpc } = transport;
+  const { rpc } = transport;
   const taskSession = createTaskSession(
     {
       snapshot: (scope, signal) => rpc.task.snapshot.query(scope, { signal }),
@@ -33,24 +34,37 @@ export function getRouter() {
         subscribeTaskEvents(listener, () => {
           void endSession().then(() => router.navigate({ to: '/login', replace: true }));
         }),
-      invalidateSummaries: () => {
-        void queryClient.invalidateQueries({ queryKey: trpc.task.projects.queryKey() });
-      },
+      summaries: (signal) => rpc.task.projects.query(undefined, { signal }),
     },
     typeof window !== 'undefined',
   );
+  const auth = createAuthData({
+    me: async (signal) => {
+      try {
+        return await rpc.user.me.query(undefined, { signal });
+      } catch (error) {
+        if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) return { user: null };
+        throw error;
+      }
+    },
+    login: async (input, signal) => (await rpc.auth.login.mutate(input, { signal })).user,
+    signup: async (input, signal) => (await rpc.auth.signup.mutate(input, { signal })).user,
+    logout: async (signal) => {
+      await rpc.auth.logout.mutate(undefined, { signal });
+    },
+    clearUserData: () => taskSession.clear(),
+  });
   async function endSession() {
-    const cleanup = taskSession.clear();
-    queryClient.clear();
-    await cleanup;
+    await auth.clear();
   }
 
   const router = createTanStackRouter({
     routeTree,
-    context: { ...transport, taskSession, endSession },
-    dehydrate: () => ({ taskData: taskSession.dehydrate() }),
+    context: { taskSession, auth, endSession },
+    dehydrate: () => ({ taskData: taskSession.dehydrate(), auth: auth.dehydrate() }),
     hydrate: (state) => {
-      const parsed = v.parse(v.object({ taskData: v.nullable(taskHydrationSchema) }), state);
+      const parsed = v.parse(v.object({ taskData: v.nullable(taskHydrationSchema), auth: authHydrationSchema }), state);
+      auth.hydrate(parsed.auth);
       if (parsed.taskData) taskSession.hydrate(parsed.taskData);
     },
     scrollRestoration: true,
@@ -69,11 +83,10 @@ export function getRouter() {
       ...(router.serverSsrLifecycle?.onServerSsrAttach ?? []),
       (ssr) =>
         ssr.onCleanup(() => {
-          void taskSession.clear();
+          void Promise.all([taskSession.clear(), auth.dispose()]);
         }),
     ],
   };
-  setupRouterSsrQueryIntegration({ router, queryClient });
 
   return router;
 }

@@ -1,6 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
 import { useLiveSuspenseQuery } from '@tanstack/react-db';
-import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useAtom } from '@tanstack/react-store';
 import type { Project, Task, TaskStatus } from '@tooday/shared';
@@ -20,6 +19,7 @@ import {
   ScheduleValue,
   useProjectOptions,
 } from '@/features/tasks/task-fields';
+import { useActionState } from '@/shared/action-state';
 import { useLocale, useT } from '@/shared/i18n';
 import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
@@ -63,11 +63,8 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
 
   const dateLabel = useMemo(() => formatDateLabel(locale, parseIsoDate(task.date), 'short'), [locale, task.date]);
 
-  const update = useMutation({ mutationFn: (action: () => Promise<void>) => action() });
-  const remove = useMutation({
-    mutationFn: actions.deleteTask,
-    onSuccess: () => navigate({ to: '/today' }),
-  });
+  const update = useActionState();
+  const remove = useActionState();
 
   const commitTitle = () => {
     if (titleDraft === null) return;
@@ -77,8 +74,9 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
       setTitleDraft(null);
       return;
     }
-    update.mutate(() => actions.renameTask({ taskId, title: next }), {
-      onSuccess: () => setTitleDraft((current) => (current === submitted ? null : current)),
+    update.dispatch(async () => {
+      await actions.renameTask({ taskId, title: next });
+      setTitleDraft((current) => (current === submitted ? null : current));
     });
   };
 
@@ -134,7 +132,18 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         </MetaList>
 
         <Stack gap="md">
-          <Button tone="dangerSoft" size="lg" fullWidth loading={remove.isPending} onClick={() => remove.mutate({ taskId })}>
+          <Button
+            tone="dangerSoft"
+            size="lg"
+            fullWidth
+            loading={remove.isPending}
+            onClick={() =>
+              remove.dispatch(async () => {
+                await actions.deleteTask({ taskId });
+                await navigate({ to: '/today' });
+              })
+            }
+          >
             <Trash2 size={16} />
             {t.taskDetail.delete}
           </Button>
@@ -157,7 +166,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         }))}
         selectedKey={task.status}
         onSelect={(status) => {
-          if (status !== task.status) update.mutate(() => actions.setTaskStatus({ taskId, status }));
+          if (status !== task.status) update.dispatch(() => actions.setTaskStatus({ taskId, status }));
           setActiveSheet(null);
         }}
       />
@@ -171,7 +180,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         onSelect={(key) => {
           const nextProjectId = key === NO_PROJECT_KEY ? null : key;
           if (nextProjectId !== task.projectId)
-            update.mutate(() => actions.moveTaskToProject({ taskId, projectId: nextProjectId }));
+            update.dispatch(() => actions.moveTaskToProject({ taskId, projectId: nextProjectId }));
           setActiveSheet(null);
         }}
       />
@@ -183,7 +192,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         durationMin={task.durationMin}
         onApply={(startAt, durationMin) => {
           if (startAt !== task.startAt || durationMin !== task.durationMin)
-            update.mutate(() => actions.rescheduleTask({ taskId, startAt, durationMin }));
+            update.dispatch(() => actions.rescheduleTask({ taskId, startAt, durationMin }));
           setActiveSheet(null);
         }}
       />

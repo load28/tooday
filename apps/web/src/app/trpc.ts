@@ -1,10 +1,7 @@
-import { QueryClient } from '@tanstack/react-query';
 import { createIsomorphicFn } from '@tanstack/react-start';
 import type { AppRouter } from '@tooday/bff';
-import type { User } from '@tooday/shared';
 import { TRPC_ENDPOINT } from '@tooday/shared';
 import { createTRPCClient, httpLink, type TRPCClient } from '@trpc/client';
-import { createTRPCOptionsProxy, type TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 
 const BFF_URL = import.meta.env.VITE_BFF_URL ?? 'http://localhost:3002';
 
@@ -85,38 +82,18 @@ async function fetchWithRefresh(
   return fetch(input, { ...init, credentials: 'include' });
 }
 
-export type Trpc = TRPCOptionsProxy<AppRouter>;
-
 export interface TrpcContext {
-  queryClient: QueryClient;
-  trpc: Trpc;
   rpc: TRPCClient<AppRouter>;
   onSessionLost(listener: () => void): () => void;
 }
 
 export function createTrpc(): TrpcContext {
   const sessionLostListeners = new Set<() => void>();
-  // staleTime·gcTime은 React Query 기본값(0 / 5분)을 쓴다 — 기본값과 같은 값을 명시하지 않는다.
-  // 캐시가 살아 있어야 loader의 ensureQueryData가 네트워크 없이 즉시 반환하고
-  // (docs/authentication-architecture.md의 "네비게이션 블로킹 제로"), 화면의
-  // useSuspenseQuery가 suspend 하지 않는다. staleTime 0이라 마운트 트리거에서
-  // 백그라운드 재검증이 돌아 과거 데이터를 보는 창은 재요청 왕복 시간으로 묶인다.
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-  // 세션이 죽었을 때 게이트 캐시를 버리는 콜백 — trpc 프록시가 아래에서 만들어지므로
-  // 요청 시점에 읽도록 지연 참조한다(첫 요청은 반드시 프록시 생성 이후에 일어난다).
   const dropSessionUser = (): void => {
-    queryClient.clear();
     for (const listener of sessionLostListeners) listener();
   };
-
-  const trpcClient = createTRPCClient<AppRouter>({
+  const rpc = createTRPCClient<AppRouter>({
     links: [
-      // 노배치(httpLink): 쿼리가 GET 단일 경로 URL로 나가야 BFF의 HTTP 캐시 정책이 동작한다
       httpLink({
         url: bffUrl(TRPC_ENDPOINT),
         fetch: (input, init) => fetchWithRefresh(input, init, dropSessionUser),
@@ -124,12 +101,8 @@ export function createTrpc(): TrpcContext {
       }),
     ],
   });
-
-  const trpc = createTRPCOptionsProxy<AppRouter>({ client: trpcClient, queryClient });
   return {
-    queryClient,
-    trpc,
-    rpc: trpcClient,
+    rpc,
     onSessionLost: (listener) => {
       sessionLostListeners.add(listener);
       return () => {
@@ -137,30 +110,4 @@ export function createTrpc(): TrpcContext {
       };
     },
   };
-}
-
-/** 세션 게이트가 캐시를 신선하다고 볼 시간 — 이 동안은 재확인 요청이 나가지 않는다. */
-const SESSION_STALE_MS = 15 * 60_000;
-/**
- * 게이트 캐시 수명. 반드시 SESSION_STALE_MS보다 커야 한다 — user.me는 구독하는
- * 컴포넌트가 없어 백그라운드 갱신(fetch)만이 gc 타이머를 리셋할 수 있으므로,
- * gcTime이 더 짧으면 갱신 전에 캐시가 삭제돼 블로킹 요청이 생긴다.
- */
-const SESSION_GC_MS = 30 * 60_000;
-
-export async function fetchSessionUser({ queryClient, trpc }: Pick<TrpcContext, 'queryClient' | 'trpc'>): Promise<User | null> {
-  try {
-    const { user } = await queryClient.ensureQueryData({
-      ...trpc.user.me.queryOptions(),
-      // 게이트 용도라 초 단위 정확도가 필요 없다. 캐시를 즉시 반환해 내비게이션을
-      // 막지 않고, 낡았을 때만 뒤에서 세션 유효성을 재확인한다. 폐기를 즉시 잡는 건
-      // 이 주기가 아니라 fetchWithRefresh의 세션 상실 콜백이 담당한다.
-      staleTime: SESSION_STALE_MS,
-      gcTime: SESSION_GC_MS,
-      revalidateIfStale: true,
-    });
-    return user;
-  } catch {
-    return null;
-  }
 }

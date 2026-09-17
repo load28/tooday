@@ -57,7 +57,7 @@ function server() {
       return { id };
     }),
     subscribe: vi.fn(() => close),
-    invalidateSummaries: vi.fn(),
+    summaries: vi.fn(async () => ({ projects: [] })),
   };
   return {
     transport,
@@ -294,4 +294,26 @@ describe('공용 Task 데이터', () => {
     expect(data.tasks.get(task.id)).toMatchObject({ startAt: '09:00', durationMin: 30 });
     expect(remote.transport.update).not.toHaveBeenCalled();
   });
+});
+
+it('업무 액션과 원격 델타가 집계 DB 구독을 함께 갱신한다', async () => {
+  const remote = server();
+  remote.transport.summaries = vi.fn(async () => ({
+    projects: [{ ...project, totalCount: 100, doneCount: remote.rows.get('t1')?.status === 'done' ? 21 : 20 }],
+  }));
+  const data = make(remote.transport);
+  await Promise.all([data.preload(week), data.preloadSummaries()]);
+  const view = data.summaryView();
+  const subscription = view.subscribeChanges(() => {});
+  try {
+    expect([...view.values()][0]?.doneCount).toBe(20);
+    await data.actions.setTaskStatus({ taskId: 't1', status: 'done' });
+    await vi.waitFor(() => expect([...view.values()][0]?.doneCount).toBe(21));
+    remote.change({ status: 'todo' });
+    await data.pull();
+    await vi.waitFor(() => expect([...view.values()][0]?.doneCount).toBe(20));
+    expect([...view.values()][0]?.totalCount).toBe(100);
+  } finally {
+    subscription.unsubscribe();
+  }
 });

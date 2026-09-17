@@ -6,6 +6,7 @@ import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynam
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
 import { StylexStyleSheet } from '@/app/stylex-stylesheet';
+import { AuthDataProvider } from '@/entities/auth/context';
 import type { RouterAppContext } from '@/router-context';
 import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
@@ -58,10 +59,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootComponent() {
   const { locale } = Route.useLoaderData();
+  const { auth } = Route.useRouteContext();
   const dictionary = getDictionary(locale);
   return (
     <I18nProvider value={{ locale, dictionary }}>
-      <Outlet />
+      <AuthDataProvider data={auth}>
+        <Outlet />
+      </AuthDataProvider>
     </I18nProvider>
   );
 }

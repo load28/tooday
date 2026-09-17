@@ -24,6 +24,10 @@ feature의 캐시를 수정하게 하는 것보다 이 경계에 소유권을 �
 
 | 위치 | 책임 |
 | --- | --- |
+| `entities/auth/data.ts` | 인증 DB·로그인/회원가입/로그아웃 액션·SSR 복원 |
+| `entities/auth/context.tsx` | 인증 환경 공급 |
+| `entities/task/summaries.ts` | 서버 전체 집계 DB·캐시 갱신 |
+| `shared/action-state.ts` | 컴포넌트별 실행 상태 Store |
 | `entities/task/status.ts` | 순수 표시 상수 |
 | `entities/task/ports.ts` | 인증 구현을 모르는 통신 인터페이스 |
 | `entities/task/data.ts` | 사용자별 DB·범위 로딩·커서 동기화·정리 |
@@ -41,3 +45,5 @@ feature의 캐시를 수정하게 하는 것보다 이 경계에 소유권을 �
 상세 페이지의 상태 Provider는 업무/프로젝트 ID를 key로 사용해 소유 대상 변경 시 초기화한다.
 
 자세한 동작과 수명은 [web-cache-policy.md](web-cache-policy.md)를 따른다.
+
+T041에서 UI는 DB·Store·업무 액션만 사용한다. Query는 DB 컬렉션 내부에 한정한다.

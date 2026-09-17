@@ -8,6 +8,7 @@ import {
 import {
   type Project,
   projectSchema,
+  projectSummarySchema,
   type Task,
   type TaskChange,
   type TaskRangeResponse,
@@ -20,6 +21,7 @@ import { createTaskActions } from '@/entities/task/actions';
 import type { TaskTransport } from '@/entities/task/ports';
 import { taskQuery } from '@/entities/task/queries';
 import { matchesScope, scopeFromSubset, scopeKey } from '@/entities/task/scope';
+import { createProjectSummaries } from '@/entities/task/summaries';
 
 export const TASK_GC_MS = 5 * 60_000;
 
@@ -30,6 +32,7 @@ export const taskHydrationSchema = v.object({
   tasks: v.array(taskSchema),
   projects: v.array(projectSchema),
   scopes: v.array(taskScopeSchema),
+  summaries: v.optional(v.array(projectSummarySchema)),
 });
 export type TaskHydration = v.InferOutput<typeof taskHydrationSchema>;
 type Sink<T extends object> = Parameters<SyncConfig<T, string>['sync']>[0];
@@ -49,6 +52,7 @@ export function createTaskData(
   const gcTime = options.gcTime ?? TASK_GC_MS;
   const db = new DbClient();
   const abort = new AbortController();
+  const summaries = createProjectSummaries(db, userId, transport, abort.signal, gcTime, options.initial?.summaries);
   const scopes = new Map<string, ScopeEntry>();
   const acquisitions = new WeakMap<LoadSubsetOptions, ScopeEntry>();
   const versions = new Map<string, number>();
@@ -180,7 +184,7 @@ export function createTaskData(
         }
         // 양쪽 컬렉션의 적용이 끝나기 전에는 커서를 전진시키지 않는다.
         cursor = delta.cursor;
-        if (delta.tasks.length || delta.projects.length) transport.invalidateSummaries();
+        if (delta.tasks.length || delta.projects.length) summaries.invalidate();
       } while (pullPending && !abort.signal.aborted && sourceCount > 0);
     }).finally(() => {
       pulling = undefined;
@@ -382,6 +386,7 @@ export function createTaskData(
     projects,
     transport,
     signal: abort.signal,
+    invalidateSummaries: summaries.invalidate,
     async retain() {
       assertActive();
       // 진행 중인 액션은 페이지 언마운트·컬렉션 GC와 독립적으로 완료한다.
@@ -417,12 +422,15 @@ export function createTaskData(
     actions,
     taskView,
     projectView,
+    summaryView: summaries.view,
+    preloadSummaries: summaries.preload,
     preload,
     pull,
     dehydrate(): TaskHydration {
       return {
         userId,
         cursor,
+        summaries: summaries.dehydrate(),
         tasks: [...tasks.values()].map((task) => v.parse(taskSchema, task)),
         projects: [...projects.values()].map((project) => v.parse(projectSchema, project)),
         scopes: [...scopes.values()].filter((entry) => entry.loaded).map((entry) => entry.scope),
@@ -435,6 +443,7 @@ export function createTaskData(
       clearTimeout(retryTimer);
       for (const entry of scopes.values()) clearTimeout(entry.timer);
       await db.cleanup();
+      summaries.clear();
     },
   };
 }
