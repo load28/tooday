@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { TaskDataProvider } from '@/entities/task/context';
+import { TaskServerCacheProvider } from '@/entities/task/context';
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context }) => {
@@ -8,18 +8,18 @@ export const Route = createFileRoute('/_app')({
       await context.endSession();
       throw redirect({ to: '/login' });
     }
-    if (context.taskSession.userId && context.taskSession.userId !== user.id) await context.endSession();
-    context.taskSession.get(user.id);
+    if (context.taskCacheSession.userId && context.taskCacheSession.userId !== user.id) await context.endSession();
+    context.taskCacheSession.get(user.id);
     return { user };
   },
   component: AuthenticatedApp,
 });
 
 function AuthenticatedApp() {
-  const { user, taskSession } = Route.useRouteContext();
+  const { user, taskCacheSession } = Route.useRouteContext();
   return (
-    <TaskDataProvider data={taskSession.get(user.id)}>
+    <TaskServerCacheProvider cache={taskCacheSession.get(user.id)}>
       <Outlet />
-    </TaskDataProvider>
+    </TaskServerCacheProvider>
   );
 }

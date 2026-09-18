@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createActionState } from '@/shared/action-state';
+import { createCommandExecutionStore } from '@/shared/command-execution-store';
 
 function deferred() {
   let resolve!: () => void;
@@ -12,7 +12,7 @@ function deferred() {
 }
 describe('컴포넌트 실행 Store', () => {
   it('겹친 요청 중 하나가 끝나도 남은 요청의 대기 상태를 유지한다', async () => {
-    const state = createActionState();
+    const state = createCommandExecutionStore();
     const first = deferred();
     const second = deferred();
     const a = state.run(() => first.promise);
@@ -26,7 +26,7 @@ describe('컴포넌트 실행 Store', () => {
     expect(state.state.get().pendingCount).toBe(0);
   });
   it('이전 요청의 늦은 실패가 최신 성공의 오류 상태를 덮지 않는다', async () => {
-    const state = createActionState();
+    const state = createCommandExecutionStore();
     const first = deferred();
     const pending = state.run(() => first.promise);
     const rejected = expect(pending).rejects.toThrow('old');
@@ -36,8 +36,8 @@ describe('컴포넌트 실행 Store', () => {
     expect(state.state.get()).toEqual({ pendingCount: 0, error: null });
   });
   it('실패를 표시하고 다음 실행에서 지우며 별도 Store에는 전파하지 않는다', async () => {
-    const a = createActionState();
-    const b = createActionState();
+    const a = createCommandExecutionStore();
+    const b = createCommandExecutionStore();
     const error = new Error('failed');
     await expect(
       a.run(async () => {

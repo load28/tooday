@@ -68,3 +68,4 @@
 | T039 | [vanilla-extract → StyleX 전면 전환](T039-stylex-full-migration.md) | 중간 | ✅ 완료 |
 | T040 | [사용자별 Task DB·업무 액션·페이지 Store](T040-task-data-lifecycle.md) | 높음 | ✅ 완료 |
 | T041 | [UI 접근을 DB·Store·업무 액션으로 통일](T041-ui-db-store-boundary.md) | 높음 | ✅ 완료 |
+| T042 | [서버 캐시·클라이언트 Store의 공개 범위와 이름 정리](T042-server-cache-client-store-boundary.md) | 높음 | ✅ 완료 |

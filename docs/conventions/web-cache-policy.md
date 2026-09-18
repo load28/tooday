@@ -1,13 +1,28 @@
 # web 상태·캐시 정책
 
+## DB·Store·명령의 경계
+
+여기서 DB는 브라우저/SSR의 TanStack DB 서버 데이터 캐시다. 영속 원본은 서버에 있다.
+DB는 Task·Project·인증 사용자·서버 집계와 저장 중인 낙관적 변경을 소유한다.
+Store는 서버 원본이 아닌 클라이언트 상태를 소유한다. 작성 중인 값도 클라이언트 상태이며 기존 Form이나 지역 draft에 둘 수 있다.
+
+Store는 `useTaskCommands` 또는 `useAuthCommands`로 얻은 변경 명령을 호출할 수 있다.
+흐름은 **Store의 입력/실행 상태 → 변경 명령 → 서버 요청과 DB 반영 → live query 갱신**이다.
+Store의 값 변경 자체를 자동 저장으로 해석하지 않는다. 명시적인 명령 호출이 저장을 시작한다.
+서버 결과를 Store의 별도 원본으로 보관하지 않는다.
+
+화면은 `useTaskServerQueries` / `useAuthServerQueries`로 조회하고 변경 명령은 별도 훅으로 얻는다.
+Context는 이 두 기능만 전달한다. 원본 컬렉션·DbClient·동기화·SSR 복원·dispose는 공개하지 않는다.
+서버 캐시 생성과 세션 수명은 라우터 조립 계층이 소유하며 feature의 내부 모듈 import는 의존성 검사로 금지한다.
+
 ## 소유권
 
 | 데이터 | 소유자 | UI 접근 |
 | --- | --- | --- |
-| Task·Project 원본 | 사용자별 `entities/task/data.ts` | DB live query |
+| Task·Project 원본 | 사용자별 `entities/task/server-cache.ts` | DB live query |
 | 프로젝트 전체·완료 건수 | 사용자별 집계 DB 컬렉션 | DB live query |
 | 인증 사용자 | router / SSR 요청별 인증 DB 컬렉션 | DB live query |
-| 액션 대기·오류 | 컴포넌트 Store (`useActionState`) | Atom 구독 |
+| 액션 대기·오류 | 컴포넌트 Store (`useCommandExecutionStore`) | Atom 구독 |
 | 선택 날짜·탭·열린 시트 | 페이지 Store | Context로 Atom 객체 전달 후 개별 구독 |
 | 입력 중인 값 | TanStack Form 또는 지역 draft | 폼의 검증·dirty 상태 유지 |
 
@@ -17,7 +32,7 @@ ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 �
 
 ## 업무 변경
 
-`entities/task/actions.ts`의 이름 있는 액션을 호출한다. 화면은 API body나 캐시 패치를
+`entities/task/commands.ts`의 이름 있는 액션을 호출한다. 화면은 API body나 캐시 패치를
 조립하지 않는다. 액션은 변경 필드만 기존 tRPC 의도 기반 API로 보낸다.
 
 - 제목·상태·프로젝트·일정 수정: DB 트랜잭션의 낙관적 변경 → 서버 요청 →
@@ -40,7 +55,7 @@ ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 �
 `task.snapshot`은 날짜 범위, 프로젝트, 단건, 프로젝트 라벨을 지원한다. SQL 어댑터는
 데이터와 커서를 동일한 REPEATABLE READ 트랜잭션에서 읽는다.
 
-라우트 loader는 `TaskData.preload(scope)`로 필요한 범위만 로딩한다. 이 함수도 컴포넌트와 동일한 파생 live query의
+라우트 loader는 `TaskServerCache.preload(scope)`로 필요한 범위만 로딩한다. 이 함수도 컴포넌트와 동일한 파생 live query의
 `loadSubset` 경로를 사용한다. 파생 조회 역시 DbClient에 등록하고, 구독이 없으면
 라이브러리 GC가 정리한다. 요청 종료에는 파생 조회부터 정리한다. 캐시된 범위는 `loadSubset`이 동기적으로 완료해 SSR에서 다시 suspend하지 않는다.
 지원하지 않는 필터는 명시적으로 실패하며 전체 데이터를 대신 다운로드하지 않는다.

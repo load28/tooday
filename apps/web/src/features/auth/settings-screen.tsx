@@ -3,25 +3,26 @@ import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
-import { useAuthData } from '@/entities/auth/context';
+import { useAuthCommands, useAuthServerQueries } from '@/entities/auth/context';
 import { styles } from '@/features/auth/settings-screen.styles';
-import { useActionState } from '@/shared/action-state';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
   const router = useRouter();
-  const auth = useAuthData();
+  const auth = useAuthServerQueries();
+  const commands = useAuthCommands();
   const t = useT();
 
   const { data: sessions } = useLiveSuspenseQuery(auth.sessionView());
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const logout = useActionState();
+  const logout = useCommandExecutionStore();
   const confirmLogout = () =>
     logout.dispatch(async () => {
-      await auth.actions.logout();
+      await commands.logout();
       setConfirmOpen(false);
       await navigate({ to: '/login' });
     });

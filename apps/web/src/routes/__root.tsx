@@ -6,7 +6,7 @@ import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynam
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
 import { StylexStyleSheet } from '@/app/stylex-stylesheet';
-import { AuthDataProvider } from '@/entities/auth/context';
+import { AuthServerCacheProvider } from '@/entities/auth/context';
 import type { RouterAppContext } from '@/router-context';
 import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
@@ -63,9 +63,9 @@ function RootComponent() {
   const dictionary = getDictionary(locale);
   return (
     <I18nProvider value={{ locale, dictionary }}>
-      <AuthDataProvider data={auth}>
+      <AuthServerCacheProvider cache={auth}>
         <Outlet />
-      </AuthDataProvider>
+      </AuthServerCacheProvider>
     </I18nProvider>
   );
 }

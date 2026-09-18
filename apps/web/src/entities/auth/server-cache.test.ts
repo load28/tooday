@@ -1,9 +1,9 @@
 import type { User } from '@tooday/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { type AuthData, type AuthTransport, createAuthData } from '@/entities/auth/data';
+import { type AuthServerCache, type AuthTransport, createAuthServerCache } from '@/entities/auth/server-cache';
 
 const user: User = { id: 'u1', email: 'one@example.com', name: '하나' };
-const resources: AuthData[] = [];
+const resources: AuthServerCache[] = [];
 function setup(overrides: Partial<AuthTransport> = {}) {
   const transport: AuthTransport = {
     me: vi.fn(async () => ({ user: null })),
@@ -13,7 +13,7 @@ function setup(overrides: Partial<AuthTransport> = {}) {
     clearUserData: vi.fn(async () => {}),
     ...overrides,
   };
-  const data = createAuthData(transport);
+  const data = createAuthServerCache(transport);
   resources.push(data);
   return { data, transport };
 }
@@ -28,10 +28,10 @@ describe('인증 DB와 업무 액션', () => {
     const view = data.sessionView();
     const subscription = view.subscribeChanges(() => {});
     try {
-      await data.actions.login({ email: user.email, password: 'password' });
+      await data.commands.login({ email: user.email, password: 'password' });
       await vi.waitFor(() => expect([...view.values()][0]?.user).toEqual(user));
       expect(await data.resolveUser()).toEqual(user);
-      await data.actions.logout();
+      await data.commands.logout();
       await vi.waitFor(() => expect([...view.values()][0]?.user).toBeNull());
       expect(await data.resolveUser()).toBeNull();
       expect(transport.clearUserData).toHaveBeenCalledTimes(2);
@@ -49,7 +49,7 @@ describe('인증 DB와 업무 액션', () => {
     });
     await data.resolveUser();
     vi.mocked(transport.clearUserData).mockClear();
-    await expect(data.actions.logout()).rejects.toThrow('offline');
+    await expect(data.commands.logout()).rejects.toThrow('offline');
     expect(await data.resolveUser()).toEqual(user);
     expect(transport.clearUserData).not.toHaveBeenCalled();
   });
@@ -62,7 +62,7 @@ describe('인증 DB와 업무 액션', () => {
         }),
     });
     await data.resolveUser();
-    const pending = data.actions.login({ email: user.email, password: 'password' });
+    const pending = data.commands.login({ email: user.email, password: 'password' });
     const rejected = expect(pending).rejects.toMatchObject({ name: 'AbortError' });
     await data.clear();
     resolve(user);

@@ -1,10 +1,10 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
 import { ProjectDetailScreen } from '@/features/projects/project-detail-screen';
-import { ProjectPageStateProvider } from '@/features/projects/state';
+import { ProjectStatusFilterStoreProvider } from '@/features/projects/status-filter-store';
 
 export const Route = createFileRoute('/_app/_tabs/projects/$projectId')({
   loader: async ({ context, params }) => {
-    const data = context.taskSession.get(context.user.id);
+    const data = context.taskCacheSession.get(context.user.id);
     await data.preload({ kind: 'project', projectId: params.projectId });
     if (!data.projects.has(params.projectId)) throw notFound();
   },
@@ -14,8 +14,8 @@ export const Route = createFileRoute('/_app/_tabs/projects/$projectId')({
 function ProjectDetailRoute() {
   const { projectId } = Route.useParams();
   return (
-    <ProjectPageStateProvider key={projectId}>
+    <ProjectStatusFilterStoreProvider key={projectId}>
       <ProjectDetailScreen projectId={projectId} />
-    </ProjectPageStateProvider>
+    </ProjectStatusFilterStoreProvider>
   );
 }

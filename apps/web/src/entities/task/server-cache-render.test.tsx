@@ -6,8 +6,10 @@ import { Suspense } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createTaskData, type TaskHydration } from '@/entities/task/data';
-import { TodayStateProvider, useTodayState } from '@/features/today/state';
+import { TaskServerCacheProvider, useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { createTaskServerCache, type TaskHydration } from '@/entities/task/server-cache';
+import { TodayDateNavigationStoreProvider, useTodayDateNavigationStore } from '@/features/today/date-navigation-store';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 
 const initial: TaskHydration = {
   userId: 'u1',
@@ -35,7 +37,7 @@ describe('페이지 상태와 초기 렌더링', () => {
     const unexpected = vi.fn(async (): Promise<never> => {
       throw new Error('초기 렌더에서 네트워크를 호출하면 안 된다');
     });
-    const data = createTaskData(
+    const data = createTaskServerCache(
       'u1',
       {
         snapshot: unexpected,
@@ -77,8 +79,8 @@ describe('페이지 상태와 초기 렌더링', () => {
 
   it('같은 페이지를 두 번 열어도 Atom을 공유하지 않고 다시 마운트하면 초기화된다', () => {
     function Selection({ name }: { name: string }) {
-      const { activeOffsetAtom } = useTodayState();
-      const [value, setValue] = useAtom(activeOffsetAtom);
+      const { selectedDayOffsetAtom } = useTodayDateNavigationStore();
+      const [value, setValue] = useAtom(selectedDayOffsetAtom);
       return (
         <button type="button" onClick={() => setValue(value + 1)}>
           {name}:{value}
@@ -87,12 +89,12 @@ describe('페이지 상태와 초기 렌더링', () => {
     }
     const tree = (
       <>
-        <TodayStateProvider>
+        <TodayDateNavigationStoreProvider>
           <Selection name="A" />
-        </TodayStateProvider>
-        <TodayStateProvider>
+        </TodayDateNavigationStoreProvider>
+        <TodayDateNavigationStoreProvider>
           <Selection name="B" />
-        </TodayStateProvider>
+        </TodayDateNavigationStoreProvider>
       </>
     );
     const view = render(tree);
@@ -106,12 +108,12 @@ describe('페이지 상태와 초기 렌더링', () => {
 });
 
 it('집계·인증 DB를 SSR 데이터로 복원해 하이드레이션한다', async () => {
-  const { createAuthData } = await import('@/entities/auth/data');
+  const { createAuthServerCache } = await import('@/entities/auth/server-cache');
   const { createProjectSummaries } = await import('@/entities/task/summaries');
   const { DbClient } = await import('@tanstack/react-db');
   const user = { id: 'u1', name: '하나', email: 'one@example.test' };
   const summary = { id: 'p1', name: '전체 업무', color: 'blue' as const, totalCount: 100, doneCount: 20 };
-  const auth = createAuthData({
+  const auth = createAuthServerCache({
     me: async () => ({ user }),
     login: async () => user,
     signup: async () => user,
@@ -162,5 +164,75 @@ it('집계·인증 DB를 SSR 데이터로 복원해 하이드레이션한다', a
     await db.cleanup();
     summaries.clear();
     await auth.dispose();
+  }
+});
+
+it('화면 Store가 변경 명령으로 저장하고 조회는 서버 확정값을 구독한다', async () => {
+  const originalTask = initial.tasks[0];
+  if (!originalTask) throw new Error('업무 fixture가 필요합니다.');
+  let resolveSave!: (value: { task: TaskHydration['tasks'][number] }) => void;
+  const update = vi.fn(
+    () =>
+      new Promise<{ task: TaskHydration['tasks'][number] }>((resolve) => {
+        resolveSave = resolve;
+      }),
+  );
+  const unexpected = async (): Promise<never> => {
+    throw new Error('예상하지 않은 서버 요청');
+  };
+  const cache = createTaskServerCache(
+    'u1',
+    {
+      snapshot: unexpected,
+      changes: unexpected,
+      create: unexpected,
+      remove: unexpected,
+      createProject: unexpected,
+      update,
+      subscribe: () => () => {},
+      summaries: async () => ({ projects: [] }),
+    },
+    { realtime: false, initial },
+  );
+  function Editor() {
+    const queries = useTaskServerQueries();
+    const commands = useTaskCommands();
+    const execution = useCommandExecutionStore();
+    const { data: rows } = useLiveSuspenseQuery(queries.taskView({ kind: 'task', id: 't1' }));
+    expect(queries).not.toHaveProperty('dispose');
+    expect(queries).not.toHaveProperty('tasks');
+    expect(queries).not.toHaveProperty('commands');
+    return (
+      <>
+        <p>{rows[0]?.title}</p>
+        <button
+          type="button"
+          onClick={() => execution.dispatch(() => commands.renameTask({ taskId: 't1', title: '저장할 제목' }))}
+        >
+          {execution.isPending ? '저장 중' : '저장'}
+        </button>
+      </>
+    );
+  }
+  const view = render(
+    <TaskServerCacheProvider cache={cache}>
+      <Suspense fallback="loading">
+        <Editor />
+      </Suspense>
+    </TaskServerCacheProvider>,
+  );
+  try {
+    fireEvent.click(await screen.findByText('저장'));
+    expect(await screen.findByText('저장 중')).toBeDefined();
+    expect(await screen.findByText('저장할 제목')).toBeDefined();
+    await vi.waitFor(() => expect(update).toHaveBeenCalledOnce());
+    await act(async () => {
+      resolveSave({ task: { ...originalTask, title: '서버 확정 제목', version: 2 } });
+    });
+    expect(await screen.findByText('서버 확정 제목')).toBeDefined();
+    expect(await screen.findByText('저장')).toBeDefined();
+  } finally {
+    view.unmount();
+    await cache.dispose();
   }
 });

@@ -24,19 +24,19 @@ feature의 캐시를 수정하게 하는 것보다 이 경계에 소유권을 �
 
 | 위치 | 책임 |
 | --- | --- |
-| `entities/auth/data.ts` | 인증 DB·로그인/회원가입/로그아웃 액션·SSR 복원 |
-| `entities/auth/context.tsx` | 인증 환경 공급 |
+| `entities/auth/server-cache.ts` | 인증 DB·로그인/회원가입/로그아웃 액션·SSR 복원 |
+| `entities/auth/context.tsx` | 인증 서버 조회와 변경 명령만 별도로 공급 |
 | `entities/task/summaries.ts` | 서버 전체 집계 DB·캐시 갱신 |
-| `shared/action-state.ts` | 컴포넌트별 실행 상태 Store |
+| `shared/command-execution-store.ts` | 컴포넌트별 실행 상태 Store |
 | `entities/task/status.ts` | 순수 표시 상수 |
 | `entities/task/ports.ts` | 인증 구현을 모르는 통신 인터페이스 |
-| `entities/task/data.ts` | 사용자별 DB·범위 로딩·커서 동기화·정리 |
-| `entities/task/actions.ts` | 업무 의도, 낙관적 트랜잭션, 서버 응답 확정 |
+| `entities/task/server-cache.ts` | 사용자별 DB·범위 로딩·커서 동기화·정리 |
+| `entities/task/commands.ts` | 업무 의도, 낙관적 트랜잭션, 서버 응답 확정 |
 | `entities/task/scope.ts` | 서버 범위와 DB 필터의 매핑 |
 | `entities/task/queries.ts` | 공용 Task 조회식 |
-| `entities/task/session.ts` | router / SSR 요청 단위의 사용자 환경 |
-| `entities/task/context.tsx` | 데이터 환경 객체의 공급 |
-| `features/*/state.tsx` | 페이지 UI Atom의 생성·공급 |
+| `entities/task/cache-session.ts` | router / SSR 요청 단위의 사용자 환경 |
+| `entities/task/context.tsx` | 서버 조회와 변경 명령만 별도로 공급 |
+| `features/*/*-store.tsx` | 페이지 UI Atom의 생성·공급 |
 | `app/trpc.ts`, `app/task-events.ts` | 기존 인증을 통한 tRPC·SSE 전송 |
 | `router.tsx`, `routes/_app` | 포트 주입·인증 경계·SSR 복원 |
 
@@ -47,3 +47,10 @@ feature의 캐시를 수정하게 하는 것보다 이 경계에 소유권을 �
 자세한 동작과 수명은 [web-cache-policy.md](web-cache-policy.md)를 따른다.
 
 T041에서 UI는 DB·Store·업무 액션만 사용한다. Query는 DB 컬렉션 내부에 한정한다.
+
+## 이름과 제한된 책임
+
+- `server-cache.ts` / `createTaskServerCache`, `createAuthServerCache`: 서버 데이터 캐시와 동기화·수명 조립. 화면에서 직접 import하지 않는다.
+- `commands.ts` / `createTaskCommands`: 서버에 반영하는 도메인 변경. 클라이언트 Store의 값 변경과 구분한다.
+- `cache-session.ts` / `createTaskCacheSession`: 사용자 변경 시 Task 서버 캐시 교체·정리. 로그인 세션 자체를 관리하지 않는다.
+- `date-navigation-store.tsx`, `status-filter-store.tsx`, `detail-sheet-store.tsx`: 각 페이지의 날짜 선택·프로젝트 상태 필터·상세 시트 선택만 소유한다. `command-execution-store.ts`는 컴포넌트별 대기 개수와 오류만 소유한다.

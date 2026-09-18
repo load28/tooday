@@ -17,7 +17,7 @@ export interface AuthTransport {
 }
 
 /** router / SSR 요청별 인증 환경. UI와 가드 모두 같은 DB 원본을 사용한다. */
-export function createAuthData(transport: AuthTransport) {
+export function createAuthServerCache(transport: AuthTransport) {
   const db = new DbClient();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.mount();
@@ -92,7 +92,7 @@ export function createAuthData(transport: AuthTransport) {
       await sessionView().preload();
       return rows[0]?.user ?? null;
     },
-    actions: {
+    commands: {
       login: (input: LoginRequest) => authenticate((signal) => transport.login(input, signal)),
       signup: (input: SignupRequest) => authenticate((signal) => transport.signup(input, signal)),
       async logout() {
@@ -120,4 +120,4 @@ export function createAuthData(transport: AuthTransport) {
     },
   };
 }
-export type AuthData = ReturnType<typeof createAuthData>;
+export type AuthServerCache = ReturnType<typeof createAuthServerCache>;

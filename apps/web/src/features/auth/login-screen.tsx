@@ -3,7 +3,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
 import * as v from 'valibot';
-import { useAuthData } from '@/entities/auth/context';
+import { useAuthCommands } from '@/entities/auth/context';
 import { styles } from '@/features/auth/login-screen.styles';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -21,7 +21,7 @@ function toLoginRequest({ email, password }: LoginFormValues): LoginRequest {
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { actions } = useAuthData();
+  const commands = useAuthCommands();
   const t = useT();
 
   const messages = useFormMessages(loginFormSchema, (t) => ({
@@ -36,7 +36,7 @@ export function LoginScreen() {
       onDynamic: loginFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await actions.login(toLoginRequest(value));
+          await commands.login(toLoginRequest(value));
           await navigate({ to: '/today' });
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {

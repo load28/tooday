@@ -5,9 +5,9 @@ import { useAtom } from '@tanstack/react-store';
 import type { Project, Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useTaskData } from '@/entities/task/context';
+import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
-import { useTaskPageState } from '@/features/tasks/state';
+import { useTaskDetailSheetStore } from '@/features/tasks/detail-sheet-store';
 import { styles } from '@/features/tasks/task-detail-screen.styles';
 import {
   MetaList,
@@ -19,7 +19,7 @@ import {
   ScheduleValue,
   useProjectOptions,
 } from '@/features/tasks/task-fields';
-import { useActionState } from '@/shared/action-state';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useLocale, useT } from '@/shared/i18n';
 import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
@@ -29,10 +29,10 @@ type TaskDetailScreenProps = {
 };
 
 export function TaskDetailScreen({ taskId }: TaskDetailScreenProps) {
-  const taskData = useTaskData();
+  const taskQueries = useTaskServerQueries();
   const t = useT();
-  const { data: tasks } = useLiveSuspenseQuery(taskData.taskView({ kind: 'task', id: taskId }));
-  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const { data: tasks } = useLiveSuspenseQuery(taskQueries.taskView({ kind: 'task', id: taskId }));
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
   const task = tasks[0];
   if (!task)
     return (
@@ -47,14 +47,14 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
   const taskId = task.id;
   const navigate = useNavigate();
   const router = useRouter();
-  const { actions } = useTaskData();
+  const commands = useTaskCommands();
   const t = useT();
   const locale = useLocale();
   const projectOptions = useProjectOptions(projects);
   // null은 미편집 상태다. 원격 제목은 미편집 상태에서만 즉시 표시한다.
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
-  const { activeSheetAtom } = useTaskPageState();
-  const [activeSheet, setActiveSheet] = useAtom(activeSheetAtom);
+  const { openDetailSheetAtom } = useTaskDetailSheetStore();
+  const [activeSheet, setTaskDetailSheet] = useAtom(openDetailSheetAtom);
 
   const project = useMemo(
     () => (task.projectId !== null ? (projects.find((candidate) => candidate.id === task.projectId) ?? null) : null),
@@ -63,8 +63,8 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
 
   const dateLabel = useMemo(() => formatDateLabel(locale, parseIsoDate(task.date), 'short'), [locale, task.date]);
 
-  const update = useActionState();
-  const remove = useActionState();
+  const update = useCommandExecutionStore();
+  const remove = useCommandExecutionStore();
 
   const commitTitle = () => {
     if (titleDraft === null) return;
@@ -75,7 +75,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
       return;
     }
     update.dispatch(async () => {
-      await actions.renameTask({ taskId, title: next });
+      await commands.renameTask({ taskId, title: next });
       setTitleDraft((current) => (current === submitted ? null : current));
     });
   };
@@ -110,7 +110,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
             aria-label={t.taskDetail.title}
           />
 
-          <BaseButton sx={styles.statusButton} onClick={() => setActiveSheet('status')}>
+          <BaseButton sx={styles.statusButton} onClick={() => setTaskDetailSheet('status')}>
             <Chip tone={STATUS_CHIP_TONE[task.status]} size="lg" leading={<Dot size="sm" tone={STATUS_DOT_TONE[task.status]} />}>
               {t.common.status[task.status]}
             </Chip>
@@ -121,13 +121,13 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
           <MetaRow
             label={t.taskDetail.project}
             value={<ProjectValue name={project?.name ?? null} color={project?.color} />}
-            onClick={() => setActiveSheet('project')}
+            onClick={() => setTaskDetailSheet('project')}
           />
           <MetaRow label={t.taskDetail.date} value={<Text variant="bodyStrong">{dateLabel}</Text>} />
           <MetaRow
             label={t.taskDetail.time}
             value={<ScheduleValue startAt={task.startAt} durationMin={task.durationMin} />}
-            onClick={() => setActiveSheet('schedule')}
+            onClick={() => setTaskDetailSheet('schedule')}
           />
         </MetaList>
 
@@ -139,7 +139,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
             loading={remove.isPending}
             onClick={() =>
               remove.dispatch(async () => {
-                await actions.deleteTask({ taskId });
+                await commands.deleteTask({ taskId });
                 await navigate({ to: '/today' });
               })
             }
@@ -157,7 +157,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
 
       <OptionSheet<TaskStatus>
         open={activeSheet === 'status'}
-        onClose={() => setActiveSheet(null)}
+        onClose={() => setTaskDetailSheet(null)}
         title={t.taskDetail.changeStatus}
         options={STATUS_ORDER.map((status) => ({
           key: status,
@@ -166,34 +166,34 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         }))}
         selectedKey={task.status}
         onSelect={(status) => {
-          if (status !== task.status) update.dispatch(() => actions.setTaskStatus({ taskId, status }));
-          setActiveSheet(null);
+          if (status !== task.status) update.dispatch(() => commands.setTaskStatus({ taskId, status }));
+          setTaskDetailSheet(null);
         }}
       />
 
       <OptionSheet
         open={activeSheet === 'project'}
-        onClose={() => setActiveSheet(null)}
+        onClose={() => setTaskDetailSheet(null)}
         title={t.taskDetail.changeProject}
         options={projectOptions}
         selectedKey={task.projectId ?? NO_PROJECT_KEY}
         onSelect={(key) => {
           const nextProjectId = key === NO_PROJECT_KEY ? null : key;
           if (nextProjectId !== task.projectId)
-            update.dispatch(() => actions.moveTaskToProject({ taskId, projectId: nextProjectId }));
-          setActiveSheet(null);
+            update.dispatch(() => commands.moveTaskToProject({ taskId, projectId: nextProjectId }));
+          setTaskDetailSheet(null);
         }}
       />
 
       <ScheduleSheet
         open={activeSheet === 'schedule'}
-        onClose={() => setActiveSheet(null)}
+        onClose={() => setTaskDetailSheet(null)}
         startAt={task.startAt}
         durationMin={task.durationMin}
         onApply={(startAt, durationMin) => {
           if (startAt !== task.startAt || durationMin !== task.durationMin)
-            update.dispatch(() => actions.rescheduleTask({ taskId, startAt, durationMin }));
-          setActiveSheet(null);
+            update.dispatch(() => commands.rescheduleTask({ taskId, startAt, durationMin }));
+          setTaskDetailSheet(null);
         }}
       />
     </Screen>

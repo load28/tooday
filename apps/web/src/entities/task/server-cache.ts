@@ -17,7 +17,7 @@ import {
   taskScopeSchema,
 } from '@tooday/shared';
 import * as v from 'valibot';
-import { createTaskActions } from '@/entities/task/actions';
+import { createTaskCommands } from '@/entities/task/commands';
 import type { TaskTransport } from '@/entities/task/ports';
 import { taskQuery } from '@/entities/task/queries';
 import { matchesScope, scopeFromSubset, scopeKey } from '@/entities/task/scope';
@@ -44,7 +44,7 @@ type ScopeEntry = {
   timer?: ReturnType<typeof setTimeout>;
 };
 
-export function createTaskData(
+export function createTaskServerCache(
   userId: string,
   transport: TaskTransport,
   options: { gcTime?: number; initial?: TaskHydration; realtime?: boolean } = {},
@@ -380,7 +380,7 @@ export function createTaskData(
     await Promise.all([taskView(scope).preload(), projectView().preload()]);
   }
 
-  const actions = createTaskActions({
+  const commands = createTaskCommands({
     db,
     tasks,
     projects,
@@ -416,10 +416,9 @@ export function createTaskData(
 
   return {
     userId,
-    db,
     tasks,
     projects,
-    actions,
+    commands,
     taskView,
     projectView,
     summaryView: summaries.view,
@@ -448,4 +447,4 @@ export function createTaskData(
   };
 }
 
-export type TaskData = ReturnType<typeof createTaskData>;
+export type TaskServerCache = ReturnType<typeof createTaskServerCache>;

@@ -5,13 +5,13 @@ import { useAtom } from '@tanstack/react-store';
 import type { Task } from '@tooday/shared';
 import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTaskData } from '@/entities/task/context';
-import { useTodayState } from '@/features/today/state';
+import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { useTodayDateNavigationStore } from '@/features/today/date-navigation-store';
 import { TaskCard } from '@/features/today/task-card';
 import { styles } from '@/features/today/today-screen.styles';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
-import { useActionState } from '@/shared/action-state';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useLocale, useT } from '@/shared/i18n';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
@@ -34,17 +34,18 @@ type TodayScreenProps = {
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function TodayScreen({ now }: TodayScreenProps) {
   const navigate = useNavigate();
-  const taskData = useTaskData();
+  const taskQueries = useTaskServerQueries();
+  const commands = useTaskCommands();
   const t = useT();
   const locale = useLocale();
 
   const days = useMemo(() => buildWeek(new Date(now), locale), [now, locale]);
-  const { activeOffsetAtom } = useTodayState();
-  const [activeOffset, setActiveOffset] = useAtom(activeOffsetAtom);
+  const { selectedDayOffsetAtom } = useTodayDateNavigationStore();
+  const [activeOffset, setActiveOffset] = useAtom(selectedDayOffsetAtom);
 
   const range = useMemo(() => weekRange(new Date(now)), [now]);
-  const { data: taskRows } = useLiveSuspenseQuery(taskData.taskView({ kind: 'range', ...range }));
-  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const { data: taskRows } = useLiveSuspenseQuery(taskQueries.taskView({ kind: 'range', ...range }));
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
 
   const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const tasksByDate = useMemo(() => {
@@ -61,7 +62,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
     return map;
   }, [taskRows]);
 
-  const updateTask = useActionState();
+  const updateTask = useCommandExecutionStore();
 
   const day = days.find((d) => d.offset === activeOffset) ?? days[0];
   if (!day) return null;
@@ -70,9 +71,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
   const toggleTask = (task: Task) => {
-    updateTask.dispatch(() =>
-      taskData.actions.setTaskStatus({ taskId: task.id, status: task.status === 'done' ? 'todo' : 'done' }),
-    );
+    updateTask.dispatch(() => commands.setTaskStatus({ taskId: task.id, status: task.status === 'done' ? 'todo' : 'done' }));
   };
 
   return (

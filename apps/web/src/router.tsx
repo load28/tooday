@@ -2,9 +2,9 @@ import { createRouter as createTanStackRouter } from '@tanstack/react-router';
 import * as v from 'valibot';
 import { subscribeTaskEvents } from '@/app/task-events';
 import { createTrpc } from '@/app/trpc.ts';
-import { authHydrationSchema, createAuthData } from '@/entities/auth/data';
-import { taskHydrationSchema } from '@/entities/task/data';
-import { createTaskSession } from '@/entities/task/session';
+import { authHydrationSchema, createAuthServerCache } from '@/entities/auth/server-cache';
+import { createTaskCacheSession } from '@/entities/task/cache-session';
+import { taskHydrationSchema } from '@/entities/task/server-cache';
 import { routeTree } from '@/routeTree.gen.ts';
 import { hasTrpcErrorCode, TRPC_ERROR_CODES } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -22,7 +22,7 @@ function NotFound() {
 export function getRouter() {
   const transport = createTrpc();
   const { rpc } = transport;
-  const taskSession = createTaskSession(
+  const taskCacheSession = createTaskCacheSession(
     {
       snapshot: (scope, signal) => rpc.task.snapshot.query(scope, { signal }),
       changes: (cursor, signal) => rpc.task.changes.query({ cursor }, { signal }),
@@ -38,7 +38,7 @@ export function getRouter() {
     },
     typeof window !== 'undefined',
   );
-  const auth = createAuthData({
+  const auth = createAuthServerCache({
     me: async (signal) => {
       try {
         return await rpc.user.me.query(undefined, { signal });
@@ -52,7 +52,7 @@ export function getRouter() {
     logout: async (signal) => {
       await rpc.auth.logout.mutate(undefined, { signal });
     },
-    clearUserData: () => taskSession.clear(),
+    clearUserData: () => taskCacheSession.clear(),
   });
   async function endSession() {
     await auth.clear();
@@ -60,12 +60,12 @@ export function getRouter() {
 
   const router = createTanStackRouter({
     routeTree,
-    context: { taskSession, auth, endSession },
-    dehydrate: () => ({ taskData: taskSession.dehydrate(), auth: auth.dehydrate() }),
+    context: { taskCacheSession, auth, endSession },
+    dehydrate: () => ({ taskData: taskCacheSession.dehydrate(), auth: auth.dehydrate() }),
     hydrate: (state) => {
       const parsed = v.parse(v.object({ taskData: v.nullable(taskHydrationSchema), auth: authHydrationSchema }), state);
       auth.hydrate(parsed.auth);
-      if (parsed.taskData) taskSession.hydrate(parsed.taskData);
+      if (parsed.taskData) taskCacheSession.hydrate(parsed.taskData);
     },
     scrollRestoration: true,
     defaultPreload: 'intent',
@@ -83,7 +83,7 @@ export function getRouter() {
       ...(router.serverSsrLifecycle?.onServerSsrAttach ?? []),
       (ssr) =>
         ssr.onCleanup(() => {
-          void Promise.all([taskSession.clear(), auth.dispose()]);
+          void Promise.all([taskCacheSession.clear(), auth.dispose()]);
         }),
     ],
   };

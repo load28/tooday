@@ -3,7 +3,7 @@ import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { useNavigate } from '@tanstack/react-router';
 import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
-import { useTaskData } from '@/entities/task/context';
+import { useTaskServerQueries } from '@/entities/task/context';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { styles } from '@/features/projects/projects-screen.styles';
 import { useT } from '@/shared/i18n';
@@ -13,10 +13,10 @@ import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } f
 export function ProjectsScreen() {
   const navigate = useNavigate();
   const t = useT();
-  const taskData = useTaskData();
-  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const taskQueries = useTaskServerQueries();
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
 
-  const { data: summaries } = useLiveSuspenseQuery(taskData.summaryView());
+  const { data: summaries } = useLiveSuspenseQuery(taskQueries.summaryView());
 
   const [createOpen, setCreateOpen] = useState(false);
 

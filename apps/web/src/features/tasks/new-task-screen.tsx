@@ -6,7 +6,7 @@ import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@
 import { ChevronLeft } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import * as v from 'valibot';
-import { useTaskData } from '@/entities/task/context';
+import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
 import { styles } from '@/features/tasks/new-task-screen.styles';
 import {
   MetaList,
@@ -53,10 +53,11 @@ type NewTaskScreenProps = {
 export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
-  const taskData = useTaskData();
+  const taskQueries = useTaskServerQueries();
+  const commands = useTaskCommands();
   const t = useT();
 
-  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
   const projectOptions = useProjectOptions(projects);
 
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
@@ -80,7 +81,7 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
       onDynamic: taskFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await taskData.actions.createTask(toCreateTaskRequest(value));
+          await commands.createTask(toCreateTaskRequest(value));
           await navigate({ to: '/today' });
         } catch {
           return formError(t.common.error.unexpected);

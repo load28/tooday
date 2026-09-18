@@ -6,10 +6,10 @@ import { useAtom } from '@tanstack/react-store';
 import type { Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTaskData } from '@/entities/task/context';
+import { useTaskServerQueries } from '@/entities/task/context';
 import { STATUS_ORDER } from '@/entities/task/status';
 import { styles } from '@/features/projects/project-detail-screen.styles';
-import { useProjectPageState } from '@/features/projects/state';
+import { useProjectStatusFilterStore } from '@/features/projects/status-filter-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, Text } from '@/shared/ui';
 import { text } from '@/styles/text.styles';
@@ -22,14 +22,14 @@ type ProjectDetailScreenProps = {
 export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
-  const taskData = useTaskData();
+  const taskQueries = useTaskServerQueries();
   const t = useT();
 
-  const { data: tasks } = useLiveSuspenseQuery(taskData.taskView({ kind: 'project', projectId }));
-  const { data: projects } = useLiveSuspenseQuery(taskData.projectView());
+  const { data: tasks } = useLiveSuspenseQuery(taskQueries.taskView({ kind: 'project', projectId }));
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
   const project = projects.find((item) => item.id === projectId);
-  const { tabAtom } = useProjectPageState();
-  const [tab, setTab] = useAtom(tabAtom);
+  const { statusFilterAtom } = useProjectStatusFilterStore();
+  const [tab, setTab] = useAtom(statusFilterAtom);
 
   const byStatus = useMemo(() => {
     const groups: Record<TaskStatus, Task[]> = { todo: [], doing: [], done: [] };

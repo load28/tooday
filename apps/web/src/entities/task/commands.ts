@@ -2,7 +2,7 @@ import type { Collection, DbClient } from '@tanstack/react-db';
 import type { CreateProjectRequest, CreateTaskRequest, Project, Task, TaskPatch, TaskStatus } from '@tooday/shared';
 import type { TaskTransport } from '@/entities/task/ports';
 
-type ActionDeps = {
+type TaskCommandDependencies = {
   db: DbClient;
   tasks: Collection<Task, string>;
   projects: Collection<Project, string>;
@@ -15,7 +15,7 @@ type ActionDeps = {
   applyProject(project: Project): Promise<void>;
 };
 
-export function createTaskActions(deps: ActionDeps) {
+export function createTaskCommands(deps: TaskCommandDependencies) {
   const { db, tasks, transport, signal } = deps;
   // 같은 업무의 요청 순서가 사용자의 의도 순서와 일치하도록 한다. 다른 업무는 병렬이다.
   const queues = new Map<string, Promise<unknown>>();

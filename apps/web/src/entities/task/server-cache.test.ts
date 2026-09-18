@@ -1,10 +1,10 @@
 import { createLiveQueryCollection } from '@tanstack/react-db';
 import type { Project, Task, TaskChange, TaskScope } from '@tooday/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createTaskData, type TaskData } from '@/entities/task/data';
 import type { TaskTransport } from '@/entities/task/ports';
 import { taskQuery } from '@/entities/task/queries';
 import { matchesScope } from '@/entities/task/scope';
+import { createTaskServerCache, type TaskServerCache } from '@/entities/task/server-cache';
 
 const task: Task = {
   id: 't1',
@@ -18,7 +18,7 @@ const task: Task = {
 };
 const project: Project = { id: 'p1', name: '앱', color: 'blue' };
 const week: TaskScope = { kind: 'range', from: '2026-09-14', to: '2026-09-20' };
-const resources: TaskData[] = [];
+const resources: TaskServerCache[] = [];
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
@@ -70,8 +70,8 @@ function server() {
     },
   };
 }
-function make(transport: TaskTransport, options: Parameters<typeof createTaskData>[2] = {}) {
-  const data = createTaskData('u1', transport, { realtime: false, ...options });
+function make(transport: TaskTransport, options: Parameters<typeof createTaskServerCache>[2] = {}) {
+  const data = createTaskServerCache('u1', transport, { realtime: false, ...options });
   resources.push(data);
   return data;
 }
@@ -93,7 +93,7 @@ describe('공용 Task 데이터', () => {
     const detail = createLiveQueryCollection({ query: taskQuery(data, { kind: 'task', id: 't1' }), startSync: true });
     try {
       await Promise.all([today.preload(), board.preload(), detail.preload()]);
-      const mutation = data.actions.setTaskStatus({ taskId: 't1', status: 'done' });
+      const mutation = data.commands.setTaskStatus({ taskId: 't1', status: 'done' });
       await vi.waitFor(() => expect(today.toArray[0]?.status).toBe('done'));
       expect(board.toArray[0]?.status).toBe('done');
       expect(detail.toArray[0]?.status).toBe('done');
@@ -112,7 +112,7 @@ describe('공용 Task 데이터', () => {
     remote.transport.update = () => response.promise;
     const data = make(remote.transport);
     await data.preload(week);
-    const mutation = data.actions.setTaskStatus({ taskId: 't1', status: 'done' });
+    const mutation = data.commands.setTaskStatus({ taskId: 't1', status: 'done' });
     const failed = expect(mutation).rejects.toThrow('저장 실패');
     await vi.waitFor(() => expect(data.tasks.get('t1')?.status).toBe('done'));
     remote.change({ title: '다른 기기의 제목' });
@@ -175,7 +175,7 @@ describe('공용 Task 데이터', () => {
     remote.transport.update = () => response.promise;
     const data = make(remote.transport);
     await data.preload(week);
-    const mutation = data.actions.renameTask({ taskId: task.id, title: '늦은 저장' });
+    const mutation = data.commands.renameTask({ taskId: task.id, title: '늦은 저장' });
     const failed = expect(mutation).rejects.toThrow();
     await vi.waitFor(() => expect(data.tasks.get(task.id)?.title).toBe('늦은 저장'));
     await data.dispose();
@@ -209,9 +209,9 @@ describe('공용 Task 데이터', () => {
       .mockResolvedValueOnce({ task: { ...task, title: '나중 제목', version: 2 } });
     const data = make(remote.transport);
     await data.preload(week);
-    const a = data.actions.setTaskStatus({ taskId: task.id, status: 'done' });
+    const a = data.commands.setTaskStatus({ taskId: task.id, status: 'done' });
     const rejected = expect(a).rejects.toThrow('앞선 요청 실패');
-    const b = data.actions.renameTask({ taskId: task.id, title: '나중 제목' });
+    const b = data.commands.renameTask({ taskId: task.id, title: '나중 제목' });
     await vi.waitFor(() => expect(data.tasks.get(task.id)).toMatchObject({ status: 'done', title: '나중 제목' }));
     expect(remote.transport.update).toHaveBeenCalledTimes(1);
     first.reject(new Error('앞선 요청 실패'));
@@ -227,7 +227,7 @@ describe('공용 Task 데이터', () => {
     remote.transport.update = () => response.promise;
     const data = make(remote.transport, { gcTime: 100 });
     await data.preload(week);
-    const mutation = data.actions.renameTask({ taskId: task.id, title: '저장 중' });
+    const mutation = data.commands.renameTask({ taskId: task.id, title: '저장 중' });
     await vi.advanceTimersByTimeAsync(150);
     expect(data.tasks.get(task.id)?.title).toBe('저장 중');
     expect(data.tasks.status).not.toBe('cleaned-up');
@@ -268,7 +268,7 @@ describe('공용 Task 데이터', () => {
     remote.transport.update = () => response.promise;
     const data = make(remote.transport);
     await data.preload(week);
-    const mutation = data.actions.setTaskStatus({ taskId: task.id, status: 'done' });
+    const mutation = data.commands.setTaskStatus({ taskId: task.id, status: 'done' });
     await vi.waitFor(() => expect(data.tasks.get(task.id)?.status).toBe('done'));
     remote.change({ status: 'done' }); // 이 액션이 서버에서 완료됨. 응답만 지연된다.
     remote.change({ title: '더 새로운 원격 변경', status: 'doing' });
@@ -283,14 +283,14 @@ describe('공용 Task 데이터', () => {
     const data = make(remote.transport);
     await data.preload(week);
     remote.change({ date: '2026-09-18' });
-    await data.actions.rescheduleTask({ taskId: task.id, startAt: '10:00', durationMin: 60 });
+    await data.commands.rescheduleTask({ taskId: task.id, startAt: '10:00', durationMin: 60 });
     expect(data.tasks.get(task.id)).toMatchObject({ date: '2026-09-18', startAt: '10:00', durationMin: 60 });
   });
   it('잘못된 일정은 원본을 바꾸거나 API를 호출하지 않고 실패한다', async () => {
     const remote = server();
     const data = make(remote.transport);
     await data.preload(week);
-    await expect(data.actions.rescheduleTask({ taskId: task.id, startAt: '10:00', durationMin: 0 })).rejects.toThrow();
+    await expect(data.commands.rescheduleTask({ taskId: task.id, startAt: '10:00', durationMin: 0 })).rejects.toThrow();
     expect(data.tasks.get(task.id)).toMatchObject({ startAt: '09:00', durationMin: 30 });
     expect(remote.transport.update).not.toHaveBeenCalled();
   });
@@ -307,7 +307,7 @@ it('업무 액션과 원격 델타가 집계 DB 구독을 함께 갱신한다', 
   const subscription = view.subscribeChanges(() => {});
   try {
     expect([...view.values()][0]?.doneCount).toBe(20);
-    await data.actions.setTaskStatus({ taskId: 't1', status: 'done' });
+    await data.commands.setTaskStatus({ taskId: 't1', status: 'done' });
     await vi.waitFor(() => expect([...view.values()][0]?.doneCount).toBe(21));
     remote.change({ status: 'todo' });
     await data.pull();

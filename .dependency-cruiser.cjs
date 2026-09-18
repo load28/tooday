@@ -8,6 +8,13 @@
 module.exports = {
   forbidden: [
     {
+      name: 'web-features-no-server-cache-internals',
+      severity: 'error',
+      comment: '화면과 클라이언트 Store는 context의 조회·명령만 사용한다. 서버 캐시 생성과 수명 관리는 조립 계층에 한정한다.',
+      from: { path: '^apps/web/src/features/' },
+      to: { path: '^apps/web/src/entities/[^/]+/(server-cache|cache-session|commands|ports|scope|queries|summaries)\\.' },
+    },
+    {
       name: 'web-ui-no-query-or-transport',
       severity: 'error',
       comment: 'UI는 DB·Store·업무 액션으로 접근한다. Query와 전송 구현은 컬렉션/조립 계층에 한정한다.',

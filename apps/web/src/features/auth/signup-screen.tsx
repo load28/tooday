@@ -3,7 +3,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MIN_PASSWORD_LENGTH, type SignupRequest, signupRequestSchema } from '@tooday/shared';
 import * as v from 'valibot';
-import { useAuthData } from '@/entities/auth/context';
+import { useAuthCommands } from '@/entities/auth/context';
 import { styles } from '@/features/auth/signup-screen.styles';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -21,7 +21,7 @@ function toSignupRequest({ name, email, password }: SignupFormValues): SignupReq
 
 export function SignupScreen() {
   const navigate = useNavigate();
-  const { actions } = useAuthData();
+  const commands = useAuthCommands();
   const t = useT();
 
   const messages = useFormMessages(signupFormSchema, (t) => ({
@@ -37,7 +37,7 @@ export function SignupScreen() {
       onDynamic: signupFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await actions.signup(toSignupRequest(value));
+          await commands.signup(toSignupRequest(value));
           await navigate({ to: '/today' });
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.conflict)) {
