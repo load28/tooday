@@ -1,31 +1,31 @@
 import * as stylex from '@stylexjs/stylex';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
+import { useAuthCommands, useAuthServerQueries } from '@/entities/auth/context';
 import { styles } from '@/features/auth/settings-screen.styles';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const auth = useAuthServerQueries();
+  const commands = useAuthCommands();
   const t = useT();
 
-  const { data } = useSuspenseQuery(trpc.user.me.queryOptions());
+  const { data: sessions } = useLiveSuspenseQuery(auth.sessionView());
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const logout = useMutation(
-    trpc.auth.logout.mutationOptions({
-      onSuccess: async () => {
-        setConfirmOpen(false);
-        // 웹뷰는 새로고침으로 리셋되지 않는다 — 이전 유저 데이터가 남지 않게 전 캐시를 비운다.
-        queryClient.clear();
-        await navigate({ to: '/login' });
-      },
-    }),
-  );
+  const logout = useCommandExecutionStore();
+  const confirmLogout = () =>
+    logout.dispatch(async () => {
+      await commands.logout();
+      setConfirmOpen(false);
+      await navigate({ to: '/login' });
+    });
 
   const closeConfirm = () => {
     if (logout.isPending) return; // 진행 중엔 시트를 닫지 않는다
@@ -52,7 +52,7 @@ export function SettingsScreen() {
             <Text variant="label" tone="tertiary">
               {t.settings.account.label}
             </Text>
-            <Text variant="body">{data.user?.email}</Text>
+            <Text variant="body">{sessions[0]?.user?.email}</Text>
           </Stack>
           <div {...stylex.props(styles.logoutSlot)}>
             <Button tone="danger" size="xl" fullWidth onClick={() => setConfirmOpen(true)}>
@@ -73,7 +73,7 @@ export function SettingsScreen() {
               {t.settings.logout.error}
             </Text>
           ) : null}
-          <Button tone="danger" size="xl" fullWidth loading={logout.isPending} onClick={() => logout.mutate()}>
+          <Button tone="danger" size="xl" fullWidth loading={logout.isPending} onClick={confirmLogout}>
             {t.settings.logout.confirm}
           </Button>
           <Button tone="ghost" size="xl" fullWidth disabled={logout.isPending} onClick={closeConfirm}>

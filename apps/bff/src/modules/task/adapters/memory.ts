@@ -8,11 +8,12 @@ import type {
   ProjectTaskCounts,
   TaskRefInput,
   TaskStore,
+  TaskSyncReader,
   UpdateTaskInput,
 } from '@bff/modules/task/ports';
 import { newId } from '@bff/platform/ids';
 import { orderKeyAfter } from '@bff/platform/ordering';
-import type { Project, ProjectChange, Task, TaskChange } from '@tooday/shared';
+import type { Project, ProjectChange, Task, TaskChange, TaskScope } from '@tooday/shared';
 
 /** 유저별 단조증가 seq — SQL 구현의 sync_counters에 대응. 두 스토어가 하나를 공유해야 한다 */
 export class InMemorySyncCounter {
@@ -201,5 +202,49 @@ export class InMemoryTaskStore implements TaskStore {
 
   async syncCursor(userId: string): Promise<number> {
     return this.counter.current(userId);
+  }
+}
+
+/** 메모리 스토어는 첫 await 전에 배열을 복사한다. 세 읽기를 같은 JS 턴에서 시작한다. */
+export class InMemoryTaskSyncReader implements TaskSyncReader {
+  constructor(
+    private readonly tasks: InMemoryTaskStore,
+    private readonly projects: InMemoryProjectStore,
+  ) {}
+
+  async snapshot({ userId, scope }: { userId: string; scope: TaskScope }) {
+    // findById 역시 호출 즉시 복사한다. await를 사이에 넣지 않는다.
+    const taskRead =
+      scope.kind === 'range'
+        ? this.tasks.listRange({ userId, ...scope })
+        : scope.kind === 'project'
+          ? this.tasks.listByProject({ userId, projectId: scope.projectId })
+          : scope.kind === 'task'
+            ? this.tasks.findById({ userId, id: scope.id }).then((task) => (task ? [task] : []))
+            : Promise.resolve([]);
+    const [tasks, projects, cursor] = await Promise.all([
+      taskRead,
+      this.projects.listByUser(userId),
+      this.tasks.syncCursor(userId),
+    ]);
+    return { tasks, projects, cursor };
+  }
+
+  async range(input: ListTasksRangeInput) {
+    const [tasks, projects, cursor] = await Promise.all([
+      this.tasks.listRange(input),
+      this.projects.listByUser(input.userId),
+      this.tasks.syncCursor(input.userId),
+    ]);
+    return { tasks, projects, cursor };
+  }
+
+  async changes(input: ListChangesInput) {
+    const [tasks, projects, cursor] = await Promise.all([
+      this.tasks.changesSince(input),
+      this.projects.changesSince(input),
+      this.tasks.syncCursor(input.userId),
+    ]);
+    return { tasks, projects, cursor };
   }
 }

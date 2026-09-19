@@ -52,10 +52,10 @@ apps/bff/src/
 
 apps/web/src/
   routes/             # TanStack 파일 라우팅 — 배선만 (가드·리다이렉트·화면 연결)
-  features/<feature>/ # 화면·폼·쿼리 등 기능 코드 (auth/, today/, tasks/, projects/)
+  features/<feature>/ # 화면·폼·페이지 Store 등 기능 코드 (auth/, today/, tasks/, projects/)
                       #   feature 간 직접 import 금지 — 도메인 공용은 entities/,
                       #   도메인 무관은 shared/, 조립은 routes/
-  entities/<domain>/  # 도메인 공용 모델·표시 상수 (task/) — FSD entities만
+  entities/<domain>/  # 도메인 공용 모델·컬렉션·업무 액션 (task/) — FSD entities만
                       #   부분 채택 (docs/conventions/web-entities.md)
   app/                # 앱 셸 — tRPC 클라이언트, global.css
   styles/             # 스타일 계약 — tokens.stylex.ts(디자인 토큰), slots.stylex.ts
@@ -74,6 +74,9 @@ packages/shared/src/  # web ↔ bff 계약만 — 도메인별 파일 (auth, use
 
 - Bun workspaces + Turborepo
 - TypeScript, React 19, TanStack Router/Start
+- TanStack DB: Task·Project·서버 집계·인증 사용자의 서버 캐시 / TanStack Store: 클라이언트 상태
+- 서버 변경: 명시적인 도메인 명령 호출. Store에서도 호출할 수 있으며 서버 응답은 DB에 반영
+- TanStack Query: DB 컬렉션 내부 캐시·재조회 / TanStack Form: 작성 중인 폼
 - StyleX (빌드타임 원자 CSS) + Ark UI — 스타일은 컴포넌트 파일이나 옆
   `*.styles.ts`에 콜로케이션하고, 토큰은 `src/styles/*.stylex.ts`가 소유한다.
   override 승패는 레이어가 아니라 `stylex.props()` 인자 순서가 정한다 —

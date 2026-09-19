@@ -43,7 +43,7 @@
 | T014 | [design-guide 토큰 드리프트 해소](T014-design-guide-token-drift.md) | 낮음 | ➖ 미처리 (종결) |
 | T015 | [날짜 라벨 포맷 shared/time.ts로 집중화](T015-date-format-centralize.md) | 낮음 | ✅ 완료 |
 | T016 | [소소한 통일 (캐스트 가드·내비게이션 API)](T016-minor-consistency.md) | 낮음 | ✅ 완료 |
-| T017 | [동기화 읽기 스냅샷 일관성 (영구 유실 버그)](T017-sync-read-snapshot-consistency.md) | 높음 | ⬜ 대기 |
+| T017 | [동기화 읽기 스냅샷 일관성 (영구 유실 버그)](T017-sync-read-snapshot-consistency.md) | 높음 | ✅ 완료 |
 | T018 | [리프레시 토큰 회전 원자성](T018-refresh-rotation-atomicity.md) | 높음 | ⬜ 대기 |
 | T019 | [BFF 운영 견고화 (config 검증·장애 가시성)](T019-bff-operational-hardening.md) | 중간 | ⬜ 대기 |
 | T020 | [낙관적 뮤테이션 에러 표면화 + 라우트 에러 경계](T020-mutation-error-surfaces.md) | 중간 | ⬜ 대기 |
@@ -66,3 +66,6 @@
 | T037 | [vanilla-extract 전환에 맞춰 문서·주석 정합](T037-ve-docs-alignment.md) | 중간 | ✅ 완료 |
 | T038 | [StyleX 전환 타당성 스파이크 (vanilla-extract 대체 검토)](T038-stylex-migration-spike.md) | 중간 | ✅ 완료 |
 | T039 | [vanilla-extract → StyleX 전면 전환](T039-stylex-full-migration.md) | 중간 | ✅ 완료 |
+| T040 | [사용자별 Task DB·업무 액션·페이지 Store](T040-task-data-lifecycle.md) | 높음 | ✅ 완료 |
+| T041 | [UI 접근을 DB·Store·업무 액션으로 통일](T041-ui-db-store-boundary.md) | 높음 | ✅ 완료 |
+| T042 | [서버 캐시·클라이언트 Store의 공개 범위와 이름 정리](T042-server-cache-client-store-boundary.md) | 높음 | ✅ 완료 |

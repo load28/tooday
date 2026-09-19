@@ -1,9 +1,9 @@
 import * as stylex from '@stylexjs/stylex';
 import { revalidateLogic, useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
-import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { type LoginRequest, loginRequestSchema } from '@tooday/shared';
 import * as v from 'valibot';
+import { useAuthCommands } from '@/entities/auth/context';
 import { styles } from '@/features/auth/login-screen.styles';
 import { fieldErrorMessage, fieldErrors, formError, hasTrpcErrorCode, TRPC_ERROR_CODES, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -21,22 +21,13 @@ function toLoginRequest({ email, password }: LoginFormValues): LoginRequest {
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const commands = useAuthCommands();
   const t = useT();
 
   const messages = useFormMessages(loginFormSchema, (t) => ({
     email: { min_length: t.auth.login.emailRequired },
     password: { min_length: t.auth.login.passwordRequired },
   }));
-
-  const login = useMutation(
-    trpc.auth.login.mutationOptions({
-      onSuccess: async ({ user }) => {
-        queryClient.setQueryData(trpc.user.me.queryKey(), { user });
-        await navigate({ to: '/today' });
-      },
-    }),
-  );
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
@@ -45,7 +36,8 @@ export function LoginScreen() {
       onDynamic: loginFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          await login.mutateAsync(toLoginRequest(value));
+          await commands.login(toLoginRequest(value));
+          await navigate({ to: '/today' });
         } catch (error) {
           if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) {
             return fieldErrors(loginFormSchema, { password: t.auth.login.invalidCredentials });

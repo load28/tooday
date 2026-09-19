@@ -1,12 +1,15 @@
 import { ToggleGroup } from '@ark-ui/react/toggle-group';
 import * as stylex from '@stylexjs/stylex';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext, useRouter } from '@tanstack/react-router';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useAtom } from '@tanstack/react-store';
 import type { Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useTaskServerQueries } from '@/entities/task/context';
 import { STATUS_ORDER } from '@/entities/task/status';
 import { styles } from '@/features/projects/project-detail-screen.styles';
+import { useProjectStatusFilterStore } from '@/features/projects/status-filter-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BaseButton, Button, Card, Dot, Row, Screen, Stack, Text } from '@/shared/ui';
 import { text } from '@/styles/text.styles';
@@ -19,14 +22,14 @@ type ProjectDetailScreenProps = {
 export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
   const navigate = useNavigate();
   const router = useRouter();
-  const { trpc } = useRouteContext({ from: '__root__' });
+  const taskQueries = useTaskServerQueries();
   const t = useT();
 
-  const {
-    data: { project, tasks },
-  } = useSuspenseQuery(trpc.task.project.queryOptions({ projectId }));
-
-  const [tab, setTab] = useState<TaskStatus>('todo');
+  const { data: tasks } = useLiveSuspenseQuery(taskQueries.taskView({ kind: 'project', projectId }));
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
+  const project = projects.find((item) => item.id === projectId);
+  const { statusFilterAtom } = useProjectStatusFilterStore();
+  const [tab, setTab] = useAtom(statusFilterAtom);
 
   const byStatus = useMemo(() => {
     const groups: Record<TaskStatus, Task[]> = { todo: [], doing: [], done: [] };
@@ -34,7 +37,8 @@ export function ProjectDetailScreen({ projectId }: ProjectDetailScreenProps) {
     return groups;
   }, [tasks]);
 
-  const items = byStatus[tab];
+  const items = byStatus[tab].sort((a, b) => a.date.localeCompare(b.date) || a.startAt.localeCompare(b.startAt));
+  if (!project) return <Text>{t.notFound.message}</Text>;
 
   return (
     <>

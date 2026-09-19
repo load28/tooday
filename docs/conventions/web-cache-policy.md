@@ -1,103 +1,108 @@
-# web 캐시 정책 — 뮤테이션 후 캐시 갱신 전략
+# web 상태·캐시 정책
 
-같은 코드베이스에 갱신 전략이 뮤테이션마다 제각각이면 "이 화면은 왜 안
-바뀌지"를 매번 새로 추리해야 한다. 전략은 아래 4가지만 쓰고, 선택 기준을
-따른다. 새 전략이 필요해지면 이 문서에 먼저 추가한다.
+## DB·Store·명령의 경계
 
-## 전략 4가지와 선택 기준
+여기서 DB는 브라우저/SSR의 TanStack DB 서버 데이터 캐시다. 영속 원본은 서버에 있다.
+DB는 Task·Project·인증 사용자·서버 집계와 저장 중인 낙관적 변경을 소유한다.
+Store는 서버 원본이 아닌 클라이언트 상태를 소유한다. 작성 중인 값도 클라이언트 상태이며 기존 Form이나 지역 draft에 둘 수 있다.
 
-| 전략 | 언제 쓰나 | 현재 사용처 |
+Store는 `useTaskCommands` 또는 `useAuthCommands`로 얻은 변경 명령을 호출할 수 있다.
+흐름은 **Store의 입력/실행 상태 → 변경 명령 → 서버 요청과 DB 반영 → live query 갱신**이다.
+Store의 값 변경 자체를 자동 저장으로 해석하지 않는다. 명시적인 명령 호출이 저장을 시작한다.
+서버 결과를 Store의 별도 원본으로 보관하지 않는다.
+
+화면은 `useTaskServerQueries` / `useAuthServerQueries`로 조회하고 변경 명령은 별도 훅으로 얻는다.
+Context는 이 두 기능만 전달한다. 원본 컬렉션·DbClient·동기화·SSR 복원·dispose는 공개하지 않는다.
+서버 캐시 생성과 세션 수명은 라우터 조립 계층이 소유하며 feature의 내부 모듈 import는 의존성 검사로 금지한다.
+
+## 소유권
+
+| 데이터 | 소유자 | UI 접근 |
 | --- | --- | --- |
-| ① 낙관적 패치 + 롤백 + invalidate | 화면에 **이미 있는 데이터의 부분 수정**이고 즉각 반응이 UX의 일부일 때 (토글, 인라인 편집) | `task.update` (today·task-detail) |
-| ② setQueryData prime | **뮤테이션 응답이 곧 쿼리 데이터**일 때 — 재요청 없이 캐시를 심는다 | `auth.login`·`auth.signup` → `user.me` |
-| ③ invalidate만 | 응답만으로 캐시를 정확히 재구성할 수 없을 때 (서버 몫인 정렬·집계·목록 멤버십) | `task.createProject` → `task.projects` |
-| ④ remove 후 navigate | 뮤테이션 후 **화면을 떠날 때** — 다음 화면 loader가 채우도록 그 캐시를 비운다 | `task.create`·`task.delete` → `/today` |
+| Task·Project 원본 | 사용자별 `entities/task/server-cache.ts` | DB live query |
+| 프로젝트 전체·완료 건수 | 사용자별 집계 DB 컬렉션 | DB live query |
+| 인증 사용자 | router / SSR 요청별 인증 DB 컬렉션 | DB live query |
+| 액션 대기·오류 | 컴포넌트 Store (`useCommandExecutionStore`) | Atom 구독 |
+| 선택 날짜·탭·열린 시트 | 페이지 Store | Context로 Atom 객체 전달 후 개별 구독 |
+| 입력 중인 값 | TanStack Form 또는 지역 draft | 폼의 검증·dirty 상태 유지 |
 
-판단 순서: 화면을 떠나나? → ④. 응답이 쿼리 데이터 전체인가? → ②.
-남아 있는 화면의 일부를 고치고 즉각성이 중요한가? → ①. 그 외 → ③.
+DB 조회 결과를 Atom이나 화면별 Query에 다시 복사하지 않는다. 컬렉션 ID에는 사용자
+ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 환경을 만든다. 회사나
+페이지별 컬렉션 레지스트리는 만들지 않는다.
 
-## 머물면 `invalidate`, 떠나면 `remove`
+## 업무 변경
 
-①~③(머무름)과 ④(떠남)의 갈림길은 "뮤테이션이 성공했나"가 아니라 **다음에 그
-데이터를 읽는 주체가 누구냐**다. 창구가 둘이고 규칙이 다르다.
+`entities/task/commands.ts`의 이름 있는 액션을 호출한다. 화면은 API body나 캐시 패치를
+조립하지 않는다. 액션은 변경 필드만 기존 tRPC 의도 기반 API로 보낸다.
 
-| 창구 | 데이터가 있을 때 | 낡음 표시를 보나 |
-| --- | --- | --- |
-| 컴포넌트 `useSuspenseQuery` | 즉시 렌더 + 백그라운드 재검증 | **본다** (refetchOnMount) |
-| 라우트 loader `ensureQueryData` | 즉시 반환, 재요청 없음 | **무시한다** |
+- 제목·상태·프로젝트·일정 수정: DB 트랜잭션의 낙관적 변경 → 서버 요청 →
+  서버 응답을 원본 sync에 적용 → 완료. 실패 시 그 트랜잭션의 변경만 제거한다.
+- 같은 Task의 요청은 사용자 의도 순서대로 전송한다. 다른 Task는 병렬이다.
+- 서버 `version`은 클라이언트에서 증가시키지 않는다. 늦은 서버 응답·스냅샷은
+  마지막 수신 버전보다 새로울 때만 반영한다. 삭제 표식도 버전을 가진다.
+- Task·Project 생성은 서버 ID를 받은 뒤 반영한다. 삭제는 서버 확인 후 제거한다.
+  모든 액션이 낙관적일 필요는 없다.
+- 서버 응답은 전역 동기화 커서를 전진시키지 않는다. 다른 행의 미수신 변경을
+  건너뛰지 않도록 커서는 `task.changes` 전체 적용 후에만 전진시킨다.
+- 프로젝트 집계는 액션과 원격 변경에서 invalidate한다. 부분 로딩한 Task로 전체
+  완료 건수를 추정하지 않는다.
 
-- **화면에 머물면 `invalidateQueries`.** 다음에 읽는 건 구독 중인 컴포넌트라
-  낡음 표시만으로 재요청이 걸린다. 데이터는 남아 있어 화면이 안 깨진다.
-  여기서 `removeQueries`를 하면 구독 중인 `useSuspenseQuery`가 데이터를 잃고
-  suspend 해 **화면이 빈다**.
-- **화면을 떠나면 `removeQueries`.** 다음에 읽는 건 다음 화면의 loader인데,
-  `ensureQueryData`는 낡음을 무시하고 캐시를 그대로 준다. 즉 `invalidate`가
-  **안 통한다** — 비워야 loader가 실제로 새로 채운다.
+기존 `optimisticPatch`의 전체 Query 스냅샷 복원과 `applyTaskPatch`는 제거했다.
+낙관적 상태와 원격 변경을 합치는 책임은 DB 트랜잭션과 공용 sync가 가진다.
 
-떠나는 화면이 스스로 구독 중인 캐시(예: 삭제한 태스크의 `task.byId`)는
-`navigate`를 await 한 **뒤에** 지운다. 마운트된 상태에서 지우면 위의 suspend가 난다.
+## 조회·SSR
 
-## 캐시 수명 — 기본값을 쓰고, 예외는 쿼리 단위로
+`task.snapshot`은 날짜 범위, 프로젝트, 단건, 프로젝트 라벨을 지원한다. SQL 어댑터는
+데이터와 커서를 동일한 REPEATABLE READ 트랜잭션에서 읽는다.
 
-`QueryClient` 전역 기본값은 React Query 기본(`staleTime` 0 / `gcTime` 5분)을 쓴다.
-`staleTime` 0은 "계속 요청"이 아니라 "재요청 기회가 오면 막지 마라"는 뜻이다 —
-갱신은 트리거(`refetchOnMount` / `refetchOnWindowFocus` / `refetchOnReconnect` /
-`invalidateQueries`)가 일으키고 폴링(`refetchInterval`)은 꺼져 있다. 덕분에 캐시로
-즉시 렌더한 뒤 뒤에서 갱신돼, 과거 데이터를 보는 창이 재요청 왕복 시간으로 묶인다.
+라우트 loader는 `TaskServerCache.preload(scope)`로 필요한 범위만 로딩한다. 이 함수도 컴포넌트와 동일한 파생 live query의
+`loadSubset` 경로를 사용한다. 파생 조회 역시 DbClient에 등록하고, 구독이 없으면
+라이브러리 GC가 정리한다. 요청 종료에는 파생 조회부터 정리한다. 캐시된 범위는 `loadSubset`이 동기적으로 완료해 SSR에서 다시 suspend하지 않는다.
+지원하지 않는 필터는 명시적으로 실패하며 전체 데이터를 대신 다운로드하지 않는다.
 
-수명을 늘려야 하는 쿼리는 **전역이 아니라 그 쿼리에만** 준다
-(`user.me` = 세션 게이트, `app/trpc.ts`의 `fetchSessionUser`).
+- SSR router의 `dehydrate`에 원본 행·로드한 범위·동기화 커서를 싣는다.
+- 브라우저 `hydrate`에서 스키마 검증 후 사용자 환경을 복원한다.
+- 함수·Atom·연결은 직렬화하지 않는다. 서버에서는 SSE를 열지 않는다.
+- `serverSsr.onCleanup`에서 요청의 컬렉션·타이머를 정리한다.
+- 기준 날짜는 기존처럼 loader의 `now`를 사용한다.
 
-**구독하는 컴포넌트가 없는 쿼리는 `gcTime > staleTime`이어야 한다.** gc 타이머는
-생성자 / 마지막 관찰자 제거 / **fetch 완료** 시에만 리셋된다. 관찰자가 없으면
-백그라운드 갱신(fetch)만이 타이머를 리셋할 수 있으므로, `gcTime`이 더 짧으면 갱신이
-일어나기 전에 캐시가 삭제돼 다음 진입이 **블로킹 요청**이 된다. `staleTime`의
-`gcTime` 초과분은 언제나 무의미하다.
+## 자동 정리와 세션 종료
 
-`ensureQueryData`만 쓰는 쿼리(관찰자 없음)에 재검증이 필요하면
-`revalidateIfStale: true`를 준다 — 캐시는 즉시 반환해 내비게이션을 막지 않고
-백그라운드로만 갱신한다.
+- 원본 컬렉션 `gcTime`: 5분. 마지막 원본 구독 해제 후 DB가 sync cleanup을 호출한다.
+  live query 자체의 수명도 있으므로 페이지 unmount와 원본 GC를 같은 사건으로 보지 않는다.
+- 범위별 캐시: 마지막 획득 해제 후 5분. 다른 범위를 계속 구독하고 있더라도 만료한
+  범위 전용 행은 제거한다. 범위 해제는 서버 삭제 표식과 다르다.
+- 액션은 임시 구독으로 컬렉션을 유지한다. 페이지를 떠나도 저장이 완료되고,
+  성공·실패 모두에서 그 구독을 해제한다.
+- SSE는 활성 sync 원본들이 공유하고, 마지막 원본 cleanup에서 닫는다. 데이터 환경을
+  Context로 공급하는 것만으로 연결을 유지하지 않는다.
+- 로그아웃·세션 상실·사용자 변경은 AbortController로 이전 요청·대기 액션을 차단하고,
+  DB와 Query를 명시적으로 비운다. GC는 보안 경계를 대체하지 않는다.
 
-## ① 낙관적 패치는 헬퍼로 배선한다
+## UI 경계와 컬렉션 내부 Query
 
-cancel → snapshot → 캐시 패치 / 실패 시 롤백 / 정착 시 invalidate 삼단을
-손으로 배선하지 않는다 — `shared/query.ts`의 `optimisticPatch`에 queryKey와
-캐시 shape 반영 콜백만 넘긴다.
+화면은 DB live query로 서버 데이터를 읽고 이름 있는 업무 액션으로 변경한다.
+`useQuery`/`useMutation`/QueryClient/tRPC를 화면에서 직접 사용하지 않는다.
+Router context에도 QueryClient와 rpc를 노출하지 않으며 의존성 검사로 직접 import를 금지한다.
 
-```ts
-const update = useMutation(
-  trpc.task.update.mutationOptions(
-    optimisticPatch(queryClient, trpc.task.byId.queryKey({ id }), (old: { task: Task }, { patch }: UpdateTaskRequest) => ({
-      task: applyTaskPatch(old.task, patch),
-    })),
-  ),
-);
-```
+서버 집계와 인증은 `queryCollectionOptions`로 만든 실제 DB 컬렉션이다.
+Query는 컬렉션의 전송 캐시·취소·재조회 수단이며, Query 결과를 UI Atom에 복사하지 않는다.
+집계는 기존 서버 API의 전체 카운트를 사용한다. 사용자별 키를 쓰고, 업무 액션과
+SSE 델타 반영에서 내부 캐시를 무효화한다. 서버 집계는 낙관적으로 추정하지 않는다.
 
-task 도메인의 "서버 흉내"(지정 필드 적용 + version 증가)는
-`entities/task/patch.ts`의 `applyTaskPatch`가 담당한다 — 여러 feature가
-공용하는 도메인 매핑이므로 entities 자리다
-([web-entities.md](web-entities.md)).
+인증 게이트와 설정 화면은 동일한 인증 컬렉션을 사용한다. 인증 캐시의 staleTime은
+15분, gcTime은 30분이다. 네트워크 장애는 오류로 전달하고 익명 사용자로 오인하지 않는다.
+로그인·회원가입 액션이 사용자 데이터를 정리한 뒤 인증 원본을 갱신한다.
+로그아웃·세션 상실은 진행 중인 이전 요청을 취소하고 사용자 데이터를 정리한다.
+SSR에는 인증 행과 갱신 시각, 로딩한 집계 행을 직렬화하고 복원한다.
+Query의 focus/reconnect 처리를 위한 구독도 데이터 환경이 생성·정리한다.
 
-낙관적 패치는 어디까지나 흉내다 — 서버 결과와의 최종 수렴은 `onSettled`
-invalidate(①)와 sync 델타(`use-task-sync`)가 맡는다.
+액션 실행 상태는 컴포넌트마다 생성한 Store가 소유한다. 겹친 실행의 대기 개수를
+추적하고 마지막 실행의 오류를 표시한다. 서버 결과 자체는 Store에 보관하지 않는다.
+Form으로 작성하는 화면은 Form의 isSubmitting/errorMap을 재사용하고 별도 mutation 캐시를 만들지 않는다.
 
-## 에러는 반드시 표면화한다
+## 에러
 
-에러 처리 없는 뮤테이션을 두지 않는다. 실패가 사용자에게 보이는 경로가
-하나는 있어야 한다.
-
-- **폼 제출 뮤테이션** — `onSubmitAsync`에서 try/catch 후
-  `formError(t.common.error.unexpected)` (도메인 에러는 코드별 필드 에러로
-  매핑, `shared/form.ts`).
-- **폼 밖 뮤테이션** (버튼 단독 등) — `mutation.isError`일 때
-  `t.common.error.unexpected`를 danger Text로 표시 (task-detail의 삭제 버튼).
-  낙관적 패치였다면 롤백(①의 onError)이 함께 동작한다.
-
-## queryKey 파생은 `trpc.<proc>.queryKey(input)`로 통일
-
-캐시 키가 필요한 곳(setQueryData, invalidateQueries, optimisticPatch, sync
-패치)은 `trpc.task.range.queryKey(range)`처럼 파생한다.
-`queryOptions(input).queryKey`로 같은 값을 얻을 수 있지만, 키 파생 용도로
-`queryOptions()`를 만들지 않는다 — `queryOptions`는 쿼리를 구독/프리페치하는
-자리에만 쓴다.
+폼은 기존 `formError`를 사용한다. 오늘 토글과 상세 수정·삭제는 Store의 실행 오류를
+표시한다. 상세 제목은 draft가 없을 때 원격 제목을 그대로 보여 주고, 작성 중이면
+draft를 유지한다. 저장 실패 시 입력을 잃지 않는다.

@@ -3,7 +3,10 @@ import { ProjectsScreen } from '@/features/projects/projects-screen';
 
 export const Route = createFileRoute('/_app/_tabs/projects/')({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(context.trpc.task.projects.queryOptions());
+    await Promise.all([
+      context.taskCacheSession.get(context.user.id).preload({ kind: 'projects' }),
+      context.taskCacheSession.get(context.user.id).preloadSummaries(),
+    ]);
   },
   component: ProjectsRoute,
 });

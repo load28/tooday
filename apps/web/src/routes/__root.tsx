@@ -6,7 +6,8 @@ import pretendardCss from 'pretendard/dist/web/variable/pretendardvariable-dynam
 import type { ReactNode } from 'react';
 import globalCss from '@/app/global.css?url';
 import { StylexStyleSheet } from '@/app/stylex-stylesheet';
-import type { RouterAppContext } from '@/app/trpc.ts';
+import { AuthServerCacheProvider } from '@/entities/auth/context';
+import type { RouterAppContext } from '@/router-context';
 import { getDictionary, I18nProvider, type Locale, resolveLocale } from '@/shared/i18n';
 
 // locale은 요청 스코프로 결정한다. 사전은 함수형 문구를 포함하므로 loader 데이터로 직렬화하지 않는다.
@@ -58,10 +59,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootComponent() {
   const { locale } = Route.useLoaderData();
+  const { auth } = Route.useRouteContext();
   const dictionary = getDictionary(locale);
   return (
     <I18nProvider value={{ locale, dictionary }}>
-      <Outlet />
+      <AuthServerCacheProvider cache={auth}>
+        <Outlet />
+      </AuthServerCacheProvider>
     </I18nProvider>
   );
 }

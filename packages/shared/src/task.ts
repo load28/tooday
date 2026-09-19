@@ -98,7 +98,7 @@ export const projectChangeSchema = v.object({
 export const syncChangesResponseSchema = v.object({
   tasks: v.array(taskChangeSchema),
   projects: v.array(projectChangeSchema),
-  /** 다음 요청에 쓸 커서 — max(요청 커서, 반환된 변경의 최대 seq) */
+  /** 다음 요청에 쓸 커서 — 데이터와 같은 스냅샷에서 읽은 유저 sync counter */
   cursor: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
 
@@ -159,3 +159,12 @@ export type ProjectDetailRequest = v.InferOutput<typeof projectDetailRequestSche
 export type ProjectSummary = v.InferOutput<typeof projectSummarySchema>;
 export type ProjectListResponse = v.InferOutput<typeof projectListResponseSchema>;
 export type ProjectDetailResponse = v.InferOutput<typeof projectDetailResponseSchema>;
+
+/** 컬렉션 로딩 범위. 화면 이름 대신 서버 데이터의 조회 조건을 계약으로 둔다. */
+export const taskScopeSchema = v.variant('kind', [
+  v.object({ kind: v.literal('range'), ...taskRangeRequestSchema.entries }),
+  v.object({ kind: v.literal('task'), ...taskIdRequestSchema.entries }),
+  v.object({ kind: v.literal('project'), ...projectDetailRequestSchema.entries }),
+  v.object({ kind: v.literal('projects') }),
+]);
+export type TaskScope = v.InferOutput<typeof taskScopeSchema>;

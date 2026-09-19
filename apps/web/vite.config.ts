@@ -9,6 +9,8 @@ import { defineConfig } from 'vite';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
+const isTest = process.env.VITEST === 'true';
+
 const isPagesBuild = process.env.DEPLOY_TARGET === 'github-pages';
 // GitHub Pages 용으로 빌드할 때만 web 앱을 design-guide 사이트의 하위 경로에 마운트한다.
 const basepath = process.env.BASE_PATH ?? (isPagesBuild ? '/tooday/web' : '/');
@@ -18,15 +20,19 @@ const config = defineConfig({
   base: viteBase,
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools(),
-    nitro(),
-    tanstackStart({
-      router: {
-        // *.styles.ts(StyleX)는 라우트 파일이 아니므로 라우트 스캔에서 제외한다
-        routeFileIgnorePattern: '\\.styles\\.ts$',
-        basepath,
-      },
-    }),
+    ...(isTest
+      ? []
+      : [
+          devtools(),
+          nitro(),
+          tanstackStart({
+            router: {
+              // *.styles.ts(StyleX)는 라우트 파일이 아니므로 라우트 스캔에서 제외한다
+              routeFileIgnorePattern: '\\.styles\\.ts$',
+              basepath,
+            },
+          }),
+        ]),
     // StyleX 레이어를 `stylex` 부모 레이어 아래로 모은다 — 순서는 __root.tsx의
     // `@layer reset, base, stylex;` 한 줄이 확정한다.
     stylex.vite({

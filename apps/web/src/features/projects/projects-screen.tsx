@@ -1,8 +1,9 @@
 import * as stylex from '@stylexjs/stylex';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext } from '@tanstack/react-router';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
+import { useNavigate } from '@tanstack/react-router';
 import { LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useState } from 'react';
+import { useTaskServerQueries } from '@/entities/task/context';
 import { NewProjectSheet } from '@/features/projects/new-project-sheet';
 import { styles } from '@/features/projects/projects-screen.styles';
 import { useT } from '@/shared/i18n';
@@ -11,12 +12,11 @@ import { AppBar, Button, Card, Dot, HStack, ProgressBar, Screen, Stack, Text } f
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function ProjectsScreen() {
   const navigate = useNavigate();
-  const { trpc } = useRouteContext({ from: '__root__' });
   const t = useT();
+  const taskQueries = useTaskServerQueries();
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
 
-  const {
-    data: { projects },
-  } = useSuspenseQuery(trpc.task.projects.queryOptions());
+  const { data: summaries } = useLiveSuspenseQuery(taskQueries.summaryView());
 
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -57,7 +57,10 @@ export function ProjectsScreen() {
         ) : (
           <Stack gap="md" sx={styles.list}>
             {projects.map((project) => {
-              const ratio = project.totalCount > 0 ? project.doneCount / project.totalCount : 0;
+              const summary = summaries.find((item) => item.id === project.id);
+              const totalCount = summary?.totalCount ?? 0;
+              const doneCount = summary?.doneCount ?? 0;
+              const ratio = totalCount > 0 ? doneCount / totalCount : 0;
               return (
                 <Card
                   key={project.id}
@@ -76,7 +79,7 @@ export function ProjectsScreen() {
                   </HStack>
                   <ProgressBar value={ratio} tone={project.color} />
                   <Text variant="caption" tone="tertiary">
-                    {t.projects.progress({ done: project.doneCount, total: project.totalCount })}
+                    {t.projects.progress({ done: doneCount, total: totalCount })}
                   </Text>
                 </Card>
               );

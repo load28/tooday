@@ -31,7 +31,7 @@
 - [web-entities.md](docs/conventions/web-entities.md) — FSD는 전면 도입이 아니라 단위별
   점진 채택. 현재는 entities만 — 도메인 지식 + 여러 feature 공용 코드의 자리.
 - [web-cache-policy.md](docs/conventions/web-cache-policy.md) — 뮤테이션 후 캐시 갱신
-  전략 4가지의 선택 기준, 낙관적 패치 헬퍼(`optimisticPatch`) 배선, 에러 표면화,
+  DB 액션·페이지 Store·서버 집계 Query의 역할, 범위별 캐시와 SSR·세션 정리, 에러 표면화,
   queryKey 파생(`trpc.x.queryKey(input)`) 통일.
 - [git-commits.md](docs/conventions/git-commits.md) — **절대 규칙.** 커밋은 태스크 단위로
   하고 제목 끝에 `(T0XX)`로 태스크 번호를 명시한다. 영어 conventional 제목 + 한국어

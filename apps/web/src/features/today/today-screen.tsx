@@ -1,17 +1,18 @@
 import * as stylex from '@stylexjs/stylex';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { useNavigate, useRouteContext } from '@tanstack/react-router';
-import type { Task, TaskRangeResponse, UpdateTaskRequest } from '@tooday/shared';
+import { useLiveSuspenseQuery } from '@tanstack/react-db';
+import { useNavigate } from '@tanstack/react-router';
+import { useAtom } from '@tanstack/react-store';
+import type { Task } from '@tooday/shared';
 import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { applyTaskPatch } from '@/entities/task/patch';
+import { useMemo } from 'react';
+import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { useTodayDateNavigationStore } from '@/features/today/date-navigation-store';
 import { TaskCard } from '@/features/today/task-card';
 import { styles } from '@/features/today/today-screen.styles';
-import { useTaskSync } from '@/features/today/use-task-sync';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
+import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useLocale, useT } from '@/shared/i18n';
-import { optimisticPatch } from '@/shared/query';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
 
@@ -33,24 +34,23 @@ type TodayScreenProps = {
 /** 뷰포트와 하단 탭바는 `routes/_app/_tabs` 레이아웃이 소유한다 — 여기선 헤더·본문만 그린다. */
 export function TodayScreen({ now }: TodayScreenProps) {
   const navigate = useNavigate();
-  const { trpc, queryClient } = useRouteContext({ from: '__root__' });
+  const taskQueries = useTaskServerQueries();
+  const commands = useTaskCommands();
   const t = useT();
   const locale = useLocale();
 
   const days = useMemo(() => buildWeek(new Date(now), locale), [now, locale]);
-  const [activeOffset, setActiveOffset] = useState(0);
+  const { selectedDayOffsetAtom } = useTodayDateNavigationStore();
+  const [activeOffset, setActiveOffset] = useAtom(selectedDayOffsetAtom);
 
-  // loader가 같은 범위를 ensureQueryData로 채워 두므로 첫 렌더에서 suspend 하지 않는다
   const range = useMemo(() => weekRange(new Date(now)), [now]);
-  const { data } = useSuspenseQuery(trpc.task.range.queryOptions(range));
+  const { data: taskRows } = useLiveSuspenseQuery(taskQueries.taskView({ kind: 'range', ...range }));
+  const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
 
-  // 다른 기기의 변경이 SSE 신호 → 델타 → 캐시 패치로 이 화면에 실시간 반영된다
-  useTaskSync(range);
-
-  const projectById = useMemo(() => new Map(data.projects.map((project) => [project.id, project])), [data.projects]);
+  const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>();
-    for (const task of data.tasks) {
+    for (const task of taskRows) {
       const list = map.get(task.date);
       if (list) list.push(task);
       else map.set(task.date, [task]);
@@ -60,20 +60,9 @@ export function TodayScreen({ now }: TodayScreenProps) {
       list.sort((a, b) => timeToMin(a.startAt) - timeToMin(b.startAt));
     }
     return map;
-  }, [data.tasks]);
+  }, [taskRows]);
 
-  const updateTask = useMutation(
-    trpc.task.update.mutationOptions(
-      optimisticPatch(
-        queryClient,
-        trpc.task.range.queryKey(range),
-        (old: TaskRangeResponse, { id, patch }: UpdateTaskRequest) => ({
-          ...old,
-          tasks: old.tasks.map((task) => (task.id === id ? applyTaskPatch(task, patch) : task)),
-        }),
-      ),
-    ),
-  );
+  const updateTask = useCommandExecutionStore();
 
   const day = days.find((d) => d.offset === activeOffset) ?? days[0];
   if (!day) return null;
@@ -82,7 +71,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
   const toggleTask = (task: Task) => {
-    updateTask.mutate({ id: task.id, patch: { status: task.status === 'done' ? 'todo' : 'done' } });
+    updateTask.dispatch(() => commands.setTaskStatus({ taskId: task.id, status: task.status === 'done' ? 'todo' : 'done' }));
   };
 
   return (
@@ -122,6 +111,11 @@ export function TodayScreen({ now }: TodayScreenProps) {
             </Stack>
           </Card>
 
+          {updateTask.isError ? (
+            <Text role="alert" tone="danger">
+              {t.common.error.unexpected}
+            </Text>
+          ) : null}
           <WeekStrip
             days={days}
             activeOffset={activeOffset}
