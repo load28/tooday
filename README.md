@@ -42,6 +42,10 @@ apps/design-guide ── 모바일 웹뷰용 디자인 프로토타입 (port 300
 도메인 수직 슬라이스 + 헥사고날 라이트. 경계는 dependency-cruiser가 CI에서 강제한다
 (`bun run lint:deps`).
 
+검사 규칙은 루트 `.dependency-cruiser.cjs`에서 관리한다. `scripts/lint-deps.mjs`가
+`apps/*`와 `packages/*`를 각각 검사하며, 경로 별칭은 각 대상의 `tsconfig.json`에서 읽는다.
+새 앱이나 패키지도 별도 검사 설정 없이 포함되며, 각 대상에는 `tsconfig.json`이 필요하다.
+
 ```
 apps/bff/src/
   modules/<domain>/   # 도메인 수직 슬라이스 — 포트·어댑터·tRPC 라우터 코로케이션
