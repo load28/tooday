@@ -1,7 +1,7 @@
 /**
- * 공용 규칙 베이스. 각 앱의 tsconfig 별칭(@bff/*, @/*)을 해석해야 규칙이 실제로
- * 동작하므로, 앱별 .dependency-cruiser.cjs가 이 파일을 상속해 tsConfig만 바꾼다.
- * 실행은 루트 `bun run lint:deps`가 앱별 + packages 크루즈를 순서대로 수행한다.
+ * 모든 앱과 패키지의 공용 의존성 규칙.
+ * `bun run lint:deps`가 scripts/lint-deps.mjs를 실행한다.
+ * 실행 스크립트가 각 tsconfig의 별칭을 읽고 대상별 캐시를 분리한다.
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
@@ -95,7 +95,6 @@ module.exports = {
     },
   ],
   options: {
-    tsConfig: { fileName: 'tsconfig.base.json' },
     // import type도 아키텍처 경계 위반이므로 컴파일 전 의존성 기준으로 검사한다
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
@@ -116,11 +115,6 @@ module.exports = {
         '(^|/)\\.turbo/',
         '(^|/)\\.tanstack/',
       ],
-    },
-    cache: {
-      folder: 'node_modules/.cache/dependency-cruiser/packages',
-      strategy: 'metadata',
-      compress: true,
     },
     progress: { type: 'none' },
     reporterOptions: {
