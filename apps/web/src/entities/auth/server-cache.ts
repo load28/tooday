@@ -1,7 +1,7 @@
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { collectionOptions, DbClient, liveQueryCollectionOptions } from '@tanstack/react-db';
 import { QueryClient } from '@tanstack/react-query';
-import { type LoginRequest, type SignupRequest, type User, userSchema } from '@tooday/shared';
+import { type CurrentUserResponse, type LoginRequest, type SignupRequest, type User, userSchema } from '@tooday/shared';
 import * as v from 'valibot';
 
 const sessionRowSchema = v.object({ id: v.literal('current'), user: v.nullable(userSchema) });
@@ -9,7 +9,7 @@ export const authHydrationSchema = v.object({ rows: v.array(sessionRowSchema), u
 type SessionRow = v.InferOutput<typeof sessionRowSchema>;
 type AuthHydration = v.InferOutput<typeof authHydrationSchema>;
 export interface AuthTransport {
-  me(signal: AbortSignal): Promise<{ user: User | null }>;
+  getCurrentUser(signal: AbortSignal): Promise<CurrentUserResponse>;
   login(input: LoginRequest, signal: AbortSignal): Promise<User>;
   signup(input: SignupRequest, signal: AbortSignal): Promise<User>;
   logout(signal: AbortSignal): Promise<void>;
@@ -31,7 +31,7 @@ export function createAuthServerCache(transport: AuthTransport) {
     gcTime: 30 * 60_000,
     queryFn: async ({ signal }: { signal: AbortSignal }): Promise<SessionRow[]> => {
       const combined = AbortSignal.any([abort.signal, signal]);
-      const { user } = await transport.me(combined);
+      const { user } = await transport.getCurrentUser(combined);
       combined.throwIfAborted();
       if (userId !== user?.id) await transport.clearUserData();
       combined.throwIfAborted();

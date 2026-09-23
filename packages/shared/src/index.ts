@@ -1,8 +1,17 @@
 export type { ApiError } from './api';
 export { TRPC_ENDPOINT } from './api';
-export type { AuthResponse, LoginRequest, RefreshRequest, RefreshResponse, SignupRequest, TokenPair } from './auth';
+export type {
+  AuthResponse,
+  CurrentUserResponse,
+  LoginRequest,
+  RefreshRequest,
+  RefreshResponse,
+  SignupRequest,
+  TokenPair,
+} from './auth';
 export {
   authResponseSchema,
+  currentUserResponseSchema,
   loginRequestSchema,
   MIN_PASSWORD_LENGTH,
   refreshRequestSchema,
@@ -59,5 +68,5 @@ export {
   taskStatusSchema,
   updateTaskRequestSchema,
 } from './task';
-export type { MeResponse, User } from './user';
-export { meResponseSchema, userSchema } from './user';
+export type { User } from './user';
+export { userSchema } from './user';
