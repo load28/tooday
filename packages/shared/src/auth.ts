@@ -49,3 +49,10 @@ export type RefreshRequest = v.InferOutput<typeof refreshRequestSchema>;
 export type TokenPair = v.InferOutput<typeof tokenPairSchema>;
 export type AuthResponse = v.InferOutput<typeof authResponseSchema>;
 export type RefreshResponse = v.InferOutput<typeof refreshResponseSchema>;
+
+/** 현재 인증 사용자 조회 — 익명은 200 + null, 무효 자격증명은 BFF에서 401. */
+export const currentUserResponseSchema = v.object({
+  user: v.nullable(userSchema),
+});
+
+export type CurrentUserResponse = v.InferOutput<typeof currentUserResponseSchema>;

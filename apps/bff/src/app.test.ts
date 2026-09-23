@@ -14,7 +14,7 @@ import { InMemorySyncBroker } from '@bff/platform/sync-broker';
 import { CACHE_DIRECTIVES_BY_PATH, PRIVATE_CACHE_CONTROL, serializePublicCacheControl } from '@bff/trpc/cache';
 import {
   authResponseSchema,
-  meResponseSchema,
+  currentUserResponseSchema,
   projectSchema,
   SYNC_EVENTS_PATH,
   syncChangesResponseSchema,
@@ -176,16 +176,16 @@ describe('auth.login', () => {
   });
 });
 
-describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
+describe('auth.getCurrentUser — 인증 (쿠키 + 헤더 이중 지원)', () => {
   it('쿠키 방식으로 접근할 수 있다', async () => {
     const { app, config } = setup();
     const { token } = await signup(app);
 
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: { Cookie: accessCookieHeader({ config, token }) },
     });
     expect(res.status).toBe(200);
-    const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
+    const { user } = await unwrapTrpcData({ res, schema: currentUserResponseSchema });
     expect(user?.email).toBe('test@tooday.app');
   });
 
@@ -193,11 +193,11 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { app } = setup();
     const { token } = await signup(app);
 
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
-    const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
+    const { user } = await unwrapTrpcData({ res, schema: currentUserResponseSchema });
     expect(user?.email).toBe('test@tooday.app');
   });
 
@@ -205,7 +205,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { app, config } = setup();
     const { token } = await signup(app);
 
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: {
         Authorization: 'Bearer invalid-token',
         Cookie: accessCookieHeader({ config, token }),
@@ -216,15 +216,15 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
 
   it('자격증명이 전혀 없으면(익명) 200 + user null을 반환한다', async () => {
     const { app } = setup();
-    const res = await app.request(trpcPath('user.me'));
+    const res = await app.request(trpcPath('auth.getCurrentUser'));
     expect(res.status).toBe(200);
-    const { user } = await unwrapTrpcData({ res, schema: meResponseSchema });
+    const { user } = await unwrapTrpcData({ res, schema: currentUserResponseSchema });
     expect(user).toBeNull();
   });
 
   it('리프레시 쿠키만 있고 액세스가 없으면 401을 반환한다(만료 세션 복구 경로)', async () => {
     const { app, config } = setup();
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: { Cookie: `${config.refreshCookieName}=some-refresh-token` },
     });
     expect(res.status).toBe(401);
@@ -234,7 +234,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { app } = setup({ accessTtlMs: -60_000 });
     const { token } = await signup(app);
 
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(401);
@@ -244,7 +244,7 @@ describe('user.me — 인증 (쿠키 + 헤더 이중 지원)', () => {
     const { app } = setup();
     const { token } = await signup(app);
 
-    const res = await app.request(trpcPath('user.me'), {
+    const res = await app.request(trpcPath('auth.getCurrentUser'), {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.headers.get('cache-control')).toBe(PRIVATE_CACHE_CONTROL);
@@ -265,7 +265,7 @@ describe('HTTP 캐시 정책', () => {
     const { app } = setup();
     const { token } = await signup(app);
 
-    const res = await app.request(`${trpcPath('pub.appConfig,user.me')}?batch=1`, {
+    const res = await app.request(`${trpcPath('pub.appConfig,auth.getCurrentUser')}?batch=1`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
@@ -509,7 +509,7 @@ describe('auth.refresh', () => {
     // (액세스 JWT는 같은 초에 서명되면 byte-identical일 수 있으므로 값 비교하지 않는다)
 
     // 새 액세스로 인증된다
-    const me = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    const me = await app.request(trpcPath('auth.getCurrentUser'), { headers: { Authorization: `Bearer ${accessToken}` } });
     expect(me.status).toBe(200);
 
     // 옛 리프레시 재사용 = 탈취 신호 → 401 + 계보 전체 무효화(재사용 탐지)
@@ -569,7 +569,7 @@ describe('auth.logout', () => {
     expect(refreshRes.status).toBe(401);
 
     // 즉시 무효화: 아직 만료 안 된 액세스 토큰도 세션 라이브니스 체크에서 곧바로 거부된다.
-    const meRes = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${token}` } });
+    const meRes = await app.request(trpcPath('auth.getCurrentUser'), { headers: { Authorization: `Bearer ${token}` } });
     expect(meRes.status).toBe(401);
   });
 
@@ -583,7 +583,7 @@ describe('auth.logout', () => {
       postJson({ input: {}, headers: { Cookie: refreshCookieHeader({ config, token: refreshToken }) } }),
     );
     const { accessToken } = await unwrapTrpcData({ res: rotate1, schema: tokenPairSchema });
-    const meOk = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    const meOk = await app.request(trpcPath('auth.getCurrentUser'), { headers: { Authorization: `Bearer ${accessToken}` } });
     expect(meOk.status).toBe(200);
 
     // 2) 옛 리프레시 재사용 = 탈취 신호 → 세션 전체 무효화
@@ -593,7 +593,7 @@ describe('auth.logout', () => {
     );
 
     // 3) 방금까지 멀쩡하던 액세스도 세션 라이브니스 체크로 즉시 401
-    const meRes = await app.request(trpcPath('user.me'), { headers: { Authorization: `Bearer ${accessToken}` } });
+    const meRes = await app.request(trpcPath('auth.getCurrentUser'), { headers: { Authorization: `Bearer ${accessToken}` } });
     expect(meRes.status).toBe(401);
   });
 });

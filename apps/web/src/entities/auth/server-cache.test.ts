@@ -6,7 +6,7 @@ const user: User = { id: 'u1', email: 'one@example.com', name: '하나' };
 const resources: AuthServerCache[] = [];
 function setup(overrides: Partial<AuthTransport> = {}) {
   const transport: AuthTransport = {
-    me: vi.fn(async () => ({ user: null })),
+    getCurrentUser: vi.fn(async () => ({ user: null })),
     login: vi.fn(async () => user),
     signup: vi.fn(async () => user),
     logout: vi.fn(async () => {}),
@@ -35,14 +35,14 @@ describe('인증 DB와 업무 액션', () => {
       await vi.waitFor(() => expect([...view.values()][0]?.user).toBeNull());
       expect(await data.resolveUser()).toBeNull();
       expect(transport.clearUserData).toHaveBeenCalledTimes(2);
-      expect(transport.me).toHaveBeenCalledTimes(1);
+      expect(transport.getCurrentUser).toHaveBeenCalledTimes(1);
     } finally {
       subscription.unsubscribe();
     }
   });
   it('로그아웃 실패는 로그인 사용자와 데이터를 지우지 않는다', async () => {
     const { data, transport } = setup({
-      me: async () => ({ user }),
+      getCurrentUser: async () => ({ user }),
       logout: async () => {
         throw new Error('offline');
       },
@@ -70,17 +70,28 @@ describe('인증 DB와 업무 액션', () => {
     expect(await data.resolveUser()).toBeNull();
   });
   it('SSR 복원 후 같은 사용자 데이터를 추가 요청 없이 읽는다', async () => {
-    const server = setup({ me: async () => ({ user }) });
+    const server = setup({ getCurrentUser: async () => ({ user }) });
     await server.data.resolveUser();
     const client = setup();
     client.data.hydrate(server.data.dehydrate());
     expect(await client.data.resolveUser()).toEqual(user);
     expect([...client.data.sessionView().values()][0]?.user).toEqual(user);
-    expect(client.transport.me).not.toHaveBeenCalled();
+    expect(client.transport.getCurrentUser).not.toHaveBeenCalled();
+  });
+  it('익명 결과를 재사용하고 SSR 복원 후에도 추가 요청하지 않는다', async () => {
+    const server = setup();
+    expect(await server.data.resolveUser()).toBeNull();
+    expect(await server.data.resolveUser()).toBeNull();
+    expect(server.transport.getCurrentUser).toHaveBeenCalledTimes(1);
+    const client = setup();
+    client.data.hydrate(server.data.dehydrate());
+    expect(await client.data.resolveUser()).toBeNull();
+    expect(await client.data.resolveUser()).toBeNull();
+    expect(client.transport.getCurrentUser).not.toHaveBeenCalled();
   });
   it('네트워크 실패를 익명 사용자로 오인하지 않고 호출자에게 전달한다', async () => {
     const { data } = setup({
-      me: async () => {
+      getCurrentUser: async () => {
         throw new Error('offline');
       },
     });
