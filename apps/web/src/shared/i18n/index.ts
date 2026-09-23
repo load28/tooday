@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
-import type { MessagesOf, TextsOf } from './message';
 import { ko } from './ko';
+import type { MessagesOf, TextsOf } from './message';
 import type { MessageSchema } from './schema';
 
 export { defineMessages } from './message';

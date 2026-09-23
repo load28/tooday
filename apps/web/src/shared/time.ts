@@ -1,7 +1,7 @@
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { addMinutes, format as dfFormat, differenceInMinutes, parse, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { type Locale, type Messages } from '@/shared/i18n';
+import type { Locale, Messages } from '@/shared/i18n';
 
 const ISO_DATE = 'yyyy-MM-dd';
 const CLOCK = 'HH:mm';

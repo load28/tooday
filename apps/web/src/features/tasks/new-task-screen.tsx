@@ -2,12 +2,14 @@ import * as stylex from '@stylexjs/stylex';
 import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { revalidateLogic, useForm, useStore } from '@tanstack/react-form';
 import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useAtom } from '@tanstack/react-store';
 import { type CreateTaskRequest, createTaskRequestSchema, type Project } from '@tooday/shared';
 import { ChevronLeft } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import * as v from 'valibot';
 import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
 import { styles } from '@/features/tasks/new-task-screen.styles';
+import { useNewTaskSheetStore } from '@/features/tasks/new-task-sheet-store';
 import {
   MetaList,
   MetaRow,
@@ -60,9 +62,8 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
   const { data: projects } = useLiveSuspenseQuery(taskQueries.projectView());
   const projectOptions = useProjectOptions(projects);
 
-  const [projectSheetOpen, setProjectSheetOpen] = useState(false);
-  const [newProjectSheetOpen, setNewProjectSheetOpen] = useState(false);
-  const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false);
+  const { openSheetAtom } = useNewTaskSheetStore();
+  const [openSheet, setOpenSheet] = useAtom(openSheetAtom);
 
   const messages = useFormMessages(taskFormSchema, (t) => ({
     title: { min_length: t.taskNew.titleRequired },
@@ -150,12 +151,12 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
           <MetaRow
             label={t.taskNew.project}
             value={<ProjectValue name={selectedProject?.name ?? null} color={selectedProject?.color} />}
-            onClick={() => setProjectSheetOpen(true)}
+            onClick={() => setOpenSheet('project')}
           />
           <MetaRow
             label={t.taskNew.time}
             value={<ScheduleValue startAt={startAt} durationMin={durationMin} />}
-            onClick={() => setScheduleSheetOpen(true)}
+            onClick={() => setOpenSheet('schedule')}
           />
         </MetaList>
 
@@ -180,42 +181,41 @@ export function NewTaskScreen({ now, renderNewProjectSheet }: NewTaskScreenProps
       </form>
 
       <OptionSheet
-        open={projectSheetOpen}
-        onClose={() => setProjectSheetOpen(false)}
+        open={openSheet === 'project'}
+        onClose={() => setOpenSheet(null)}
         title={t.taskNew.selectProject}
         options={projectOptions}
         selectedKey={projectId ?? NO_PROJECT_KEY}
         onSelect={(key) => {
           form.setFieldValue('projectId', key === NO_PROJECT_KEY ? null : key);
-          setProjectSheetOpen(false);
+          setOpenSheet(null);
         }}
         action={{
           label: t.taskNew.createProject,
           onClick: () => {
-            setProjectSheetOpen(false);
-            setNewProjectSheetOpen(true);
+            setOpenSheet('newProject');
           },
         }}
       />
 
       {renderNewProjectSheet({
-        open: newProjectSheetOpen,
-        onClose: () => setNewProjectSheetOpen(false),
+        open: openSheet === 'newProject',
+        onClose: () => setOpenSheet(null),
         onCreated: (project) => {
           form.setFieldValue('projectId', project.id);
-          setNewProjectSheetOpen(false);
+          setOpenSheet(null);
         },
       })}
 
       <ScheduleSheet
-        open={scheduleSheetOpen}
-        onClose={() => setScheduleSheetOpen(false)}
+        open={openSheet === 'schedule'}
+        onClose={() => setOpenSheet(null)}
         startAt={startAt}
         durationMin={durationMin}
         onApply={(nextStart, nextDuration) => {
           form.setFieldValue('startAt', nextStart);
           form.setFieldValue('durationMin', nextDuration);
-          setScheduleSheetOpen(false);
+          setOpenSheet(null);
         }}
       />
     </Screen>

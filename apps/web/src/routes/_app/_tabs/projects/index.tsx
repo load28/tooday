@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ProjectsScreen } from '@/features/projects/projects-screen';
+import { ProjectsScreenStoreProvider } from '@/features/projects/projects-screen-store';
 
 export const Route = createFileRoute('/_app/_tabs/projects/')({
   loader: async ({ context }) => {
@@ -12,5 +13,9 @@ export const Route = createFileRoute('/_app/_tabs/projects/')({
 });
 
 function ProjectsRoute() {
-  return <ProjectsScreen />;
+  return (
+    <ProjectsScreenStoreProvider>
+      <ProjectsScreen />
+    </ProjectsScreenStoreProvider>
+  );
 }
