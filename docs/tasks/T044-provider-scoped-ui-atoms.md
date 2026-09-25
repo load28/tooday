@@ -1,4 +1,4 @@
-# T043 — Provider 범위의 TanStack Store Atom으로 UI 상태 분리
+# T044 — Provider 범위의 TanStack Store Atom으로 UI 상태 분리
 
 - 상태: 완료
 - 생성: 2026-09-23

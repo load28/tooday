@@ -49,7 +49,7 @@
 | 쓰임 | 매 요청 인증 | 액세스 만료 시 재발급 |
 
 - **핫패스가 유저 조회를 안 탄다** — 매 요청은 액세스 JWT 서명·만료 검증(`AccessTokenService`)
-  + 세션 라이브니스 체크 1회(아래)만 한다. 유저 프로필은 JWT에 담지 않고 `user.me`에서만
+  + 세션 라이브니스 체크 1회(아래)만 한다. 유저 프로필은 JWT에 담지 않고 `auth.getCurrentUser`에서만
   지연 조회한다(프로필 변경이 토큰 만료까지 지연되지 않게).
 - **두 토큰 모두 httpOnly 쿠키**(`tooday_access`, `tooday_refresh`)로 내려 SSR 인증이 쿠키
   포워딩으로 그대로 동작한다. 네이티브/웹뷰 브릿지는 쿠키를 못 쓰므로 body의 토큰을
@@ -113,35 +113,29 @@
 single-flight로 묶고, `auth.refresh/login/signup` 경로는 제외(재귀·오작동 방지)한다. SSR은
 쿠키를 브라우저로 되돌릴 수 없어 refresh하지 않고 beforeLoad가 로그인 리다이렉트로 처리한다.
 
-## 인증 상태 확인 (beforeLoad)
+## 현재 인증 사용자 확인 — auth.getCurrentUser
 
-### 원칙
+`auth.getCurrentUser`는 로그인 상태와 사용자 정보를 한 번에 조회한다. 익명은
+`200 { user: null }`, 유효한 인증은 `200 { user }`, 무효한 자격증명은 `401`이다.
+세션 확인 뒤 프로필을 따로 요청하는 폭포수를 추가하지 않는다. 기존 `user.me`를 대체하며
+웹과 네이티브 클라이언트는 새 경로를 사용해야 한다.
 
-- beforeLoad는 "게이트키퍼" 역할만 수행
-- `queryClient.ensureQueryData`를 사용하여 캐시 우선 활용
-- 캐시에 데이터가 있으면 (stale이든 아니든) 그대로 반환, 없을 때만 fetch
+- `sessionProcedure`가 자격증명 부재와 무효를 구분한다. 리프레시 쿠키만 남은 요청도
+  401로 보내 기존 브라우저 토큰 갱신 경로를 유지한다.
+- `auth.*` 경로지만 refresh 제외 대상은 login/signup/refresh뿐이다.
+  `auth.getCurrentUser`의 401은 기존처럼 갱신 후 한 번 재요청한다(브라우저).
+- 사용자 조회 구현은 user 모듈에 유지한다. `trpc/router.ts`가 `findUserById`를
+  인증 라우터에 주입하므로 auth → user 직접 import는 없다.
+- 공유 응답 계약은 `packages/shared/src/auth.ts`의 `currentUserResponseSchema`와
+  그 파생 타입 `CurrentUserResponse`다.
 
-### 동작
+라우터가 만든 인증 서버 캐시(`entities/auth/server-cache.ts`)를 게이트와 UI가 공유한다.
+`beforeLoad`는 `context.auth.resolveUser()`로 조회하고 로그인 필수/비로그인 전용 페이지의
+리다이렉트를 결정한다. 화면은 `useAuthServerQueries`의 DB live query로 읽는다.
 
-```
-최초 방문:
-  beforeLoad → ensureQueryData → 캐시 없음 → BFF 호출 → 캐시 저장 → 통과
-
-클라이언트 네비게이션:
-  beforeLoad → ensureQueryData → 캐시 있음 → 즉시 반환 → 통과
-  (네트워크 안 탐, 네비게이션 블로킹 제로)
-```
-
-### context 사용 범위
-
-- beforeLoad에서 유저 정보를 context에 넣되, **loader까지만** 사용
-- 컴포넌트는 context를 사용하지 않음 — React Query(tRPC)로 직접 조회
-
-```
-beforeLoad: 인증 확인 → 유저 정보를 context에 넣음
-loader: context.user를 받아서 필요 시 사용 (예: userId로 추가 쿼리)
-component: context 안 씀. React Query(tRPC)로 직접 가져옴
-```
+내부 Query의 staleTime은 15분, gcTime은 30분이다. `resolveUser`는 캐시를 우선 사용하고
+stale이면 백그라운드 재검증한다. 익명도 `{ id: 'current', user: null }` 행으로 캐시하며,
+SSR에서 인증 행과 갱신 시각을 전달해 브라우저가 추가 조회 없이 복원한다.
 
 ## 데이터 페칭 전략
 
@@ -171,66 +165,18 @@ component: context 안 씀. React Query(tRPC)로 직접 가져옴
 - **loader에 API 호출이 많으면 네비게이션이 블로킹되어 빈 화면이 길어짐**
 - loader에는 화면 구성에 필수적인 최소한의 데이터만, 나머지는 컴포넌트에서 React Query로
 
-## 데이터 흐름 (tRPC + React Query)
+## 인증 데이터 흐름과 캐시 갱신
 
-```
-컴포넌트
-  → trpc.user.me.useQuery()          (React Query 훅)
-    → tRPC 클라이언트                  (직렬화 + 타입 안전성)
-      → fetch (credentials: include)  (HTTP 레이어)
-        → BFF (Hono + tRPC 서버)      (쿠키 파싱 + 헤더 주입)
-          → API 서버
-```
+게이트/UI → 인증 서버 캐시 → `getCurrentUser` transport →
+`rpc.auth.getCurrentUser.query()` → BFF 세션 검증·사용자 조회 순서로 동작한다.
+화면은 tRPC나 QueryClient를 직접 호출하지 않는다.
 
-- tRPC는 fetching 레이어 (타입 안전한 fetch)
-- React Query가 캐시와 상태 관리의 단일 출처 (single source of truth)
-- @trpc/react-query가 둘을 통합
+- 로그인·회원가입: 업무 명령이 응답의 사용자로 인증 행을 갱신한다.
+- 로그아웃·세션 상실: 진행 중인 이전 요청을 취소하고 인증 행을 null로 바꾸며 사용자 데이터를 정리한다.
+- 사용자 변경: 이전 사용자의 업무 데이터를 정리한다.
+- 서버 캐시로 전달된 네트워크 오류는 익명 값으로 바꾸지 않고 호출자에게 전달한다.
 
-## 캐시 조작 전략
-
-### ensureQueryData를 소비하는 쪽 (beforeLoad)
-
-| API | 용도 | 사용 시점 |
-|-----|------|-----------|
-| `refetchQueries` | 명시적으로 캐시를 갱신 | 유저 정보 수정 후 |
-| `removeQueries` | 캐시에서 완전 삭제 | 로그아웃 시 |
-
-### useQuery / useSuspenseQuery를 소비하는 쪽 (컴포넌트)
-
-| API | 용도 | 사용 시점 |
-|-----|------|-----------|
-| `invalidateQueries` | stale 마킹 → 활성 옵저버가 자동 리페치 | 목록 갱신 등 |
-
-### 왜 이렇게 구분하는가
-
-```
-invalidateQueries → stale 마킹
-  → useQuery가 바라보고 있으면 자동 리페치 (옵저버가 있으니까)
-  → ensureQueryData는 stale이든 아니든 캐시 반환 (옵저버 개념이 없음)
-
-refetchQueries → 즉시 fetch 실행
-  → 옵저버 유무 상관없이 캐시가 갱신됨
-  → ensureQueryData가 다음에 읽을 때 갱신된 값을 반환
-```
-
-- `invalidateQueries`는 "누군가 지켜보고 있을 때" 의미가 있음 (useQuery)
-- `ensureQueryData`는 "한 번 읽고 끝"이므로 invalidate가 의미 없음
-
-### 로그아웃 시
-
-```
-1. queryClient.removeQueries({ queryKey: ['user', 'me'] })  // 캐시 완전 삭제
-2. redirect('/login')
-3. 다음 인증 라우트 접근 시 → ensureQueryData → 캐시 없음 → BFF 호출 → 세션 없음 → redirect
-```
-
-### 유저 정보 수정 시
-
-```
-1. await queryClient.refetchQueries({ queryKey: ['user', 'me'] })  // 즉시 fetch
-2. 캐시가 갱신된 상태
-3. 다음 beforeLoad의 ensureQueryData가 갱신된 캐시를 반환
-```
+상세 수명·SSR·UI 경계는 [web-cache-policy.md](conventions/web-cache-policy.md)를 따른다.
 
 ## tRPC 전송 / HTTP 캐시 정책
 
@@ -277,7 +223,7 @@ refetchQueries → 즉시 fetch 실행
 
 `sessionProcedure`는 "무효 자격증명(만료·폐기) → 401"을 미들웨어에서 거르고 익명은
 `userId=null`로 통과시킨다. 그래서 리졸버의 `!ctx.userId`는 "무효"가 아니라 "익명"만 뜻하며,
-익명을 401 에러가 아니라 200 + 빈 데이터로 돌릴 수 있다(예: `user.me` → `{ user: null }`).
+익명을 401 에러가 아니라 200 + 빈 데이터로 돌릴 수 있다(예: `auth.getCurrentUser` → `{ user: null }`).
 이는 게이트가 매 진입마다 부르는 세션 확인이 캐시·SSR dehydrate에 성공으로 남아 재요청이
 폭주하지 않게 한다. 응답이 요청자에 따라 달라지므로 `sessionProcedure`는 절대 `pub.*`(공유
 캐시)에 두지 않는다. 미래의 공유 태스크/프로젝트 뷰(`docs/task-sharing-architecture.md`)가

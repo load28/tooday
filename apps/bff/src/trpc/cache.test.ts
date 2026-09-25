@@ -10,7 +10,7 @@ import {
 } from '@bff/trpc/cache';
 
 const APP_CONFIG_PATH = 'pub.appConfig' satisfies CacheablePath;
-const PRIVATE_PATH = 'user.me';
+const PRIVATE_PATH = 'auth.getCurrentUser';
 const UNLISTED_PUB_PATH = 'pub.unlisted';
 
 describe('serializePublicCacheControl', () => {

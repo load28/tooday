@@ -114,7 +114,7 @@ it('집계·인증 DB를 SSR 데이터로 복원해 하이드레이션한다', a
   const user = { id: 'u1', name: '하나', email: 'one@example.test' };
   const summary = { id: 'p1', name: '전체 업무', color: 'blue' as const, totalCount: 100, doneCount: 20 };
   const auth = createAuthServerCache({
-    me: async () => ({ user }),
+    getCurrentUser: async () => ({ user }),
     login: async () => user,
     signup: async () => user,
     logout: async () => {},

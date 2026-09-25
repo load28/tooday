@@ -39,9 +39,9 @@ export function getRouter() {
     typeof window !== 'undefined',
   );
   const auth = createAuthServerCache({
-    me: async (signal) => {
+    getCurrentUser: async (signal) => {
       try {
-        return await rpc.user.me.query(undefined, { signal });
+        return await rpc.auth.getCurrentUser.query(undefined, { signal });
       } catch (error) {
         if (hasTrpcErrorCode(error, TRPC_ERROR_CODES.unauthorized)) return { user: null };
         throw error;
