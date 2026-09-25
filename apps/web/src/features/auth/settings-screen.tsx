@@ -1,10 +1,11 @@
 import * as stylex from '@stylexjs/stylex';
 import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useAtom } from '@tanstack/react-store';
 import { ChevronLeft } from 'lucide-react';
-import { useState } from 'react';
 import { useAuthCommands, useAuthServerQueries } from '@/entities/auth/context';
 import { styles } from '@/features/auth/settings-screen.styles';
+import { useSettingsStore } from '@/features/auth/settings-store';
 import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
@@ -17,21 +18,8 @@ export function SettingsScreen() {
   const t = useT();
 
   const { data: sessions } = useLiveSuspenseQuery(auth.sessionView());
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const logout = useCommandExecutionStore();
-  const confirmLogout = () =>
-    logout.dispatch(async () => {
-      await commands.logout();
-      setConfirmOpen(false);
-      await navigate({ to: '/login' });
-    });
-
-  const closeConfirm = () => {
-    if (logout.isPending) return; // 진행 중엔 시트를 닫지 않는다
-    logout.reset(); // 재오픈 시 이전 에러가 남지 않게 리셋
-    setConfirmOpen(false);
-  };
+  const { logoutConfirmationOpenAtom } = useSettingsStore();
+  const [, setConfirmOpen] = useAtom(logoutConfirmationOpenAtom);
 
   return (
     <>
@@ -62,25 +50,53 @@ export function SettingsScreen() {
         </div>
       </Screen>
 
-      <BottomSheet open={confirmOpen} onClose={closeConfirm} ariaLabel={t.settings.logout.confirmTitle}>
-        <BottomSheet.Header>
-          <BottomSheet.Title>{t.settings.logout.confirmTitle}</BottomSheet.Title>
-          <BottomSheet.Description>{t.settings.logout.confirmDescription}</BottomSheet.Description>
-        </BottomSheet.Header>
-        <Stack gap="md" sx={styles.sheetActions}>
-          {logout.isError ? (
-            <Text variant="bodySm" tone="danger" align="center">
-              {t.settings.logout.error}
-            </Text>
-          ) : null}
-          <Button tone="danger" size="xl" fullWidth loading={logout.isPending} onClick={confirmLogout}>
-            {t.settings.logout.confirm}
-          </Button>
-          <Button tone="ghost" size="xl" fullWidth disabled={logout.isPending} onClick={closeConfirm}>
-            {t.settings.logout.cancel}
-          </Button>
-        </Stack>
-      </BottomSheet>
+      <LogoutConfirmationSheet commands={commands} navigateToLogin={() => navigate({ to: '/login' })} />
     </>
+  );
+}
+
+function LogoutConfirmationSheet({
+  commands,
+  navigateToLogin,
+}: {
+  commands: ReturnType<typeof useAuthCommands>;
+  navigateToLogin: () => Promise<unknown>;
+}) {
+  const t = useT();
+  const { logoutConfirmationOpenAtom } = useSettingsStore();
+  const [confirmOpen, setConfirmOpen] = useAtom(logoutConfirmationOpenAtom);
+  const logout = useCommandExecutionStore();
+  const confirmLogout = () =>
+    logout.dispatch(async () => {
+      await commands.logout();
+      setConfirmOpen(false);
+      await navigateToLogin();
+    });
+  const closeConfirm = () => {
+    if (logout.isPending) return;
+    logout.reset();
+    setConfirmOpen(false);
+  };
+
+  return (
+    <BottomSheet open={confirmOpen} onClose={closeConfirm} ariaLabel={t.settings.logout.confirmTitle}>
+      <BottomSheet.Header>
+        <BottomSheet.Title>{t.settings.logout.confirmTitle}</BottomSheet.Title>
+        <BottomSheet.Description>{t.settings.logout.confirmDescription}</BottomSheet.Description>
+      </BottomSheet.Header>
+      <Stack gap="md" sx={styles.sheetActions}>
+        {logout.isError ? (
+          <Text variant="bodySm" tone="danger" align="center">
+            {t.settings.logout.error}
+          </Text>
+        ) : null}
+        <Button tone="danger" size="xl" fullWidth loading={logout.isPending} onClick={confirmLogout}>
+          {t.settings.logout.confirm}
+        </Button>
+        <Button tone="ghost" size="xl" fullWidth disabled={logout.isPending} onClick={closeConfirm}>
+          {t.settings.logout.cancel}
+        </Button>
+      </Stack>
+    </BottomSheet>
   );
 }

@@ -11,6 +11,14 @@ Store는 `useTaskCommands` 또는 `useAuthCommands`로 얻은 변경 명령을 �
 Store의 값 변경 자체를 자동 저장으로 해석하지 않는다. 명시적인 명령 호출이 저장을 시작한다.
 서버 결과를 Store의 별도 원본으로 보관하지 않는다.
 
+페이지·feature 수명의 Store는 `@tanstack/react-store`의 실제 `Atom`을 사용한다. route나
+feature 경계의 Provider가 `useCreateAtom`으로 Atom을 만들고 `createStoreContext`로
+전달한다. 따라서 같은 화면 인스턴스끼리 상태를 공유하지 않고 Provider 재마운트 시
+초기화된다. 하위 컴포넌트는 큰 화면 상태 객체나 callback 묶음을 props로 받지 않고,
+필요한 Atom만 Context에서 얻어 `useAtom`으로 직접 구독한다. 서로 함께 열릴 수 없는
+시트처럼 하나의 상태 머신인 값은 여러 boolean Atom 대신 하나의 union Atom으로 둔다.
+모듈 전역 Atom은 여러 화면 인스턴스가 의도적으로 상태를 공유해야 할 때만 허용한다.
+
 화면은 `useTaskServerQueries` / `useAuthServerQueries`로 조회하고 변경 명령은 별도 훅으로 얻는다.
 Context는 이 두 기능만 전달한다. 원본 컬렉션·DbClient·동기화·SSR 복원·dispose는 공개하지 않는다.
 서버 캐시 생성과 세션 수명은 라우터 조립 계층이 소유하며 feature의 내부 모듈 import는 의존성 검사로 금지한다.
