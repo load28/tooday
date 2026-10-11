@@ -9,65 +9,65 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PublicRouteRouteImport } from './routes/_public/route'
-import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PublicSignupRouteRouteImport } from './routes/_public/signup/route'
-import { Route as PublicLoginRouteRouteImport } from './routes/_public/login/route'
-import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as AppTabsRouteRouteImport } from './routes/_app/_tabs/route'
-import { Route as AppTasksNewRouteRouteImport } from './routes/_app/tasks/new/route'
-import { Route as AppTasksTaskIdRouteRouteImport } from './routes/_app/tasks/$taskId/route'
+import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
+import { Route as PublicLoginRouteRouteImport } from './routes/_public/login/route'
+import { Route as PublicSignupRouteRouteImport } from './routes/_public/signup/route'
 import { Route as AppTabsTodayRouteRouteImport } from './routes/_app/_tabs/today/route'
+import { Route as AppTasksTaskIdRouteRouteImport } from './routes/_app/tasks/$taskId/route'
+import { Route as AppTasksNewRouteRouteImport } from './routes/_app/tasks/new/route'
 import { Route as AppTabsProjectsIndexRouteImport } from './routes/_app/_tabs/projects/index'
 import { Route as AppTabsProjectsProjectIdRouteRouteImport } from './routes/_app/_tabs/projects/$projectId/route'
 
-const PublicRouteRoute = PublicRouteRouteImport.update({
-  id: '/_public',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PublicRouteRoute = PublicRouteRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicSignupRouteRoute = PublicSignupRouteRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicLoginRouteRoute = PublicLoginRouteRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => PublicRouteRoute,
+const AppTabsRouteRoute = AppTabsRouteRouteImport.update({
+  id: '/_tabs',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppTabsRouteRoute = AppTabsRouteRouteImport.update({
-  id: '/_tabs',
-  getParentRoute: () => AppRouteRoute,
+const PublicLoginRouteRoute = PublicLoginRouteRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => PublicRouteRoute,
 } as any)
-const AppTasksNewRouteRoute = AppTasksNewRouteRouteImport.update({
-  id: '/tasks/new',
-  path: '/tasks/new',
-  getParentRoute: () => AppRouteRoute,
+const PublicSignupRouteRoute = PublicSignupRouteRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+const AppTabsTodayRouteRoute = AppTabsTodayRouteRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => AppTabsRouteRoute,
 } as any)
 const AppTasksTaskIdRouteRoute = AppTasksTaskIdRouteRouteImport.update({
   id: '/tasks/$taskId',
   path: '/tasks/$taskId',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppTabsTodayRouteRoute = AppTabsTodayRouteRouteImport.update({
-  id: '/today',
-  path: '/today',
-  getParentRoute: () => AppTabsRouteRoute,
+const AppTasksNewRouteRoute = AppTasksNewRouteRouteImport.update({
+  id: '/tasks/new',
+  path: '/tasks/new',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppTabsProjectsIndexRoute = AppTabsProjectsIndexRouteImport.update({
   id: '/projects/',
@@ -165,11 +165,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_public': {
-      id: '/_public'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof PublicRouteRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -179,33 +179,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_public': {
+      id: '/_public'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof PublicRouteRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_public/signup': {
-      id: '/_public/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof PublicSignupRouteRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/login': {
-      id: '/_public/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof PublicLoginRouteRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteRouteImport
-      parentRoute: typeof AppRouteRoute
     }
     '/_app/_tabs': {
       id: '/_app/_tabs'
@@ -214,12 +193,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTabsRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/tasks/new': {
-      id: '/_app/tasks/new'
-      path: '/tasks/new'
-      fullPath: '/tasks/new'
-      preLoaderRoute: typeof AppTasksNewRouteRouteImport
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/signup': {
+      id: '/_public/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof PublicSignupRouteRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_app/_tabs/today': {
+      id: '/_app/_tabs/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof AppTabsTodayRouteRouteImport
+      parentRoute: typeof AppTabsRouteRoute
     }
     '/_app/tasks/$taskId': {
       id: '/_app/tasks/$taskId'
@@ -228,12 +228,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksTaskIdRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/_tabs/today': {
-      id: '/_app/_tabs/today'
-      path: '/today'
-      fullPath: '/today'
-      preLoaderRoute: typeof AppTabsTodayRouteRouteImport
-      parentRoute: typeof AppTabsRouteRoute
+    '/_app/tasks/new': {
+      id: '/_app/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof AppTasksNewRouteRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/_app/_tabs/projects/': {
       id: '/_app/_tabs/projects/'

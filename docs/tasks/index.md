@@ -71,3 +71,4 @@
 | T042 | [서버 캐시·클라이언트 Store의 공개 범위와 이름 정리](T042-server-cache-client-store-boundary.md) | 높음 | ✅ 완료 |
 | T043 | [현재 인증 사용자 API 명확화](T043-auth-current-user.md) | 중간 | ✅ 완료 |
 | T044 | [Provider 범위의 TanStack Store Atom으로 UI 상태 분리](T044-provider-scoped-ui-atoms.md) | 높음 | ✅ 완료 |
+| T045 | [TanStack Start 최신 버전 업데이트](T045-tanstack-start-upgrade.md) | 중간 | ✅ 완료 |
