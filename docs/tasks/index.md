@@ -72,3 +72,4 @@
 | T043 | [현재 인증 사용자 API 명확화](T043-auth-current-user.md) | 중간 | ✅ 완료 |
 | T044 | [Provider 범위의 TanStack Store Atom으로 UI 상태 분리](T044-provider-scoped-ui-atoms.md) | 높음 | ✅ 완료 |
 | T045 | [TanStack Start 최신 버전 업데이트](T045-tanstack-start-upgrade.md) | 중간 | ✅ 완료 |
+| T046 | [TanStack Start 1.0 정식 버전으로 올리기](T046-tanstack-start-1-0.md) | 중간 | ✅ 완료 |
