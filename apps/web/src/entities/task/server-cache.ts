@@ -61,6 +61,8 @@ export function createTaskServerCache(
   const projectSeqs = new Map<string, number>();
   let taskSink: Sink<Task> | undefined;
   let projectSink: Sink<Project> | undefined;
+  let taskReady = false;
+  let projectReady = false;
   let cursor = options.initial?.cursor ?? null;
   let projectSeed = options.initial?.cursor !== null ? options.initial?.projects : undefined;
   let taskSeed = options.initial?.tasks;
@@ -86,11 +88,11 @@ export function createTaskServerCache(
     return next;
   }
 
-  async function applyTasks(rows: Task[], immediate = false): Promise<void> {
+  async function applyTasks(rows: Task[]): Promise<void> {
     if (!taskSink || rows.length === 0) return;
     const accepted = rows.filter((task) => task.version > (versions.get(task.id) ?? 0));
     if (accepted.length === 0) return;
-    taskSink.begin({ immediate });
+    taskSink.begin();
     for (const task of accepted) {
       taskSink.write({ type: taskKeys.has(task.id) ? 'update' : 'insert', value: task });
       versions.set(task.id, task.version);
@@ -99,11 +101,11 @@ export function createTaskServerCache(
     await taskSink.commit();
   }
 
-  async function applyProjects(rows: Project[], seq: number, immediate = false): Promise<void> {
+  async function applyProjects(rows: Project[], seq: number): Promise<void> {
     if (!projectSink || rows.length === 0) return;
     const accepted = rows.filter((project) => seq >= (projectSeqs.get(project.id) ?? -1));
     if (accepted.length === 0) return;
-    projectSink.begin({ immediate });
+    projectSink.begin();
     for (const project of accepted) {
       projectSink.write({ type: projectKeys.has(project.id) ? 'update' : 'insert', value: project });
       projectSeqs.set(project.id, seq);
@@ -112,11 +114,11 @@ export function createTaskServerCache(
     await projectSink.commit();
   }
 
-  async function removeTask(id: string, version: number, immediate = false): Promise<void> {
+  async function removeTask(id: string, version: number): Promise<void> {
     if (!taskSink || version <= (versions.get(id) ?? 0)) return;
     versions.set(id, version); // tombstone도 기억해 늦은 스냅샷의 부활을 막는다.
     if (!taskKeys.delete(id)) return;
-    taskSink.begin({ immediate });
+    taskSink.begin();
     taskSink.write({ type: 'delete', key: id });
     await taskSink.commit();
   }
@@ -141,8 +143,20 @@ export function createTaskServerCache(
     void pull().catch(scheduleRetry); // 초기 스냅샷과 SSE 연결 사이의 변경도 회수한다.
   }
 
-  function scheduleRetry() {
-    if (abort.signal.aborted || sourceCount === 0 || retryTimer) return;
+  function reportSyncError(error: unknown) {
+    if (taskReady) taskSink?.reportError(error);
+    if (projectReady) projectSink?.reportError(error);
+  }
+
+  function reportSyncHealthy() {
+    if (taskReady) taskSink?.reportHealthy();
+    if (projectReady) projectSink?.reportHealthy();
+  }
+
+  function scheduleRetry(error: unknown) {
+    if (abort.signal.aborted || sourceCount === 0) return;
+    reportSyncError(error);
+    if (retryTimer) return;
     retryTimer = setTimeout(() => {
       retryTimer = undefined;
       void pull().catch(scheduleRetry);
@@ -186,6 +200,7 @@ export function createTaskServerCache(
         cursor = delta.cursor;
         if (delta.tasks.length || delta.projects.length) summaries.invalidate();
       } while (pullPending && !abort.signal.aborted && sourceCount > 0);
+      reportSyncHealthy();
     }).finally(() => {
       pulling = undefined;
     });
@@ -280,6 +295,7 @@ export function createTaskServerCache(
             taskSeed = undefined;
           }
           params.markReady();
+          taskReady = true;
           connect();
           return {
             loadSubset(subset) {
@@ -298,6 +314,7 @@ export function createTaskServerCache(
             },
             cleanup() {
               taskSink = undefined;
+              taskReady = false;
               sourceCount--;
               for (const entry of scopes.values()) clearTimeout(entry.timer);
               scopes.clear();
@@ -331,6 +348,7 @@ export function createTaskServerCache(
             params.commit();
             projectSeed = undefined;
             params.markReady();
+            projectReady = true;
             connect();
           } else {
             void read(async () => {
@@ -338,12 +356,14 @@ export function createTaskServerCache(
               if (projectSink !== params) return;
               await installSnapshot(snapshot, { kind: 'projects' });
               params.markReady();
+              projectReady = true;
             }).catch((error: unknown) => {
-              if (projectSink === params) params.markError(error);
+              if (projectSink === params) params.fail(error);
             });
           }
           return () => {
             projectSink = undefined;
+            projectReady = false;
             sourceCount--;
             projectKeys.clear();
             projectSeqs.clear();
@@ -408,10 +428,10 @@ export function createTaskServerCache(
         prune();
       };
     },
-    applyTask: (task) => applyTasks([task], true),
-    removeTask: (id) => removeTask(id, Number.POSITIVE_INFINITY, true),
+    applyTask: (task) => applyTasks([task]),
+    removeTask: (id) => removeTask(id, Number.POSITIVE_INFINITY),
     // 서버가 ID를 발급하므로 createProject는 응답 후 원본에 추가한다.
-    applyProject: (project) => applyProjects([project], cursor ?? 0, true),
+    applyProject: (project) => applyProjects([project], cursor ?? 0),
   });
 
   return {

@@ -200,6 +200,31 @@ describe('공용 Task 데이터', () => {
     expect(data.tasks.get(task.id)?.title).toBe('GC 이후 최신 제목');
     expect(remote.transport.subscribe).toHaveBeenCalledTimes(2);
   });
+  it('델타 동기화 실패를 health로 알리고 재시도가 성공하면 지운다', async () => {
+    vi.useFakeTimers();
+    const remote = server();
+    const changes = remote.transport.changes;
+    remote.transport.changes = vi.fn().mockRejectedValueOnce(new Error('동기화 실패')).mockImplementation(changes);
+    const data = make(remote.transport, { realtime: true });
+    await data.preload(week);
+    const today = createLiveQueryCollection({ query: taskQuery(data, week), startSync: true });
+    try {
+      await today.preload();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(data.tasks.health.failureReason?.message).toBe('동기화 실패');
+      expect(today.health.hasErrors).toBe(true);
+      expect(today.status).toBe('ready');
+      expect(today.toArray[0]?.title).toBe(task.title);
+      remote.change({ title: '재시도 후 제목' });
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(data.tasks.health.failureReason).toBeNull();
+      expect(today.health.hasErrors).toBe(false);
+      expect(today.toArray[0]?.title).toBe('재시도 후 제목');
+    } finally {
+      await today.cleanup();
+    }
+  });
+
   it('연속 액션의 서버 요청 순서를 보존하고 앞선 실패만 롤백한다', async () => {
     const remote = server();
     const first = deferred<{ task: Task }>();

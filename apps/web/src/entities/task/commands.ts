@@ -46,7 +46,7 @@ export function createTaskCommands(deps: TaskCommandDependencies) {
         mutationFn: async () => {
           const { task } = await send(id, () => transport.update({ id, patch }, signal));
           check();
-          await deps.applyTask(task);
+          void deps.applyTask(task).catch(() => {});
           deps.invalidateSummaries();
         },
       });
@@ -58,12 +58,12 @@ export function createTaskCommands(deps: TaskCommandDependencies) {
         });
       } catch (error) {
         // 스키마 검증 같은 동기 오류도 pending 트랜잭션을 남기지 않는다.
-        void transaction.isPersisted.promise.catch(() => {});
+        void transaction.when('settled').catch(() => {});
         transaction.rollback();
         throw error;
       }
       // 실패 시 DB가 이 트랜잭션의 낙관적 변경만 제거한다. 원본 스냅샷을 복원하지 않는다.
-      await transaction.isPersisted.promise;
+      await transaction.when('settled');
     } finally {
       release();
     }

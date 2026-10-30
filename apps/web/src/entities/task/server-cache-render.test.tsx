@@ -60,6 +60,7 @@ describe('페이지 상태와 초기 렌더링', () => {
         <View />
       </Suspense>
     );
+    await data.preload({ kind: 'task', id: 't1' });
     const html = renderToString(ui);
     expect(html).toContain('서버에서 온 제목');
     expect(html).not.toContain('loading');
