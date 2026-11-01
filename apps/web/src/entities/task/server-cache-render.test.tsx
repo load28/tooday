@@ -6,10 +6,9 @@ import { Suspense } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TaskServerCacheProvider, useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { TaskServerCacheProvider, useTaskAction, useTaskServerQueries } from '@/entities/task/context';
 import { createTaskServerCache, type TaskHydration } from '@/entities/task/server-cache';
 import { TodayDateNavigationStoreProvider, useTodayDateNavigationStore } from '@/features/today/date-navigation-store';
-import { useCommandExecutionStore } from '@/shared/command-execution-store';
 
 const initial: TaskHydration = {
   userId: 'u1',
@@ -167,7 +166,7 @@ it('집계·인증 DB를 SSR 데이터로 복원해 하이드레이션한다', a
   }
 });
 
-it('화면 Store가 변경 명령으로 저장하고 조회는 서버 확정값을 구독한다', async () => {
+it('업무 액션이 DB 명령으로 저장하고 조회는 서버 확정값을 구독한다', async () => {
   const originalTask = initial.tasks[0];
   if (!originalTask) throw new Error('업무 fixture가 필요합니다.');
   let resolveSave!: (value: { task: TaskHydration['tasks'][number] }) => void;
@@ -196,8 +195,7 @@ it('화면 Store가 변경 명령으로 저장하고 조회는 서버 확정값�
   );
   function Editor() {
     const queries = useTaskServerQueries();
-    const commands = useTaskCommands();
-    const execution = useCommandExecutionStore();
+    const renameTask = useTaskAction('renameTask');
     const { data: rows } = useLiveSuspenseQuery(queries.taskView({ kind: 'task', id: 't1' }));
     expect(queries).not.toHaveProperty('dispose');
     expect(queries).not.toHaveProperty('tasks');
@@ -205,11 +203,8 @@ it('화면 Store가 변경 명령으로 저장하고 조회는 서버 확정값�
     return (
       <>
         <p>{rows[0]?.title}</p>
-        <button
-          type="button"
-          onClick={() => execution.dispatch(() => commands.renameTask({ taskId: 't1', title: '저장할 제목' }))}
-        >
-          {execution.isPending ? '저장 중' : '저장'}
+        <button type="button" onClick={() => renameTask.mutate({ taskId: 't1', title: '저장할 제목' })}>
+          {renameTask.isPending ? '저장 중' : '저장'}
         </button>
       </>
     );
@@ -230,6 +225,69 @@ it('화면 Store가 변경 명령으로 저장하고 조회는 서버 확정값�
       resolveSave({ task: { ...originalTask, title: '서버 확정 제목', version: 2 } });
     });
     expect(await screen.findByText('서버 확정 제목')).toBeDefined();
+    expect(await screen.findByText('저장')).toBeDefined();
+  } finally {
+    view.unmount();
+    await cache.dispose();
+  }
+});
+
+it('업무 액션이 실패하면 DB의 낙관적 변경을 되돌리고 mutation 오류를 표시한다', async () => {
+  let rejectSave!: (error: Error) => void;
+  const update = vi.fn(
+    () =>
+      new Promise<never>((_, reject) => {
+        rejectSave = reject;
+      }),
+  );
+  const unexpected = async (): Promise<never> => {
+    throw new Error('예상하지 않은 서버 요청');
+  };
+  const cache = createTaskServerCache(
+    'u1',
+    {
+      snapshot: unexpected,
+      changes: unexpected,
+      create: unexpected,
+      remove: unexpected,
+      createProject: unexpected,
+      update,
+      subscribe: () => () => {},
+      summaries: async () => ({ projects: [] }),
+    },
+    { realtime: false, initial },
+  );
+  function Editor() {
+    const queries = useTaskServerQueries();
+    const renameTask = useTaskAction('renameTask');
+    const { data: rows } = useLiveSuspenseQuery(queries.taskView({ kind: 'task', id: 't1' }));
+    return (
+      <>
+        <p>{rows[0]?.title}</p>
+        <button type="button" onClick={() => renameTask.mutate({ taskId: 't1', title: '실패할 제목' })}>
+          {renameTask.isPending ? '저장 중' : '저장'}
+        </button>
+        {renameTask.isError ? <span>저장 실패</span> : null}
+      </>
+    );
+  }
+  const view = render(
+    <TaskServerCacheProvider cache={cache}>
+      <Suspense fallback="loading">
+        <Editor />
+      </Suspense>
+    </TaskServerCacheProvider>,
+  );
+  try {
+    fireEvent.click(await screen.findByText('저장'));
+    expect(await screen.findByText('실패할 제목')).toBeDefined();
+    expect(await screen.findByText('저장 중')).toBeDefined();
+    await vi.waitFor(() => expect(update).toHaveBeenCalledOnce());
+    await act(async () => {
+      rejectSave(new Error('서버 실패'));
+    });
+    expect(await screen.findByText('저장 실패')).toBeDefined();
+    expect(await screen.findByText('서버에서 온 제목')).toBeDefined();
     expect(await screen.findByText('저장')).toBeDefined();
   } finally {
     view.unmount();

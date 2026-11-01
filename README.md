@@ -79,8 +79,8 @@ packages/shared/src/  # web ↔ bff 계약만 — 도메인별 파일 (auth, use
 - Bun workspaces + Turborepo
 - TypeScript, React 19, TanStack Router/Start
 - TanStack DB: Task·Project·서버 집계·인증 사용자의 서버 캐시 / TanStack Store: 클라이언트 상태
-- 서버 변경: 명시적인 도메인 명령 호출. Store에서도 호출할 수 있으며 서버 응답은 DB에 반영
-- TanStack Query: DB 컬렉션 내부 캐시·재조회 / TanStack Form: 작성 중인 폼
+- 서버 변경: DB 명령을 mutation으로 감싼 업무 액션(`useTaskAction`/`useAuthAction`). 서버 응답은 DB에 반영
+- TanStack Query: DB 컬렉션 내부 조회·재조회 + 업무 액션의 실행 상태(mutation) / TanStack Form: 작성 중인 폼
 - StyleX (빌드타임 원자 CSS) + Ark UI — 스타일은 컴포넌트 파일이나 옆
   `*.styles.ts`에 콜로케이션하고, 토큰은 `src/styles/*.stylex.ts`가 소유한다.
   override 승패는 레이어가 아니라 `stylex.props()` 인자 순서가 정한다 —

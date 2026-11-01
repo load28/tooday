@@ -3,10 +3,9 @@ import { useLiveSuspenseQuery } from '@tanstack/react-db';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useAtom } from '@tanstack/react-store';
 import { ChevronLeft } from 'lucide-react';
-import { useAuthCommands, useAuthServerQueries } from '@/entities/auth/context';
+import { useAuthAction, useAuthServerQueries } from '@/entities/auth/context';
 import { styles } from '@/features/auth/settings-screen.styles';
 import { useSettingsStore } from '@/features/auth/settings-store';
-import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useT } from '@/shared/i18n';
 import { AppBar, BottomSheet, Button, Screen, Stack, Text } from '@/shared/ui';
 
@@ -14,7 +13,6 @@ export function SettingsScreen() {
   const navigate = useNavigate();
   const router = useRouter();
   const auth = useAuthServerQueries();
-  const commands = useAuthCommands();
   const t = useT();
 
   const { data: sessions } = useLiveSuspenseQuery(auth.sessionView());
@@ -50,27 +48,22 @@ export function SettingsScreen() {
         </div>
       </Screen>
 
-      <LogoutConfirmationSheet commands={commands} navigateToLogin={() => navigate({ to: '/login' })} />
+      <LogoutConfirmationSheet navigateToLogin={() => navigate({ to: '/login' })} />
     </>
   );
 }
 
-function LogoutConfirmationSheet({
-  commands,
-  navigateToLogin,
-}: {
-  commands: ReturnType<typeof useAuthCommands>;
-  navigateToLogin: () => Promise<unknown>;
-}) {
+function LogoutConfirmationSheet({ navigateToLogin }: { navigateToLogin: () => Promise<unknown> }) {
   const t = useT();
   const { logoutConfirmationOpenAtom } = useSettingsStore();
   const [confirmOpen, setConfirmOpen] = useAtom(logoutConfirmationOpenAtom);
-  const logout = useCommandExecutionStore();
+  const logout = useAuthAction('logout');
   const confirmLogout = () =>
-    logout.dispatch(async () => {
-      await commands.logout();
-      setConfirmOpen(false);
-      await navigateToLogin();
+    logout.mutate(undefined, {
+      onSuccess: () => {
+        setConfirmOpen(false);
+        return navigateToLogin();
+      },
     });
   const closeConfirm = () => {
     if (logout.isPending) return;

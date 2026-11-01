@@ -5,13 +5,12 @@ import { useAtom } from '@tanstack/react-store';
 import type { Task } from '@tooday/shared';
 import { Bell, CalendarX2, Plus, UserRound } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { useTaskAction, useTaskServerQueries } from '@/entities/task/context';
 import { useTodayDateNavigationStore } from '@/features/today/date-navigation-store';
 import { TaskCard } from '@/features/today/task-card';
 import { styles } from '@/features/today/today-screen.styles';
 import { buildWeek, weekRange } from '@/features/today/week';
 import { WeekStrip } from '@/features/today/week-strip';
-import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useLocale, useT } from '@/shared/i18n';
 import { formatDuration, timeToMin } from '@/shared/time';
 import { AppBar, Button, Card, Screen, Section, Stack, Text } from '@/shared/ui';
@@ -35,7 +34,6 @@ type TodayScreenProps = {
 export function TodayScreen({ now }: TodayScreenProps) {
   const navigate = useNavigate();
   const taskQueries = useTaskServerQueries();
-  const commands = useTaskCommands();
   const t = useT();
   const locale = useLocale();
 
@@ -62,7 +60,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
     return map;
   }, [taskRows]);
 
-  const updateTask = useCommandExecutionStore();
+  const setTaskStatus = useTaskAction('setTaskStatus');
 
   const day = days.find((d) => d.offset === activeOffset) ?? days[0];
   if (!day) return null;
@@ -71,7 +69,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
   const remaining = tasks.filter((task) => task.status !== 'done').length;
 
   const toggleTask = (task: Task) => {
-    updateTask.dispatch(() => commands.setTaskStatus({ taskId: task.id, status: task.status === 'done' ? 'todo' : 'done' }));
+    setTaskStatus.mutate({ taskId: task.id, status: task.status === 'done' ? 'todo' : 'done' });
   };
 
   return (
@@ -111,7 +109,7 @@ export function TodayScreen({ now }: TodayScreenProps) {
             </Stack>
           </Card>
 
-          {updateTask.isError ? (
+          {setTaskStatus.isError ? (
             <Text role="alert" tone="danger">
               {t.common.error.unexpected}
             </Text>

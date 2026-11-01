@@ -5,7 +5,7 @@ import { useAtom } from '@tanstack/react-store';
 import type { Project, Task, TaskStatus } from '@tooday/shared';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useTaskCommands, useTaskServerQueries } from '@/entities/task/context';
+import { useTaskAction, useTaskServerQueries } from '@/entities/task/context';
 import { STATUS_CHIP_TONE, STATUS_DOT_TONE, STATUS_ORDER } from '@/entities/task/status';
 import { useTaskDetailSheetStore } from '@/features/tasks/detail-sheet-store';
 import { styles } from '@/features/tasks/task-detail-screen.styles';
@@ -19,7 +19,6 @@ import {
   ScheduleValue,
   useProjectOptions,
 } from '@/features/tasks/task-fields';
-import { useCommandExecutionStore } from '@/shared/command-execution-store';
 import { useLocale, useT } from '@/shared/i18n';
 import { formatDateLabel, parseIsoDate } from '@/shared/time';
 import { AppBar, BaseButton, Button, Chip, Dot, Input, Screen, Stack, Text } from '@/shared/ui';
@@ -47,7 +46,6 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
   const taskId = task.id;
   const navigate = useNavigate();
   const router = useRouter();
-  const commands = useTaskCommands();
   const t = useT();
   const locale = useLocale();
   const projectOptions = useProjectOptions(projects);
@@ -63,8 +61,12 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
 
   const dateLabel = useMemo(() => formatDateLabel(locale, parseIsoDate(task.date), 'short'), [locale, task.date]);
 
-  const update = useCommandExecutionStore();
-  const remove = useCommandExecutionStore();
+  const renameTask = useTaskAction('renameTask');
+  const setTaskStatus = useTaskAction('setTaskStatus');
+  const moveTaskToProject = useTaskAction('moveTaskToProject');
+  const rescheduleTask = useTaskAction('rescheduleTask');
+  const deleteTask = useTaskAction('deleteTask');
+  const failed = [renameTask, setTaskStatus, moveTaskToProject, rescheduleTask, deleteTask].some((action) => action.isError);
 
   const commitTitle = () => {
     if (titleDraft === null) return;
@@ -74,10 +76,10 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
       setTitleDraft(null);
       return;
     }
-    update.dispatch(async () => {
-      await commands.renameTask({ taskId, title: next });
-      setTitleDraft((current) => (current === submitted ? null : current));
-    });
+    renameTask.mutate(
+      { taskId, title: next },
+      { onSuccess: () => setTitleDraft((current) => (current === submitted ? null : current)) },
+    );
   };
 
   return (
@@ -136,18 +138,13 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
             tone="dangerSoft"
             size="lg"
             fullWidth
-            loading={remove.isPending}
-            onClick={() =>
-              remove.dispatch(async () => {
-                await commands.deleteTask({ taskId });
-                await navigate({ to: '/today' });
-              })
-            }
+            loading={deleteTask.isPending}
+            onClick={() => deleteTask.mutate({ taskId }, { onSuccess: () => navigate({ to: '/today' }) })}
           >
             <Trash2 size={16} />
             {t.taskDetail.delete}
           </Button>
-          {remove.isError || update.isError ? (
+          {failed ? (
             <Text variant="bodySm" tone="danger" align="center">
               {t.common.error.unexpected}
             </Text>
@@ -166,7 +163,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         }))}
         selectedKey={task.status}
         onSelect={(status) => {
-          if (status !== task.status) update.dispatch(() => commands.setTaskStatus({ taskId, status }));
+          if (status !== task.status) setTaskStatus.mutate({ taskId, status });
           setTaskDetailSheet(null);
         }}
       />
@@ -179,8 +176,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         selectedKey={task.projectId ?? NO_PROJECT_KEY}
         onSelect={(key) => {
           const nextProjectId = key === NO_PROJECT_KEY ? null : key;
-          if (nextProjectId !== task.projectId)
-            update.dispatch(() => commands.moveTaskToProject({ taskId, projectId: nextProjectId }));
+          if (nextProjectId !== task.projectId) moveTaskToProject.mutate({ taskId, projectId: nextProjectId });
           setTaskDetailSheet(null);
         }}
       />
@@ -192,7 +188,7 @@ function TaskEditor({ task, projects }: { task: Task; projects: Project[] }) {
         durationMin={task.durationMin}
         onApply={(startAt, durationMin) => {
           if (startAt !== task.startAt || durationMin !== task.durationMin)
-            update.dispatch(() => commands.rescheduleTask({ taskId, startAt, durationMin }));
+            rescheduleTask.mutate({ taskId, startAt, durationMin });
           setTaskDetailSheet(null);
         }}
       />
