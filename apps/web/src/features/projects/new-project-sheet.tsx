@@ -2,7 +2,7 @@ import { revalidateLogic, useForm } from '@tanstack/react-form';
 import { type CreateProjectRequest, createProjectRequestSchema, PROJECT_COLORS, type Project } from '@tooday/shared';
 import { Check } from 'lucide-react';
 import * as v from 'valibot';
-import { useTaskCommands } from '@/entities/task/context';
+import { useTaskAction } from '@/entities/task/context';
 import { styles } from '@/features/projects/new-project-sheet.styles';
 import { fieldErrorMessage, formError, useFormMessages } from '@/shared/form';
 import { useT } from '@/shared/i18n';
@@ -42,7 +42,7 @@ export function NewProjectSheet({ open, onClose, onCreated }: NewProjectSheetPro
 }
 
 function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }) {
-  const commands = useTaskCommands();
+  const createProject = useTaskAction('createProject');
   const t = useT();
 
   const messages = useFormMessages(projectFormSchema, (t) => ({
@@ -56,7 +56,7 @@ function NewProjectForm({ onCreated }: { onCreated: (project: Project) => void }
       onDynamic: projectFormSchema,
       onSubmitAsync: async ({ value }) => {
         try {
-          const project = await commands.createProject(toCreateProjectRequest(value));
+          const project = await createProject.mutateAsync(toCreateProjectRequest(value));
           onCreated(project);
         } catch {
           return formError(t.common.error.unexpected);

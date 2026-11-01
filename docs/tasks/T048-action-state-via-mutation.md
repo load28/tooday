@@ -1,8 +1,8 @@
 # T048 — 업무 액션 실행 상태를 DB 명령 기반 mutation으로 전환
 
-- 상태: 진행중
+- 상태: 완료
 - 생성: 2026-11-01
-- 완료: -
+- 완료: 2026-11-01
 
 ## 배경
 
@@ -53,11 +53,11 @@ TanStack DB는 쓰기의 성공·실패를 화면에 상태로 제공하지 않�
 
 ## 완료 기준
 
-- [ ] 모든 화면의 업무 액션이 `useTaskAction`/`useAuthAction`을 사용한다.
-- [ ] 로그아웃·삭제 버튼이 mutation `isPending`으로 진행 중을 표시한다.
-- [ ] `command-execution-store`가 제거되고 화면에 catch로 오류를 보관하는 코드가 없다.
-- [ ] `docs/conventions/web-cache-policy.md`, README의 상태 경계 설명을 새 계층에 맞춘다.
-- [ ] 웹 test, 전체 typecheck, lint:deps, check를 통과한다.
+- [x] 모든 화면의 업무 액션이 `useTaskAction`/`useAuthAction`을 사용한다.
+- [x] 로그아웃·삭제 버튼이 mutation `isPending`으로 진행 중을 표시한다.
+- [x] `command-execution-store`가 제거되고 화면에 catch로 오류를 보관하는 코드가 없다.
+- [x] `docs/conventions/web-cache-policy.md`, README의 상태 경계 설명을 새 계층에 맞춘다.
+- [x] 웹 test, 전체 typecheck, lint:deps, check를 통과한다.
 
 ## 대화 기록
 
@@ -153,7 +153,19 @@ TanStack DB는 쓰기의 성공·실패를 화면에 상태로 제공하지 않�
 > **Claude**: 네, 맞습니다. `useMutation`은 넘겨받은 함수를 실행하고 그 상태를 기록할 뿐입니다. 그 함수가 DB 명령일 때만 DB와 연동됩니다. [중략]
 >
 > **사용자**: 지금까지 이야기한대로 전체 설계를 변경해서 문서를 수정한 다음에 작업을 시작하자. 지금 원격에 있는 작업은 불필요하다.
+>
+> **Claude**: 설계 문서를 바꾸고 구현까지 마쳤습니다. 화면의 모든 업무 액션은 이제 **DB 명령을 `mutationFn`으로 쓰는 mutation**으로 실행되고, 화면은 그 `isPending`/`isError`를 바로 읽습니다. [중략 — 문서 커밋, 구현 내용, 검증 결과]
+>
+> **사용자**: 커밋하고 푸시하고 메인에 넣어
 
 ## 작업 로그
 
 - 2026-11-01: 태스크 문서를 만들고 설계 문서를 새 계층에 맞춘다.
+- `shared/command-mutation.ts`의 `useCommandMutation`이 DB 명령을 mutation으로 감싸고,
+  `useTaskAction`/`useAuthAction`이 Provider별 QueryClient로 이를 노출한다. 화면의
+  `useTaskCommands`/`useAuthCommands` 사용과 `command-execution-store`를 제거했다.
+- 오늘 토글·상세 수정/삭제·로그아웃은 mutation `isPending`/`isError`와 `onSuccess`를 쓰고,
+  폼 화면은 `mutateAsync`를 호출한다.
+- 실패 시 DB 롤백과 mutation 오류 표시를 확인하는 렌더링 테스트를 추가했다.
+- 검증: 웹 47개 테스트, 전체 typecheck, lint:deps, build 통과. Biome check는 git 무시 대상인
+  `.claude/settings.local.json` 포맷 오류 1건만 남는다(변경 전과 동일).
