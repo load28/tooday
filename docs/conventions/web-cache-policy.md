@@ -1,15 +1,33 @@
 # web 상태·캐시 정책
 
-## DB·Store·명령의 경계
+## DB·액션·Store의 경계
 
 여기서 DB는 브라우저/SSR의 TanStack DB 서버 데이터 캐시다. 영속 원본은 서버에 있다.
 DB는 Task·Project·인증 사용자·서버 집계와 저장 중인 낙관적 변경을 소유한다.
-Store는 서버 원본이 아닌 클라이언트 상태를 소유한다. 작성 중인 값도 클라이언트 상태이며 기존 Form이나 지역 draft에 둘 수 있다.
+Store는 서버 원본도 액션 실행 상태도 아닌 클라이언트 상태를 소유한다. 작성 중인 값도
+클라이언트 상태이며 기존 Form이나 지역 draft에 둘 수 있다.
 
-Store는 `useTaskCommands` 또는 `useAuthCommands`로 얻은 변경 명령을 호출할 수 있다.
-흐름은 **Store의 입력/실행 상태 → 변경 명령 → 서버 요청과 DB 반영 → live query 갱신**이다.
-Store의 값 변경 자체를 자동 저장으로 해석하지 않는다. 명시적인 명령 호출이 저장을 시작한다.
-서버 결과를 Store의 별도 원본으로 보관하지 않는다.
+| 계층 | 맡는 일 | 화면이 읽는 것 |
+| --- | --- | --- |
+| DB | 데이터 보관, 낙관적 반영, 실패 시 되돌리기 | live query 행 |
+| Query (조회) | 서버 데이터를 가져와 DB 컬렉션에 채운다 | 직접 읽지 않는다 |
+| Query (mutation) | 업무 액션 실행과 대기·오류 상태 | `useTaskAction`/`useAuthAction`의 `isPending`·`isError` |
+| Store | 선택 날짜·탭·열린 시트 같은 화면 상태 | Atom 구독 |
+
+업무 액션은 `useTaskAction(name)` / `useAuthAction(name)`으로 얻는다. 이 훅은 이름 있는 DB
+명령을 `mutationFn`으로 하는 mutation을 반환한다. **mutation이 DB를 갱신하는 것이 아니라
+`mutationFn`인 DB 명령이 갱신한다.** 그래서 화면이 `useMutation`에 서버 호출을 직접 넣지
+못하도록 entities만 mutation을 만든다.
+흐름은 **화면의 `mutate` → DB 명령 → 서버 요청과 DB 반영 → live query 갱신**이며, 같은 실행의
+대기·오류는 mutation 상태로 화면에 돌아온다. 성공 후 화면 동작(이동·시트 닫기·draft 정리)은
+`mutate(input, { onSuccess })`에 둔다. 화면은 catch로 실패를 따로 보관하지 않는다.
+Store의 값 변경 자체를 자동 저장으로 해석하지 않는다. 명시적인 액션 호출이 저장을 시작한다.
+서버 결과를 Store나 mutation 결과의 별도 원본으로 보관하지 않는다.
+
+TanStack DB가 쓰기 상태를 직접 제공하지 않는 동안의 선택이다. 설치 버전(0.9.x)과 1.0 RC 모두
+행의 대기 여부만 알려 주고 실패 상태는 없다(RFC TanStack/db#1625에서 `$writeStatus`,
+`db.mutations` 제안 중). 로그아웃처럼 행이 없거나 삭제처럼 서버 확인 후 반영하는 액션도
+같은 방식으로 진행 중을 표시해야 하므로 액션 단위 mutation 상태를 기준으로 삼는다.
 
 페이지·feature 수명의 Store는 `@tanstack/react-store`의 실제 `Atom`을 사용한다. route나
 feature 경계의 Provider가 `useCreateAtom`으로 Atom을 만들고 `createStoreContext`로
@@ -19,8 +37,8 @@ feature 경계의 Provider가 `useCreateAtom`으로 Atom을 만들고 `createSto
 시트처럼 하나의 상태 머신인 값은 여러 boolean Atom 대신 하나의 union Atom으로 둔다.
 모듈 전역 Atom은 여러 화면 인스턴스가 의도적으로 상태를 공유해야 할 때만 허용한다.
 
-화면은 `useTaskServerQueries` / `useAuthServerQueries`로 조회하고 변경 명령은 별도 훅으로 얻는다.
-Context는 이 두 기능만 전달한다. 원본 컬렉션·DbClient·동기화·SSR 복원·dispose는 공개하지 않는다.
+화면은 `useTaskServerQueries` / `useAuthServerQueries`로 조회하고 업무 액션은 `useTaskAction` / `useAuthAction`으로 얻는다.
+Context는 이 두 기능만 전달한다. 명령 객체 자체는 화면에 공개하지 않는다. 원본 컬렉션·DbClient·동기화·SSR 복원·dispose는 공개하지 않는다.
 서버 캐시 생성과 세션 수명은 라우터 조립 계층이 소유하며 feature의 내부 모듈 import는 의존성 검사로 금지한다.
 
 ## 소유권
@@ -30,7 +48,7 @@ Context는 이 두 기능만 전달한다. 원본 컬렉션·DbClient·동기화
 | Task·Project 원본 | 사용자별 `entities/task/server-cache.ts` | DB live query |
 | 프로젝트 전체·완료 건수 | 사용자별 집계 DB 컬렉션 | DB live query |
 | 인증 사용자 | router / SSR 요청별 인증 DB 컬렉션 | DB live query |
-| 액션 대기·오류 | 컴포넌트 Store (`useCommandExecutionStore`) | Atom 구독 |
+| 액션 대기·오류 | 업무 액션 mutation (`useTaskAction`/`useAuthAction`) | `isPending`·`isError`·`reset` |
 | 선택 날짜·탭·열린 시트 | 페이지 Store | Context로 Atom 객체 전달 후 개별 구독 |
 | 입력 중인 값 | TanStack Form 또는 지역 draft | 폼의 검증·dirty 상태 유지 |
 
@@ -90,7 +108,8 @@ ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 �
 ## UI 경계와 컬렉션 내부 Query
 
 화면은 DB live query로 서버 데이터를 읽고 이름 있는 업무 액션으로 변경한다.
-`useQuery`/`useMutation`/QueryClient/tRPC를 화면에서 직접 사용하지 않는다.
+`useQuery`/`useMutation`/QueryClient/tRPC를 화면에서 직접 사용하지 않는다. mutation은
+entities의 액션 훅만 만들며, `mutationFn`은 항상 DB 명령이다.
 Router context에도 QueryClient와 rpc를 노출하지 않으며 의존성 검사로 직접 import를 금지한다.
 
 서버 집계와 인증은 `queryCollectionOptions`로 만든 실제 DB 컬렉션이다.
@@ -105,12 +124,14 @@ SSE 델타 반영에서 내부 캐시를 무효화한다. 서버 집계는 낙�
 SSR에는 인증 행과 갱신 시각, 로딩한 집계 행을 직렬화하고 복원한다.
 Query의 focus/reconnect 처리를 위한 구독도 데이터 환경이 생성·정리한다.
 
-액션 실행 상태는 컴포넌트마다 생성한 Store가 소유한다. 겹친 실행의 대기 개수를
-추적하고 마지막 실행의 오류를 표시한다. 서버 결과 자체는 Store에 보관하지 않는다.
-Form으로 작성하는 화면은 Form의 isSubmitting/errorMap을 재사용하고 별도 mutation 캐시를 만들지 않는다.
+액션 실행 상태는 액션 훅이 반환하는 mutation이 소유한다. 상태는 마지막 실행 기준이므로
+이전 실행의 늦은 실패가 최신 성공을 덮지 않는다. mutation용 QueryClient는 서버 캐시
+Provider가 캐시 인스턴스마다 만들어 세션 간 상태가 섞이지 않는다.
+Form으로 작성하는 화면은 액션의 `mutateAsync`를 제출 함수에서 호출하고, 표시는 Form의
+isSubmitting/formError를 재사용한다.
 
 ## 에러
 
-폼은 기존 `formError`를 사용한다. 오늘 토글과 상세 수정·삭제는 Store의 실행 오류를
-표시한다. 상세 제목은 draft가 없을 때 원격 제목을 그대로 보여 주고, 작성 중이면
+폼은 기존 `formError`를 사용한다. 오늘 토글, 상세 수정·삭제, 로그아웃은 액션 mutation의
+`isError`를 표시한다. 상세 제목은 draft가 없을 때 원격 제목을 그대로 보여 주고, 작성 중이면
 draft를 유지한다. 저장 실패 시 입력을 잃지 않는다.
