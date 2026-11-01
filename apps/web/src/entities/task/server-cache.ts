@@ -5,6 +5,7 @@ import {
   liveQueryCollectionOptions,
   type SyncConfig,
 } from '@tanstack/react-db';
+import { createAtom, type ReadonlyAtom } from '@tanstack/react-store';
 import {
   type Project,
   projectSchema,
@@ -71,6 +72,8 @@ export function createTaskServerCache(
   let pulling: Promise<void> | undefined;
   let reads: Promise<unknown> = Promise.resolve();
   let pendingActions = 0;
+  // 첫 로드 이후 델타 동기화 실패. DB 0.9는 ready 이후 오류 상태를 두면 쓰기가 막혀 컬렉션 밖에 둔다.
+  const syncError = createAtom<unknown>(null);
 
   const assertActive = () => {
     if (abort.signal.aborted) throw new DOMException('인증 세션이 종료되었습니다.', 'AbortError');
@@ -141,8 +144,10 @@ export function createTaskServerCache(
     void pull().catch(scheduleRetry); // 초기 스냅샷과 SSE 연결 사이의 변경도 회수한다.
   }
 
-  function scheduleRetry() {
-    if (abort.signal.aborted || sourceCount === 0 || retryTimer) return;
+  function scheduleRetry(error: unknown) {
+    if (abort.signal.aborted || sourceCount === 0) return;
+    syncError.set(() => error);
+    if (retryTimer) return;
     retryTimer = setTimeout(() => {
       retryTimer = undefined;
       void pull().catch(scheduleRetry);
@@ -155,6 +160,7 @@ export function createTaskServerCache(
     stopStream = undefined;
     clearTimeout(retryTimer);
     retryTimer = undefined;
+    syncError.set(() => null);
   }
 
   function pull(): Promise<void> {
@@ -186,6 +192,7 @@ export function createTaskServerCache(
         cursor = delta.cursor;
         if (delta.tasks.length || delta.projects.length) summaries.invalidate();
       } while (pullPending && !abort.signal.aborted && sourceCount > 0);
+      syncError.set(() => null);
     }).finally(() => {
       pulling = undefined;
     });
@@ -419,6 +426,7 @@ export function createTaskServerCache(
     tasks,
     projects,
     commands,
+    syncError: syncError as ReadonlyAtom<unknown>,
     taskView,
     projectView,
     summaryView: summaries.view,

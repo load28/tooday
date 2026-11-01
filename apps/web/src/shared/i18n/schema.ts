@@ -7,6 +7,7 @@ export interface MessageSchema {
     brand: Msg;
     error: {
       unexpected: Msg;
+      syncFailed: Msg;
     };
     duration: {
       minutes: Msg<'min'>;
