@@ -74,3 +74,4 @@
 | T045 | [TanStack Start 최신 버전 업데이트](T045-tanstack-start-upgrade.md) | 중간 | ✅ 완료 |
 | T046 | [TanStack Start 1.0 정식 버전으로 올리기](T046-tanstack-start-1-0.md) | 중간 | ✅ 완료 |
 | T048 | [업무 액션 실행 상태를 DB 명령 기반 mutation으로 전환](T048-action-state-via-mutation.md) | 높음 | ✅ 완료 |
+| T049 | [첫 로드 이후 실시간 동기화 실패를 화면에 알림](T049-sync-failure-notice.md) | 중간 | ✅ 완료 |

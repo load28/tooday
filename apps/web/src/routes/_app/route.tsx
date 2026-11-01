@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { TaskServerCacheProvider } from '@/entities/task/context';
+import { SyncErrorNotice } from '@/features/sync/sync-error-notice';
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context }) => {
@@ -20,6 +21,7 @@ function AuthenticatedApp() {
   return (
     <TaskServerCacheProvider cache={taskCacheSession.get(user.id)}>
       <Outlet />
+      <SyncErrorNotice />
     </TaskServerCacheProvider>
   );
 }

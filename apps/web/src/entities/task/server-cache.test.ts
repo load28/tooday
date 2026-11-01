@@ -200,6 +200,20 @@ describe('공용 Task 데이터', () => {
     expect(data.tasks.get(task.id)?.title).toBe('GC 이후 최신 제목');
     expect(remote.transport.subscribe).toHaveBeenCalledTimes(2);
   });
+  it('첫 로드 이후 동기화 실패를 알리고 재시도가 성공하면 지운다', async () => {
+    vi.useFakeTimers();
+    const remote = server();
+    const failure = new Error('network');
+    vi.mocked(remote.transport.changes).mockRejectedValueOnce(failure);
+    const data = make(remote.transport, { realtime: true });
+    await data.preload(week);
+    await vi.waitFor(() => expect(data.syncError.get()).toBe(failure));
+    expect(data.tasks.get(task.id)?.title).toBe('회의');
+    remote.change({ title: '복구 후 제목' });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(data.syncError.get()).toBeNull();
+    expect(data.tasks.get(task.id)?.title).toBe('복구 후 제목');
+  });
   it('연속 액션의 서버 요청 순서를 보존하고 앞선 실패만 롤백한다', async () => {
     const remote = server();
     const first = deferred<{ task: Task }>();

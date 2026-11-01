@@ -8,6 +8,7 @@ export const ko = defineMessages<MessageSchema>()({
     brand: 'TooDay',
     error: {
       unexpected: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      syncFailed: '최신 내용을 불러오지 못했어요. 다시 연결하는 중이에요.',
     },
     duration: {
       minutes: ({ min }) => msg`${min}분`,

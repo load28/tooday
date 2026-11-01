@@ -50,6 +50,7 @@ Context는 이 두 기능만 전달한다. 명령 객체 자체는 화면에 공
 | 인증 사용자 | router / SSR 요청별 인증 DB 컬렉션 | DB live query |
 | 액션 대기·오류 | 업무 액션 mutation (`useTaskAction`/`useAuthAction`) | `isPending`·`isError`·`reset` |
 | 선택 날짜·탭·열린 시트 | 페이지 Store | Context로 Atom 객체 전달 후 개별 구독 |
+| 첫 로드 이후 동기화 실패 | 서버 캐시의 `syncError` Atom | `useTaskSyncError()` |
 | 입력 중인 값 | TanStack Form 또는 지역 draft | 폼의 검증·dirty 상태 유지 |
 
 DB 조회 결과를 Atom이나 화면별 Query에 다시 복사하지 않는다. 컬렉션 ID에는 사용자
@@ -100,6 +101,8 @@ ID를 포함하고 브라우저 router / SSR 요청마다 별도의 데이터 �
   범위 전용 행은 제거한다. 범위 해제는 서버 삭제 표식과 다르다.
 - 액션은 임시 구독으로 컬렉션을 유지한다. 페이지를 떠나도 저장이 완료되고,
   성공·실패 모두에서 그 구독을 해제한다.
+- 델타 동기화 실패는 3초 뒤 재시도하며 `syncError`에 기록한다. 다음 동기화 성공이나 원본 정리 시 지운다.
+  DB 0.9는 `ready` 이후 컬렉션을 오류 상태로 두면 쓰기가 막히므로 컬렉션 status로 표현하지 않는다.
 - SSE는 활성 sync 원본들이 공유하고, 마지막 원본 cleanup에서 닫는다. 데이터 환경을
   Context로 공급하는 것만으로 연결을 유지하지 않는다.
 - 로그아웃·세션 상실·사용자 변경은 AbortController로 이전 요청·대기 액션을 차단하고,
